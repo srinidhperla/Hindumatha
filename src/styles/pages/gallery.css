@@ -1,0 +1,72 @@
+/* Styles moved to src/styles/global/index.css */
+/* @layer components {
+  .gallery-page {
+    @apply min-h-screen bg-primary-50;
+  }
+
+  .gallery-hero {
+    @apply relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 py-20;
+  }
+
+  .gallery-shell {
+    @apply mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8;
+  }
+
+  .gallery-filter-wrap {
+    @apply relative z-10 mb-12 -mt-8 flex flex-wrap justify-center gap-3;
+  }
+
+  .gallery-filter-card {
+    @apply flex flex-wrap gap-2 rounded-2xl bg-white p-2 shadow-soft;
+  }
+
+  .gallery-filter-pill {
+    @apply rounded-xl px-6 py-2.5 text-sm font-medium transition-all duration-300 ease-out;
+  }
+
+  .gallery-filter-pill--active {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-warm scale-105;
+  }
+
+  .gallery-filter-pill--inactive {
+    @apply text-slate-600 hover:bg-primary-100 hover:scale-105;
+  }
+
+  .gallery-grid {
+    @apply grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .gallery-card {
+    @apply relative cursor-pointer overflow-hidden rounded-2xl bg-white shadow-soft;
+    animation: galleryFadeIn 0.6s ease-out backwards;
+  }
+
+  .gallery-card:hover {
+    @apply shadow-warm-lg;
+    transform: translateY(-8px) scale(1.02);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .gallery-card img {
+    @apply transition-transform duration-700 ease-out;
+  }
+
+  .gallery-card:hover img {
+    @apply scale-110;
+  }
+
+  .gallery-cta {
+    @apply relative mt-20 overflow-hidden;
+  }
+
+  @keyframes galleryFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
