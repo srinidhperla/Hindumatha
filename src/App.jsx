@@ -35,9 +35,11 @@ const RouteFallback = () => (
 function App() {
   const dispatch = useDispatch();
   const { token, user, loading } = useSelector((state) => state.auth);
-  const { products, loading: productsLoading } = useSelector(
-    (state) => state.products,
-  );
+  const {
+    products,
+    loading: productsLoading,
+    loaded: productsLoaded,
+  } = useSelector((state) => state.products);
   const { loaded: siteLoaded, loading: siteLoading } = useSelector(
     (state) => state.site,
   );
@@ -55,10 +57,10 @@ function App() {
   }, [dispatch, siteLoaded, siteLoading]);
 
   useEffect(() => {
-    if (!productsLoading && products.length === 0) {
+    if (!productsLoaded && !productsLoading) {
       dispatch(fetchProducts());
     }
-  }, [dispatch, products.length, productsLoading]);
+  }, [dispatch, productsLoaded, productsLoading]);
 
   return (
     <AdminOrderAlertsProvider>

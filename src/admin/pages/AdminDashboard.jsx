@@ -1,5 +1,5 @@
 ﻿import React, { Suspense, lazy, useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AdminToast from "../components/ui/AdminToast";
 import { fetchOrders } from "../../features/orders/orderSlice";
@@ -34,10 +34,14 @@ const AdminDashboard = () => {
   const dispatch = useDispatch();
   const [toast, setToast] = useState(null);
 
+  const { loaded: productsLoaded } = useSelector((state) => state.products);
+
   useEffect(() => {
     dispatch(fetchOrders());
-    dispatch(fetchProducts());
-  }, [dispatch]);
+    if (!productsLoaded) {
+      dispatch(fetchProducts());
+    }
+  }, [dispatch, productsLoaded]);
 
   useEffect(() => {
     if (!toast) {

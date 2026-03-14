@@ -9,14 +9,16 @@ const Modal = ({
   className = "",
   maxWidthClassName = "max-w-5xl",
 }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-3">
+  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/70 p-0 sm:p-3">
     <div
-      className={`max-h-[92vh] w-full ${maxWidthClassName} overflow-y-auto rounded-[32px_14px_32px_14px] border border-slate-200 bg-slate-50 p-4 shadow-2xl sm:p-6 ${className}`}
+      className={`max-h-[95vh] sm:max-h-[92vh] w-full ${maxWidthClassName} overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 md:p-6 shadow-2xl ${className}`}
     >
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 sm:mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           {title ? (
-            <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-slate-900">
+              {title}
+            </h2>
           ) : null}
           {badge}
         </div>

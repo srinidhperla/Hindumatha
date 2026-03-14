@@ -107,6 +107,7 @@ const Profile = () => {
       longitude: Number.isFinite(Number(address.longitude))
         ? Number(address.longitude)
         : undefined,
+      formattedAddress: address.formattedAddress || "",
       isDefault: address.isDefault === true,
     }));
 
@@ -126,50 +127,44 @@ const Profile = () => {
     );
   };
 
-  const handleAddressDraftSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!addressDraft.street.trim() || !addressDraft.zipCode.trim()) {
-      dispatch(
-        showToast({
-          message: "Street and pincode are required for saved addresses.",
-          type: "error",
-        }),
-      );
-      return;
-    }
-
+  const handleAddressPickerSave = async (addressData, editIndex) => {
     const normalizedAddress = {
-      ...addressDraft,
-      label: addressDraft.label.trim() || "Saved address",
-      street: addressDraft.street.trim(),
-      city: addressDraft.city.trim() || "Vizianagaram",
-      state: addressDraft.state.trim() || "Andhra Pradesh",
-      zipCode: addressDraft.zipCode.trim(),
-      phone: addressDraft.phone.trim() || formData.phone.trim(),
+      id:
+        editIndex >= 0
+          ? savedAddresses[editIndex]?.id || `saved-${Date.now()}`
+          : `saved-${Date.now()}`,
+      label: addressData.label || "Home",
+      street: addressData.street || "",
+      city: addressData.city || "Vizianagaram",
+      state: addressData.state || "Andhra Pradesh",
+      zipCode: addressData.zipCode || "",
+      phone: addressData.phone || formData.phone || "",
+      landmark: addressData.landmark || "",
+      placeId: addressData.placeId || "",
+      latitude: addressData.latitude,
+      longitude: addressData.longitude,
+      formattedAddress: addressData.formattedAddress || "",
+      isDefault: savedAddresses.length === 0 || editIndex >= 0 ? true : false,
     };
 
-    const nextAddresses = [...savedAddresses];
-
-    if (editingAddressIndex >= 0) {
-      const existingAddress = nextAddresses[editingAddressIndex] || {};
-      nextAddresses[editingAddressIndex] = {
-        ...existingAddress,
-        ...normalizedAddress,
-      };
+    let nextAddresses;
+    if (editIndex >= 0) {
+      nextAddresses = savedAddresses.map((address, i) =>
+        i === editIndex
+          ? { ...address, ...normalizedAddress }
+          : { ...address, isDefault: false },
+      );
     } else {
-      nextAddresses.push({
-        ...normalizedAddress,
-        isDefault: nextAddresses.length === 0,
-      });
+      nextAddresses = [
+        ...savedAddresses.map((a) => ({ ...a, isDefault: false })),
+        { ...normalizedAddress, isDefault: true },
+      ];
     }
 
     try {
       await persistSavedAddresses(
         nextAddresses,
-        editingAddressIndex >= 0
-          ? "Saved address updated."
-          : "New address added.",
+        editIndex >= 0 ? "Address updated." : "New address added.",
       );
       resetAddressDraft();
     } catch (saveError) {
@@ -300,12 +295,6 @@ const Profile = () => {
         updateProfile({
           name: formData.name,
           phone: formData.phone,
-          address: {
-            street: formData.street,
-            city: formData.city,
-            state: formData.state,
-            zipCode: formData.zipCode,
-          },
           savedAddresses: normalizeAddressListPayload(savedAddresses),
         }),
       ).unwrap();
@@ -329,31 +318,53 @@ const Profile = () => {
   return (
     <div className="profile-page">
       <div className="profile-shell">
-        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-caramel-500">
-              My Profile
-            </p>
-            <h1 className="mt-3 text-4xl font-black text-primary-800">
-              Keep your checkout details ready
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-primary-600">
-              Update your contact details and default delivery address so
-              checkout is faster the next time you order.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link to="/orders" className="btn-secondary">
-              View Orders
-            </Link>
-            <Link to="/cart" className="btn-primary">
-              Go to Cart
-            </Link>
+        {/* Profile Header */}
+        <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 p-6 sm:p-10 text-white">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-caramel-400/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-berry-500/10 rounded-full blur-3xl" />
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            {/* Avatar */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-2xl sm:text-3xl font-black text-white shadow-lg flex-shrink-0">
+              {(user?.name || "U").charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cream-300 mb-1">
+                My Profile
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-black truncate">
+                {user?.name || "Your Profile"}
+              </h1>
+              <p className="mt-1 text-sm text-cream-200">{user?.email || ""}</p>
+            </div>
+            <div className="flex gap-2 sm:gap-3 self-start sm:self-center">
+              <Link
+                to="/orders"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-sm font-medium hover:bg-white/25 active:scale-95 transition-all"
+              >
+                My Orders
+              </Link>
+              <Link
+                to="/cart"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-primary-700 text-sm font-semibold hover:bg-cream-100 active:scale-95 transition-all shadow-sm"
+              >
+                Go to Cart
+              </Link>
+            </div>
           </div>
         </div>
 
+        {/* Profile Form Card */}
         <div className="profile-card">
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-primary-800 mb-1">
+                Personal Details
+              </h2>
+              <p className="text-sm text-primary-500">
+                Keep your contact info up to date for faster checkout.
+              </p>
+            </div>
+
             <div className="profile-grid">
               <label className="block">
                 <span className="commerce-field-label">Full Name</span>
@@ -380,72 +391,32 @@ const Profile = () => {
               </label>
             </div>
 
-            <label className="block">
-              <span className="commerce-field-label">Street Address</span>
-              <textarea
-                name="street"
-                rows={4}
-                value={formData.street}
-                onChange={handleChange}
-                className="commerce-input"
-                required
-              />
-            </label>
-
-            <div className="profile-grid">
-              <label className="block">
-                <span className="commerce-field-label">City</span>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="commerce-input"
-                  required
-                />
-              </label>
-
-              <label className="block">
-                <span className="commerce-field-label">State</span>
-                <input
-                  type="text"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  className="commerce-input"
-                  required
-                />
-              </label>
-            </div>
-
-            <div className="profile-grid">
-              <label className="block">
-                <span className="commerce-field-label">Pincode</span>
-                <input
-                  type="text"
-                  name="zipCode"
-                  value={formData.zipCode}
-                  onChange={handleChange}
-                  className="commerce-input"
-                  required
-                />
-              </label>
-
-              <div className="rounded-[1.5rem] border border-caramel-100 bg-caramel-50/70 p-5 text-sm leading-7 text-primary-600">
-                These details are used to prefill checkout. You can still change
-                them for any single order before placing it.
-              </div>
-            </div>
-
             {(error || user?.email) && (
-              <div className="rounded-2xl border border-cream-200 bg-cream-50 px-5 py-4 text-sm text-primary-600">
-                <p>
-                  Signed in as{" "}
-                  <span className="font-semibold text-primary-800">
-                    {user?.email}
-                  </span>
-                </p>
-                {error ? <p className="mt-2 text-red-600">{error}</p> : null}
+              <div className="flex items-center gap-3 rounded-2xl border border-cream-200 bg-cream-50/80 px-5 py-4 text-sm text-primary-600">
+                <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+                  <svg
+                    className="w-5 h-5 text-primary-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <p>
+                    Signed in as{" "}
+                    <span className="font-semibold text-primary-800">
+                      {user?.email}
+                    </span>
+                  </p>
+                  {error ? <p className="mt-1 text-red-600">{error}</p> : null}
+                </div>
               </div>
             )}
 
@@ -464,10 +435,8 @@ const Profile = () => {
             savedAddresses={savedAddresses}
             editingAddressIndex={editingAddressIndex}
             dragOverIndex={dragOverIndex}
-            addressDraft={addressDraft}
             loading={loading}
-            onAddressDraftChange={handleAddressDraftChange}
-            onAddressDraftSubmit={handleAddressDraftSubmit}
+            onAddressPickerSave={handleAddressPickerSave}
             onEditAddress={handleEditAddress}
             onDeleteAddress={handleDeleteAddress}
             onSetDefaultAddress={handleSetDefaultAddress}

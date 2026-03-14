@@ -22,3 +22,13 @@ export const deleteExistingProduct = (id) =>
 
 export const postProductReview = (id, reviewData) =>
   apiClient.post(`/products/${id}/reviews`, reviewData).then((res) => res.data);
+
+export const renameCategoryAPI = (oldName, newName) =>
+  apiClient
+    .put("/products/batch/category", { oldName, newName })
+    .then((res) => res.data);
+
+export const deleteCategoryAPI = (name) =>
+  apiClient
+    .delete(`/products/batch/category/${encodeURIComponent(name)}`)
+    .then((res) => res.data);

@@ -19,3 +19,6 @@ export const postGalleryItem = (galleryItemData) =>
 
 export const removeGalleryItem = (itemId) =>
   apiClient.delete(`/site/gallery/${itemId}`).then((res) => res.data);
+
+export const postContactMessage = (contactData) =>
+  apiClient.post("/site/contact", contactData).then((res) => res.data);

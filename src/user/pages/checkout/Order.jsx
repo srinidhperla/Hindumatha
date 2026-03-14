@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { clearCart } from "../../../features/cart/cartSlice";
@@ -18,14 +18,8 @@ import {
 import {
   getResolvedCheckoutItem,
   hasValidCoordinates,
-  loadGoogleMapsPlaces,
-  reverseGeocodeCoordinates,
-  searchAddressSuggestions,
-  toAddressFromSuggestion,
-  toAddressFromPlaceResult,
   normalizeUserSavedAddresses,
   CHECKOUT_STORAGE_KEY,
-  GOOGLE_MAPS_API_KEY,
 } from "../../components/order/orderHelpers";
 import OrderReviewStep from "../../components/order/OrderReviewStep";
 import OrderDeliveryStep from "../../components/order/OrderDeliveryStep";
@@ -64,12 +58,6 @@ const Order = () => {
   const [addressMode, setAddressMode] = useState("saved");
   const [editingAddressId, setEditingAddressId] = useState("");
   const [selectedAddressId, setSelectedAddressId] = useState("");
-  const [addressQuery, setAddressQuery] = useState("");
-  const [addressPredictions, setAddressPredictions] = useState([]);
-  const [addressLookupError, setAddressLookupError] = useState("");
-  const [googleMapsReady, setGoogleMapsReady] = useState(false);
-  const [mapLoadError, setMapLoadError] = useState("");
-  const [locationLoading, setLocationLoading] = useState(false);
   const [saveAddressForNextTime, setSaveAddressForNextTime] = useState(false);
   const [addressLabel, setAddressLabel] = useState("Home");
   const [addressMeta, setAddressMeta] = useState({
@@ -77,12 +65,7 @@ const Order = () => {
     latitude: null,
     longitude: null,
   });
-  const placesServiceRef = useRef(null);
-  const autocompleteRef = useRef(null);
-  const geocoderRef = useRef(null);
-  const addressSearchDebounceRef = useRef(null);
-  const addressSearchRequestIdRef = useRef(0);
-  const addressSearchCacheRef = useRef(new Map());
+  const [addressQuery, setAddressQuery] = useState("");
 
   const checkoutItems = useMemo(
     () => items.map((item) => getResolvedCheckoutItem(item)),
@@ -150,9 +133,14 @@ const Order = () => {
   useEffect(() => {
     const normalizedAddresses = normalizeUserSavedAddresses(user);
     setSavedAddresses(normalizedAddresses);
-    const defaultAddress =
-      normalizedAddresses.find((address) => address.isDefault) ||
-      normalizedAddresses[0];
+
+    // Prefer address passed from Cart page, then default
+    const passedAddressId = location.state?.selectedAddressId;
+    const defaultAddress = passedAddressId
+      ? normalizedAddresses.find((a) => a.id === passedAddressId)
+      : normalizedAddresses.find((address) => address.isDefault) ||
+        normalizedAddresses[0];
+
     if (defaultAddress) {
       setAddressMode("saved");
       setSelectedAddressId(defaultAddress.id);
@@ -172,48 +160,8 @@ const Order = () => {
           ? Number(defaultAddress.longitude)
           : null,
       });
-      setAddressLookupError("");
     }
   }, [user]);
-
-  useEffect(() => {
-    if (step !== 3) return;
-    let isActive = true;
-
-    if (!GOOGLE_MAPS_API_KEY) {
-      setGoogleMapsReady(false);
-      setMapLoadError(
-        "Google map key missing. Set VITE_GOOGLE_MAPS_API_KEY in frontend/.env and restart frontend.",
-      );
-      return () => {
-        isActive = false;
-      };
-    }
-
-    loadGoogleMapsPlaces()
-      .then(() => {
-        if (!isActive || !window.google?.maps) return;
-        autocompleteRef.current =
-          new window.google.maps.places.AutocompleteService();
-        placesServiceRef.current = new window.google.maps.places.PlacesService(
-          document.createElement("div"),
-        );
-        geocoderRef.current = new window.google.maps.Geocoder();
-        setGoogleMapsReady(true);
-        setMapLoadError("");
-      })
-      .catch(() => {
-        if (isActive) {
-          setGoogleMapsReady(false);
-          setMapLoadError(
-            "Google map failed to load. Check API key restrictions, Places API, Maps JavaScript API, and billing.",
-          );
-        }
-      });
-    return () => {
-      isActive = false;
-    };
-  }, [step]);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -231,15 +179,6 @@ const Order = () => {
     user?.name,
     user?.phone,
   ]);
-
-  useEffect(
-    () => () => {
-      if (addressSearchDebounceRef.current) {
-        window.clearTimeout(addressSearchDebounceRef.current);
-      }
-    },
-    [],
-  );
 
   const toSavedAddressPayload = (addresses) =>
     addresses.map((address) => ({
@@ -321,9 +260,6 @@ const Order = () => {
       setSelectedAddressId("");
       setSaveAddressForNextTime(true);
       setAddressMeta({ placeId: "", latitude: null, longitude: null });
-      setAddressLookupError(
-        "Please pick a verified suggestion or use current location.",
-      );
     }
     setFormData((prev) => ({
       ...prev,
@@ -355,7 +291,6 @@ const Order = () => {
     setEditingAddressId("");
     setSelectedAddressId(address.id);
     applySelectedAddress(address);
-    setAddressLookupError("");
     setSaveAddressForNextTime(false);
   };
 
@@ -364,13 +299,7 @@ const Order = () => {
     setEditingAddressId("");
     setSelectedAddressId("");
     setAddressQuery("");
-    setAddressPredictions([]);
     setAddressMeta({ placeId: "", latitude: null, longitude: null });
-    setAddressLookupError(
-      GOOGLE_MAPS_API_KEY
-        ? "Please pick a verified suggestion or use current location."
-        : "Google map key missing. You can still use current location, or configure the map key.",
-    );
     setFormData((prev) => ({
       ...prev,
       address: "",
@@ -386,7 +315,6 @@ const Order = () => {
     applySelectedAddress(address);
     setAddressLabel(address.label || "Home");
     setAddressQuery(address.formattedAddress || "");
-    setAddressLookupError("");
     setSaveAddressForNextTime(true);
   };
 
@@ -427,67 +355,38 @@ const Order = () => {
     }
   };
 
-  const handleSaveAddress = async () => {
-    if (
-      !formData.address.trim() ||
-      !formData.city.trim() ||
-      !formData.pincode.trim()
-    ) {
-      dispatch(
-        showToast({
-          type: "error",
-          message: "Address, city, and pincode are required.",
-        }),
-      );
-      return;
-    }
-
-    if (!hasConfiguredStoreLocation) {
-      dispatch(
-        showToast({
-          type: "error",
-          message:
-            "Store location is not configured in admin settings. Please contact support.",
-        }),
-      );
-      return;
-    }
-
-    if (!isAddressVerified) {
-      dispatch(
-        showToast({
-          type: "error",
-          message: "Please verify address by suggestion or current location.",
-        }),
-      );
-      return;
-    }
-
-    if (!isAddressServiceable) {
-      dispatch(
-        showToast({
-          type: "error",
-          message: `Address is outside our ${ENFORCED_DELIVERY_RADIUS_KM}km delivery area.`,
-        }),
-      );
-      return;
-    }
-
+  const handleSaveAddress = async (addressData) => {
     const normalizedAddress = {
       id: editingAddressId || `saved-${Date.now()}`,
-      label: addressLabel.trim() || "Saved address",
-      street: formData.address.trim(),
-      city: formData.city.trim(),
-      state: "Andhra Pradesh",
-      zipCode: formData.pincode.trim(),
-      phone: formData.phone.trim(),
-      landmark: "",
-      placeId: addressMeta.placeId || "",
-      latitude: Number(addressMeta.latitude),
-      longitude: Number(addressMeta.longitude),
-      formattedAddress: addressQuery || "",
+      label: addressData.label || "Saved address",
+      street: addressData.street,
+      city: addressData.city,
+      state: addressData.state || "Andhra Pradesh",
+      zipCode: addressData.zipCode,
+      phone: addressData.phone,
+      landmark: addressData.landmark || "",
+      placeId: addressData.placeId || "",
+      latitude: Number(addressData.latitude),
+      longitude: Number(addressData.longitude),
+      formattedAddress: addressData.formattedAddress || "",
       isDefault: true,
     };
+
+    // Update form data with the saved address
+    setFormData((prev) => ({
+      ...prev,
+      phone: addressData.phone || prev.phone,
+      address: addressData.street || prev.address,
+      city: addressData.city || prev.city,
+      pincode: addressData.zipCode || prev.pincode,
+    }));
+    setAddressMeta({
+      placeId: addressData.placeId || "",
+      latitude: Number(addressData.latitude),
+      longitude: Number(addressData.longitude),
+    });
+    setAddressLabel(addressData.label || "Home");
+    setAddressQuery(addressData.formattedAddress || "");
 
     let nextAddresses;
     if (editingAddressId) {
@@ -522,472 +421,9 @@ const Order = () => {
     }
   };
 
-  const handleAddressQueryChange = (event) => {
-    const nextQuery = event.target.value;
-    const trimmedQuery = nextQuery.trim();
-
-    if (addressSearchDebounceRef.current) {
-      window.clearTimeout(addressSearchDebounceRef.current);
-    }
-
-    setAddressQuery(nextQuery);
-    setAddressMode((prev) => (prev === "saved" ? "new" : prev));
-    setSelectedAddressId("");
-    setEditingAddressId("");
-
-    if (trimmedQuery.length < 2) {
-      addressSearchRequestIdRef.current += 1;
-      setAddressPredictions([]);
-      setAddressLookupError("");
-      return;
-    }
-
-    const getCachedMatches = () => {
-      const normalizedQuery = trimmedQuery.toLowerCase();
-      const directHit = addressSearchCacheRef.current.get(normalizedQuery);
-
-      if (Array.isArray(directHit) && directHit.length > 0) {
-        return directHit;
-      }
-
-      const aggregateMatches = [];
-      addressSearchCacheRef.current.forEach((entries, key) => {
-        if (!key.includes(normalizedQuery) && !normalizedQuery.includes(key)) {
-          return;
-        }
-
-        for (const entry of entries || []) {
-          if (!entry?.description) {
-            continue;
-          }
-
-          if (
-            entry.description.toLowerCase().includes(normalizedQuery) &&
-            !aggregateMatches.some(
-              (existing) =>
-                (existing.place_id || existing.description) ===
-                (entry.place_id || entry.description),
-            )
-          ) {
-            aggregateMatches.push(entry);
-          }
-        }
-      });
-
-      return aggregateMatches.slice(0, 8);
-    };
-
-    const cachedMatches = getCachedMatches();
-    if (cachedMatches.length > 0) {
-      setAddressPredictions(cachedMatches);
-      setAddressLookupError("");
-    }
-
-    const requestId = addressSearchRequestIdRef.current + 1;
-    addressSearchRequestIdRef.current = requestId;
-
-    const loadFallbackSuggestions = async (googleStatus = "") => {
-      try {
-        const suggestions = await searchAddressSuggestions(trimmedQuery, {
-          near: hasConfiguredStoreLocation
-            ? { lat: storeLat, lng: storeLng }
-            : undefined,
-          cityHint: formData.city || "Vizianagaram",
-        });
-
-        if (requestId !== addressSearchRequestIdRef.current) {
-          return;
-        }
-
-        addressSearchCacheRef.current.set(
-          trimmedQuery.toLowerCase(),
-          suggestions,
-        );
-
-        setAddressPredictions(suggestions);
-        if (suggestions.length === 0) {
-          const fallbackCached = getCachedMatches();
-          if (fallbackCached.length > 0) {
-            setAddressPredictions(fallbackCached);
-            setAddressLookupError("Showing close matches from recent search.");
-            return;
-          }
-
-          setAddressLookupError(
-            "No address results found. Try adding area, city, or landmark.",
-          );
-          return;
-        }
-
-        setAddressLookupError(
-          googleStatus && googleStatus !== "ZERO_RESULTS"
-            ? "Using backup search results."
-            : "",
-        );
-      } catch {
-        if (requestId !== addressSearchRequestIdRef.current) {
-          return;
-        }
-
-        const fallbackCached = getCachedMatches();
-        if (fallbackCached.length > 0) {
-          setAddressPredictions(fallbackCached);
-          setAddressLookupError("Showing close matches from recent search.");
-          return;
-        }
-
-        setAddressPredictions([]);
-        setAddressLookupError("Address search is temporarily unavailable.");
-      }
-    };
-
-    addressSearchDebounceRef.current = window.setTimeout(() => {
-      if (!googleMapsReady || !autocompleteRef.current) {
-        loadFallbackSuggestions();
-        return;
-      }
-
-      const predictionRequest = {
-        input: trimmedQuery,
-        componentRestrictions: { country: "in" },
-      };
-
-      if (hasConfiguredStoreLocation && window.google?.maps?.LatLng) {
-        predictionRequest.location = new window.google.maps.LatLng(
-          storeLat,
-          storeLng,
-        );
-        predictionRequest.radius = 12000;
-      }
-
-      autocompleteRef.current.getPlacePredictions(
-        predictionRequest,
-        (predictions, status) => {
-          if (requestId !== addressSearchRequestIdRef.current) {
-            return;
-          }
-
-          if (
-            status === "OK" &&
-            Array.isArray(predictions) &&
-            predictions.length
-          ) {
-            addressSearchCacheRef.current.set(
-              trimmedQuery.toLowerCase(),
-              predictions,
-            );
-            setAddressPredictions(predictions);
-            setAddressLookupError("");
-            return;
-          }
-
-          loadFallbackSuggestions(status || "");
-        },
-      );
-    }, 350);
-  };
-
-  const selectGooglePrediction = (prediction) => {
-    const fallbackAddress = toAddressFromSuggestion(prediction);
-    if (fallbackAddress) {
-      applySelectedAddress(fallbackAddress);
-      setAddressLabel((prev) => prev || "Home");
-      setAddressQuery(prediction.description || "");
-      setAddressPredictions([]);
-      setAddressLookupError("");
-      setSaveAddressForNextTime(true);
-      return;
-    }
-
-    if (!placesServiceRef.current) return;
-    placesServiceRef.current.getDetails(
-      {
-        placeId: prediction.place_id,
-        fields: [
-          "address_components",
-          "formatted_address",
-          "geometry",
-          "place_id",
-        ],
-      },
-      (place, status) => {
-        if (status !== "OK" || !place) return;
-        const normalizedAddress = toAddressFromPlaceResult(place);
-        applySelectedAddress(normalizedAddress);
-        setAddressLabel((prev) => prev || "Home");
-        setAddressQuery(prediction.description);
-        setAddressPredictions([]);
-        setAddressLookupError("");
-        setSaveAddressForNextTime(true);
-      },
-    );
-  };
-
-  const resolveAddressFromCoordinates = async (lat, lng) => {
-    if (geocoderRef.current) {
-      const resultFromGoogle = await new Promise((resolve) => {
-        geocoderRef.current.geocode(
-          { location: { lat, lng } },
-          (results, status) => {
-            if (status === "OK" && results?.length) {
-              resolve(toAddressFromPlaceResult(results[0]));
-              return;
-            }
-
-            resolve(null);
-          },
-        );
-      });
-
-      if (resultFromGoogle) {
-        return resultFromGoogle;
-      }
-    }
-
-    return reverseGeocodeCoordinates(lat, lng);
-  };
-
-  const handleMapPinChange = async ({ lat, lng }) => {
-    const nextLat = Number(lat);
-    const nextLng = Number(lng);
-    if (!Number.isFinite(nextLat) || !Number.isFinite(nextLng)) {
-      return;
-    }
-
-    try {
-      const resolvedAddress = await resolveAddressFromCoordinates(
-        nextLat,
-        nextLng,
-      );
-      applySelectedAddress({
-        ...resolvedAddress,
-        latitude: nextLat,
-        longitude: nextLng,
-      });
-      setAddressQuery(resolvedAddress.formattedAddress || "");
-      setAddressLookupError("");
-      setSaveAddressForNextTime(true);
-      setAddressMode((prev) => (prev === "saved" ? "new" : prev));
-    } catch {
-      setAddressMeta((prev) => ({
-        ...prev,
-        latitude: nextLat,
-        longitude: nextLng,
-      }));
-      setAddressLookupError(
-        "Unable to resolve selected map location. Try moving the pin slightly.",
-      );
-    }
-  };
-
   const handleCancelAddressModal = () => {
     setAddressMode("saved");
     setEditingAddressId("");
-    setAddressPredictions([]);
-    setAddressLookupError("");
-  };
-
-  const handleUseCurrentLocation = (autoSave = false) => {
-    if (!navigator.geolocation) {
-      dispatch(
-        showToast({
-          type: "error",
-          message:
-            "Current location is unavailable. Enable location and Google Maps API.",
-        }),
-      );
-      return;
-    }
-    setLocationLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const locationPoint = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-
-        const handleResolvedAddress = async (resolvedAddress) => {
-          applySelectedAddress(resolvedAddress);
-          setAddressQuery(resolvedAddress.formattedAddress || "");
-          setAddressLookupError("");
-          setSaveAddressForNextTime(true);
-          setAddressMode((prev) => (prev === "saved" ? "new" : prev));
-          setLocationLoading(false);
-
-          if (!autoSave) {
-            dispatch(
-              showToast({
-                type: "success",
-                message: "Current location captured.",
-              }),
-            );
-            return;
-          }
-
-          if (!hasConfiguredStoreLocation) {
-            dispatch(
-              showToast({
-                type: "error",
-                message:
-                  "Store location is not configured in admin settings. Please contact support.",
-              }),
-            );
-            return;
-          }
-
-          const normalizedStreet = (resolvedAddress.street || "").trim();
-          const normalizedCity = (
-            resolvedAddress.city ||
-            formData.city ||
-            ""
-          ).trim();
-          const normalizedPincode = (resolvedAddress.zipCode || "").trim();
-          const resolvedLat = Number(resolvedAddress.latitude);
-          const resolvedLng = Number(resolvedAddress.longitude);
-
-          if (!normalizedStreet || !normalizedCity || !normalizedPincode) {
-            dispatch(
-              showToast({
-                type: "error",
-                message:
-                  "Detected address is incomplete. Please edit and save manually.",
-              }),
-            );
-            return;
-          }
-
-          if (!hasValidCoordinates(resolvedLat, resolvedLng)) {
-            dispatch(
-              showToast({
-                type: "error",
-                message:
-                  "Could not verify coordinates from current location. Please try again.",
-              }),
-            );
-            return;
-          }
-
-          const serviceable = isWithinDeliveryRadius(
-            storeLocation,
-            resolvedLat,
-            resolvedLng,
-            ENFORCED_DELIVERY_RADIUS_KM,
-          );
-
-          if (!serviceable) {
-            dispatch(
-              showToast({
-                type: "error",
-                message: `Address is outside our ${ENFORCED_DELIVERY_RADIUS_KM}km delivery area.`,
-              }),
-            );
-            return;
-          }
-
-          const normalizedAddress = {
-            id: editingAddressId || `saved-${Date.now()}`,
-            label: addressLabel.trim() || "Home",
-            street: normalizedStreet,
-            city: normalizedCity,
-            state: "Andhra Pradesh",
-            zipCode: normalizedPincode,
-            phone: formData.phone.trim(),
-            landmark: "",
-            placeId: resolvedAddress.placeId || "",
-            latitude: resolvedLat,
-            longitude: resolvedLng,
-            formattedAddress:
-              resolvedAddress.formattedAddress ||
-              [normalizedStreet, normalizedCity, normalizedPincode]
-                .filter(Boolean)
-                .join(", "),
-            isDefault: true,
-          };
-
-          const nextAddresses = editingAddressId
-            ? savedAddresses.map((address) =>
-                address.id === editingAddressId
-                  ? normalizedAddress
-                  : { ...address, isDefault: false },
-              )
-            : [
-                ...savedAddresses.map((address) => ({
-                  ...address,
-                  isDefault: false,
-                })),
-                normalizedAddress,
-              ];
-
-          try {
-            await persistAddressesToProfile(
-              nextAddresses,
-              "Address auto-saved.",
-            );
-            setSelectedAddressId(normalizedAddress.id);
-            setAddressMode("saved");
-            setEditingAddressId("");
-            setSaveAddressForNextTime(false);
-          } catch (profileError) {
-            dispatch(
-              showToast({
-                type: "error",
-                message:
-                  profileError?.message || "Failed to auto-save address.",
-              }),
-            );
-          }
-        };
-
-        if (geocoderRef.current) {
-          geocoderRef.current.geocode(
-            { location: locationPoint },
-            (results, status) => {
-              if (status === "OK" && results?.length) {
-                handleResolvedAddress(toAddressFromPlaceResult(results[0]));
-                return;
-              }
-
-              reverseGeocodeCoordinates(locationPoint.lat, locationPoint.lng)
-                .then((resolvedAddress) =>
-                  handleResolvedAddress(resolvedAddress),
-                )
-                .catch(() => {
-                  setLocationLoading(false);
-                  dispatch(
-                    showToast({
-                      type: "error",
-                      message: "Unable to detect your address from location.",
-                    }),
-                  );
-                });
-            },
-          );
-          return;
-        }
-
-        reverseGeocodeCoordinates(locationPoint.lat, locationPoint.lng)
-          .then((resolvedAddress) => handleResolvedAddress(resolvedAddress))
-          .catch(() => {
-            setLocationLoading(false);
-            dispatch(
-              showToast({
-                type: "error",
-                message: "Unable to detect your address from location.",
-              }),
-            );
-          });
-      },
-      () => {
-        setLocationLoading(false);
-        dispatch(
-          showToast({
-            type: "error",
-            message: "Location access denied. Please allow GPS permission.",
-          }),
-        );
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
   };
 
   const handleSubmit = async (event) => {
@@ -1362,13 +798,6 @@ const Order = () => {
                     addressMode={addressMode}
                     editingAddressId={editingAddressId}
                     selectedAddressId={selectedAddressId}
-                    addressQuery={addressQuery}
-                    addressPredictions={addressPredictions}
-                    addressLookupError={addressLookupError}
-                    googleMapsReady={googleMapsReady}
-                    googleMapsConfigured={Boolean(GOOGLE_MAPS_API_KEY)}
-                    mapLoadError={mapLoadError}
-                    locationLoading={locationLoading}
                     addressLabel={addressLabel}
                     isAddressVerified={isAddressVerified}
                     distanceFromStoreKm={distanceFromStoreKm}
@@ -1378,22 +807,13 @@ const Order = () => {
                     addressLatitude={addressMeta.latitude}
                     addressLongitude={addressMeta.longitude}
                     hasConfiguredStoreLocation={hasConfiguredStoreLocation}
-                    saveAddressForNextTime={saveAddressForNextTime}
                     loading={loading}
                     error={error}
-                    invalidItems={invalidItems}
-                    pricing={pricing}
                     onChange={handleChange}
                     onSavedAddressSelect={handleSavedAddressSelect}
                     onStartNewAddress={handleStartNewAddress}
                     onEditSavedAddress={handleEditSavedAddress}
                     onDeleteSavedAddress={handleDeleteSavedAddress}
-                    onAddressQueryChange={handleAddressQueryChange}
-                    onSelectPrediction={selectGooglePrediction}
-                    onUseCurrentLocation={handleUseCurrentLocation}
-                    onMapPinChange={handleMapPinChange}
-                    onAddressLabelChange={setAddressLabel}
-                    onSaveAddressToggle={setSaveAddressForNextTime}
                     onSaveAddress={handleSaveAddress}
                     onCancelAddressModal={handleCancelAddressModal}
                     onBack={() => setStep(1)}

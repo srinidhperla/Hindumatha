@@ -1,12 +1,12 @@
 import React from "react";
 
 const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
-  <div className="contact-form-card">
-    <h2 className="mb-6 text-2xl font-bold text-primary-800">
+  <div className="contact-form-card animate-fadeInUp anim-delay-2">
+    <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-primary-800">
       Send us a Message
     </h2>
 
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-4 sm:space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <label
@@ -112,7 +112,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
       <button
         type="submit"
         disabled={status.type === "loading"}
-        className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 py-4 font-semibold text-white transition-all hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-warm hover:shadow-warm-lg"
+        className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 py-3.5 sm:py-4 font-semibold text-white transition-all hover:from-primary-700 hover:to-primary-800 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-warm hover:shadow-warm-lg"
       >
         {status.type === "loading" ? "Sending..." : "Send Message"}
       </button>

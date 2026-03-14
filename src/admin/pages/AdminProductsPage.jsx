@@ -4,6 +4,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  renameCategory,
+  deleteCategory,
 } from "../../features/products/productSlice";
 import { LoadingState } from "../components/ui/AdminUi";
 import {
@@ -14,6 +16,7 @@ import {
 import {
   createDefaultProductForm,
   normalizeFlavorOptions,
+  normalizeFlavorWeightAvailability,
   normalizeWeightOptions,
 } from "../../utils/productOptions";
 import ProductFormModal from "../components/modals/ProductFormModal";
@@ -251,6 +254,13 @@ const AdminProductsPage = ({ onToast }) => {
     }));
   };
 
+  const handleFlavorWeightAvailabilityChange = (nextMatrix) => {
+    setFormData((currentFormData) => ({
+      ...currentFormData,
+      flavorWeightAvailability: nextMatrix || {},
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -268,11 +278,6 @@ const AdminProductsPage = ({ onToast }) => {
       return;
     }
 
-    if (!formData.flavorOptions.length) {
-      onToast("Add at least one flavor option.", "error");
-      return;
-    }
-
     if (!formData.weightOptions.length) {
       onToast("Add at least one weight option.", "error");
       return;
@@ -284,6 +289,8 @@ const AdminProductsPage = ({ onToast }) => {
       productData.append("description", formData.description.trim());
       productData.append("price", Number(formData.price));
       productData.append("category", finalCategory);
+      productData.append("isEgg", formData.isEgg);
+      productData.append("isEggless", formData.isEggless);
       productData.append(
         "flavorOptions",
         JSON.stringify(formData.flavorOptions),
@@ -291,6 +298,10 @@ const AdminProductsPage = ({ onToast }) => {
       productData.append(
         "weightOptions",
         JSON.stringify(formData.weightOptions),
+      );
+      productData.append(
+        "flavorWeightAvailability",
+        JSON.stringify(formData.flavorWeightAvailability || {}),
       );
 
       const existingImages = imageItems
@@ -334,6 +345,10 @@ const AdminProductsPage = ({ onToast }) => {
 
   const handleEdit = (product) => {
     const categoryExists = availableCategories.includes(product.category);
+    const rawFlavorWeightAvailability =
+      product.flavorWeightAvailability instanceof Map
+        ? Object.fromEntries(product.flavorWeightAvailability.entries())
+        : product.flavorWeightAvailability || {};
 
     setEditingProduct(product);
     setFormData({
@@ -348,6 +363,12 @@ const AdminProductsPage = ({ onToast }) => {
           : [product.image].filter(Boolean),
       flavorOptions: normalizeFlavorOptions(product),
       weightOptions: normalizeWeightOptions(product),
+      flavorWeightAvailability: {
+        ...normalizeFlavorWeightAvailability(product),
+        ...rawFlavorWeightAvailability,
+      },
+      isEgg: product.isEgg !== false,
+      isEggless: product.isEggless === true,
     });
     setUseCustomCategory(!categoryExists);
     setCustomCategory(categoryExists ? "" : product.category);
@@ -381,7 +402,31 @@ const AdminProductsPage = ({ onToast }) => {
     }
   };
 
-  if (loading) {
+  const handleRenameCategory = async (oldName, newName) => {
+    try {
+      await dispatch(renameCategory({ oldName, newName })).unwrap();
+      onToast(`Category renamed to "${newName}".`);
+    } catch (error) {
+      onToast(getErrorMessage(error, "Failed to rename category."), "error");
+    }
+  };
+
+  const handleDeleteCategory = async (name) => {
+    if (
+      !window.confirm(
+        `Delete category "${name}"? Products will be moved to "cakes".`,
+      )
+    )
+      return;
+    try {
+      await dispatch(deleteCategory(name)).unwrap();
+      onToast(`Category "${name}" deleted.`);
+    } catch (error) {
+      onToast(getErrorMessage(error, "Failed to delete category."), "error");
+    }
+  };
+
+  if (loading && !products.length) {
     return <LoadingState />;
   }
 
@@ -430,10 +475,15 @@ const AdminProductsPage = ({ onToast }) => {
           onAddWeight={handleAddWeight}
           onRemoveWeight={handleRemoveWeight}
           onWeightFieldChange={handleWeightFieldChange}
+          onFlavorWeightAvailabilityChange={
+            handleFlavorWeightAvailabilityChange
+          }
           onImageChange={handleImageChange}
           onMoveImage={moveImageItem}
           onRemoveImage={removeImageItem}
           onSubmit={handleSubmit}
+          onRenameCategory={handleRenameCategory}
+          onDeleteCategory={handleDeleteCategory}
         />
       )}
     </div>

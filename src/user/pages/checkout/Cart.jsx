@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -7,6 +7,7 @@ import {
   updateCartItemOptions,
   updateCartQuantity,
 } from "../../../features/cart/cartSlice";
+import { updateProfile } from "../../../features/auth/authSlice";
 import { showToast } from "../../../features/uiSlice";
 import {
   calculateOrderPricing,
@@ -19,6 +20,8 @@ import {
   getAvailableWeightOptions,
   isProductPurchasable,
 } from "../../../utils/productOptions";
+import { normalizeUserSavedAddresses } from "../../components/order/orderHelpers";
+import AddressPickerModal from "../../../components/address/AddressPickerModal";
 
 const DEFAULT_COUPON_INPUT = "";
 
@@ -62,9 +65,29 @@ const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { items } = useSelector((state) => state.cart);
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const coupons = useSelector((state) => state.site.coupons);
   const [couponInput, setCouponInput] = React.useState(DEFAULT_COUPON_INPUT);
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [pickerKey, setPickerKey] = useState(0);
+
+  const savedAddresses = useMemo(
+    () => normalizeUserSavedAddresses(user),
+    [user],
+  );
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+
+  // Auto-select default address on mount / user change
+  useEffect(() => {
+    if (!savedAddresses.length) {
+      setSelectedAddressId("");
+      return;
+    }
+    const defaultAddr =
+      savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
+    if (defaultAddr) setSelectedAddressId(defaultAddr.id);
+  }, [savedAddresses]);
 
   const cartItems = useMemo(
     () => items.map((item) => getResolvedCartItem(item)),
@@ -83,9 +106,80 @@ const Cart = () => {
     coupons: availableCoupons,
   });
 
+  const selectedAddress = savedAddresses.find(
+    (a) => a.id === selectedAddressId,
+  );
+
+  const handleAddressPickerSave = async (addressData) => {
+    const normalizedAddress = {
+      label: addressData.label || "Home",
+      street: addressData.street || "",
+      city: addressData.city || "Vizianagaram",
+      state: addressData.state || "Andhra Pradesh",
+      zipCode: addressData.zipCode || "",
+      phone: addressData.phone || "",
+      landmark: addressData.landmark || "",
+      placeId: addressData.placeId || "",
+      latitude: addressData.latitude,
+      longitude: addressData.longitude,
+      formattedAddress: addressData.formattedAddress || "",
+      isDefault: true,
+    };
+
+    const existingPayload = savedAddresses.map((a) => ({
+      label: a.label,
+      street: a.street,
+      city: a.city,
+      state: a.state || "Andhra Pradesh",
+      zipCode: a.zipCode,
+      phone: a.phone,
+      landmark: a.landmark || "",
+      placeId: a.placeId || "",
+      latitude: a.latitude,
+      longitude: a.longitude,
+      formattedAddress: a.formattedAddress || "",
+      isDefault: false,
+    }));
+
+    let nextAddresses;
+    if (editingAddress) {
+      const editIdx = savedAddresses.findIndex(
+        (a) => a.id === editingAddress.id,
+      );
+      nextAddresses = existingPayload.map((a, i) =>
+        i === editIdx ? normalizedAddress : a,
+      );
+    } else {
+      nextAddresses = [...existingPayload, normalizedAddress];
+    }
+
+    try {
+      await dispatch(updateProfile({ savedAddresses: nextAddresses })).unwrap();
+      dispatch(
+        showToast({
+          message: editingAddress ? "Address updated." : "Address added.",
+          type: "success",
+        }),
+      );
+    } catch (err) {
+      dispatch(
+        showToast({
+          message: err?.message || "Failed to save address.",
+          type: "error",
+        }),
+      );
+    } finally {
+      setShowAddressPicker(false);
+      setEditingAddress(null);
+    }
+  };
+
   const handleProceed = () => {
     navigate(isAuthenticated ? "/order" : "/login", {
-      state: { couponCode: normalizeCouponCode(couponInput) },
+      state: {
+        couponCode: normalizeCouponCode(couponInput),
+        selectedAddressId: selectedAddressId || undefined,
+      },
     });
   };
 
@@ -288,6 +382,127 @@ const Cart = () => {
           </div>
 
           <aside className="commerce-sidebar">
+            {/* Delivery Address Section */}
+            {isAuthenticated && (
+              <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-bold text-primary-800">
+                    Delivery address
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingAddress(null);
+                      setPickerKey((k) => k + 1);
+                      setShowAddressPicker(true);
+                    }}
+                    className="text-xs font-semibold text-primary-600 hover:text-primary-800"
+                  >
+                    + Add new
+                  </button>
+                </div>
+
+                {savedAddresses.length > 0 ? (
+                  <div className="space-y-2">
+                    {savedAddresses.map((addr) => {
+                      const isSelected = selectedAddressId === addr.id;
+                      return (
+                        <button
+                          key={addr.id}
+                          type="button"
+                          onClick={() => setSelectedAddressId(addr.id)}
+                          className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${
+                            isSelected
+                              ? "border-primary-400 bg-primary-50"
+                              : "border-cream-200 bg-cream-50 hover:border-primary-200"
+                          }`}
+                        >
+                          <div
+                            className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                              isSelected
+                                ? "border-primary-600"
+                                : "border-slate-300"
+                            }`}
+                          >
+                            {isSelected && (
+                              <div className="h-2.5 w-2.5 rounded-full bg-primary-600" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-primary-800">
+                              {addr.label}
+                              {addr.isDefault && (
+                                <span className="ml-1.5 rounded-full bg-sage-100 px-1.5 py-0.5 text-[10px] font-semibold text-sage-700">
+                                  Default
+                                </span>
+                              )}
+                            </p>
+                            <p className="mt-0.5 line-clamp-2 text-xs text-primary-600">
+                              {[addr.street, addr.city, addr.zipCode]
+                                .filter(Boolean)
+                                .join(", ")}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingAddress(addr);
+                              setPickerKey((k) => k + 1);
+                              setShowAddressPicker(true);
+                            }}
+                            className="flex-shrink-0 rounded-lg px-2 py-1 text-[10px] font-semibold text-primary-500 hover:bg-primary-100"
+                          >
+                            Edit
+                          </button>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingAddress(null);
+                      setPickerKey((k) => k + 1);
+                      setShowAddressPicker(true);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl border border-dashed border-primary-200 bg-primary-50/50 p-3 text-left transition hover:border-primary-400"
+                  >
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
+                      <svg
+                        className="h-4 w-4 text-primary-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-primary-700">
+                        Add delivery address
+                      </p>
+                      <p className="text-xs text-primary-500">
+                        Tap to add your first address
+                      </p>
+                    </div>
+                  </button>
+                )}
+              </div>
+            )}
+
             <p className="commerce-sidebar-kicker">Summary</p>
             <h2 className="commerce-sidebar-title">Checkout preview</h2>
 
@@ -391,6 +606,17 @@ const Cart = () => {
           </aside>
         </div>
       </div>
+
+      <AddressPickerModal
+        key={pickerKey}
+        isOpen={showAddressPicker}
+        onClose={() => {
+          setShowAddressPicker(false);
+          setEditingAddress(null);
+        }}
+        onSave={handleAddressPickerSave}
+        initialAddress={editingAddress}
+      />
     </div>
   );
 };

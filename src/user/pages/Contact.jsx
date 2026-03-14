@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import ContactInfoStack from "../components/contact/ContactInfoStack";
 import ContactFormCard from "../components/contact/ContactFormCard";
 import ContactMapSection from "../components/contact/ContactMapSection";
+import { postContactMessage } from "../../services/siteAPI";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const Contact = () => {
     setStatus({ type: "loading", message: "Sending message..." });
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await postContactMessage(formData);
       setStatus({
         type: "success",
         message: "Thank you for your message! We'll get back to you soon.",
@@ -36,7 +37,9 @@ const Contact = () => {
     } catch (error) {
       setStatus({
         type: "error",
-        message: "Failed to send message. Please try again later.",
+        message:
+          error?.response?.data?.message ||
+          "Failed to send message. Please try again later.",
       });
     }
   };
@@ -44,29 +47,33 @@ const Contact = () => {
   return (
     <div className="contact-page">
       <section className="contact-hero">
-        <div className="contact-shell pt-0 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-white sm:text-5xl">
+        {/* Decorative blurs */}
+        <div className="absolute top-0 left-0 w-40 h-40 bg-caramel-400/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-52 h-52 bg-berry-500/15 rounded-full blur-3xl" />
+
+        <div className="contact-shell pt-0 text-center relative z-10">
+          <h1 className="animate-fadeInUp mb-3 sm:mb-4 text-3xl sm:text-4xl md:text-5xl font-bold text-white">
             Get in Touch
           </h1>
-          <p className="mx-auto max-w-2xl text-xl text-cream-100">
+          <p className="animate-fadeInUp anim-delay-1 mx-auto max-w-2xl text-base sm:text-xl text-cream-100">
             We'd love to hear from you. Send us a message and we'll respond as
             soon as possible.
           </p>
         </div>
       </section>
 
-      <div className="contact-shell -mt-10">
+      <div className="contact-shell -mt-8 sm:-mt-10">
         <div className="contact-grid">
-          <ContactInfoStack
-            businessInfo={businessInfo}
-            storeHours={storeHours}
-            socialLinks={socialLinks}
-          />
           <ContactFormCard
             formData={formData}
             status={status}
             onChange={handleChange}
             onSubmit={handleSubmit}
+          />
+          <ContactInfoStack
+            businessInfo={businessInfo}
+            storeHours={storeHours}
+            socialLinks={socialLinks}
           />
         </div>
 

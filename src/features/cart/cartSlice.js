@@ -46,8 +46,13 @@ const resolveDefaultWeight = (product, selectedWeight) => {
   return matchedWeight?.label || weights[0].label;
 };
 
-const createCartIdentity = (productId, selectedFlavor, selectedWeight) =>
-  `${productId}::${selectedFlavor || "none"}::${selectedWeight || "none"}`;
+const createCartIdentity = (
+  productId,
+  selectedFlavor,
+  selectedWeight,
+  selectedEggType,
+) =>
+  `${productId}::${selectedFlavor || "none"}::${selectedWeight || "none"}::${selectedEggType || "none"}`;
 
 const cartSlice = createSlice({
   name: "cart",
@@ -61,13 +66,16 @@ const cartSlice = createSlice({
         quantity = 1,
         selectedFlavor,
         selectedWeight,
+        selectedEggType,
       } = action.payload;
       const resolvedFlavor = resolveDefaultFlavor(product, selectedFlavor);
       const resolvedWeight = resolveDefaultWeight(product, selectedWeight);
+      const resolvedEggType = selectedEggType || "";
       const identity = createCartIdentity(
         product._id,
         resolvedFlavor,
         resolvedWeight,
+        resolvedEggType,
       );
       const existingItem = state.items.find(
         (item) => item.identity === identity,
@@ -82,6 +90,7 @@ const cartSlice = createSlice({
           product,
           selectedFlavor: resolvedFlavor,
           selectedWeight: resolvedWeight,
+          selectedEggType: resolvedEggType,
           quantity,
         });
       }

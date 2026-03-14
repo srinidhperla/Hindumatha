@@ -11,7 +11,9 @@ import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  isEggTypeAvailable,
   isProductPurchasable,
+  normalizeFlavorOptions,
 } from "../../../utils/productOptions";
 
 const ProductDetails = () => {
@@ -45,6 +47,7 @@ const ProductDetails = () => {
       availableFlavors,
       availableWeights,
       canOrder: isProductPurchasable(product),
+      hasExplicitFlavors: normalizeFlavorOptions(product).length > 0,
     };
   }, [product]);
 
@@ -54,6 +57,19 @@ const ProductDetails = () => {
   const [selectedWeight, setSelectedWeight] = useState(
     normalizedProduct?.availableWeights?.[0]?.label || "",
   );
+  const [selectedEggType, setSelectedEggType] = useState(() => {
+    if (!normalizedProduct) return "";
+    const hasEgg =
+      normalizedProduct.isEgg !== false &&
+      isEggTypeAvailable(normalizedProduct, "egg");
+    const hasEggless =
+      normalizedProduct.isEggless === true &&
+      isEggTypeAvailable(normalizedProduct, "eggless");
+    if (hasEgg && !hasEggless) return "egg";
+    if (!hasEgg && hasEggless) return "eggless";
+    if (hasEgg) return "egg";
+    return "";
+  });
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState("");
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
@@ -62,13 +78,50 @@ const ProductDetails = () => {
   React.useEffect(() => {
     if (normalizedProduct) {
       setSelectedFlavor(normalizedProduct.availableFlavors[0]?.name || "");
-      setSelectedWeight(normalizedProduct.availableWeights[0]?.label || "");
+      const hasEgg =
+        normalizedProduct.isEgg !== false &&
+        isEggTypeAvailable(normalizedProduct, "egg");
+      const hasEggless =
+        normalizedProduct.isEggless === true &&
+        isEggTypeAvailable(normalizedProduct, "eggless");
+      if (hasEgg && !hasEggless) setSelectedEggType("egg");
+      else if (!hasEgg && hasEggless) setSelectedEggType("eggless");
+      else if (hasEgg) setSelectedEggType("egg");
+      else setSelectedEggType("");
       setQuantity(1);
       setSelectedImage(
         normalizedProduct.images?.[0] || normalizedProduct.image || "",
       );
     }
   }, [normalizedProduct]);
+
+  // Dynamically filter weights based on selected flavor + egg type
+  const filteredWeights = useMemo(() => {
+    if (!normalizedProduct) return [];
+    const flavor =
+      selectedFlavor || normalizedProduct.availableFlavors[0]?.name || "";
+    if (!flavor) return normalizedProduct.availableWeights;
+    return getAvailableWeightOptions(
+      normalizedProduct,
+      flavor,
+      selectedEggType,
+    );
+  }, [normalizedProduct, selectedFlavor, selectedEggType]);
+
+  // Auto-select weight when filtered weights change
+  React.useEffect(() => {
+    if (!normalizedProduct) return;
+    if (filteredWeights.length === 1) {
+      setSelectedWeight(filteredWeights[0].label);
+    } else if (
+      filteredWeights.length > 0 &&
+      !filteredWeights.some((w) => w.label === selectedWeight)
+    ) {
+      setSelectedWeight(filteredWeights[0].label);
+    } else if (filteredWeights.length === 0) {
+      setSelectedWeight("");
+    }
+  }, [filteredWeights, normalizedProduct]);
 
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -108,9 +161,9 @@ const ProductDetails = () => {
     : Number(normalizedProduct.rating || 0).toFixed(1);
 
   const selectedWeightOption =
-    normalizedProduct.availableWeights.find(
-      (weight) => weight.label === selectedWeight,
-    ) || normalizedProduct.availableWeights[0];
+    filteredWeights.find((weight) => weight.label === selectedWeight) ||
+    filteredWeights[0] ||
+    normalizedProduct.availableWeights[0];
   const unitPrice = Math.round(
     Number(normalizedProduct.price || 0) *
       Number(selectedWeightOption?.multiplier || 1),
@@ -134,6 +187,7 @@ const ProductDetails = () => {
         quantity,
         selectedFlavor,
         selectedWeight,
+        selectedEggType,
       }),
     );
     dispatch(
@@ -228,6 +282,20 @@ const ProductDetails = () => {
                 <span className="product-category-pill">
                   {normalizedProduct.categoryLabel}
                 </span>
+                {normalizedProduct.isEgg !== false &&
+                  isEggTypeAvailable(normalizedProduct, "egg") && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 ring-1 ring-red-200">
+                      <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+                      Egg
+                    </span>
+                  )}
+                {normalizedProduct.isEggless === true &&
+                  isEggTypeAvailable(normalizedProduct, "eggless") && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-600 ring-1 ring-green-200">
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                      Eggless
+                    </span>
+                  )}
                 {!normalizedProduct.canOrder && (
                   <span className="product-stock-pill">Out of Stock</span>
                 )}
@@ -250,20 +318,22 @@ const ProductDetails = () => {
             </div>
 
             <div className="product-option-grid">
-              <label className="block">
-                <span className="product-field-label">Flavor</span>
-                <select
-                  value={selectedFlavor}
-                  onChange={(event) => setSelectedFlavor(event.target.value)}
-                  className="product-select"
-                >
-                  {normalizedProduct.availableFlavors.map((flavor) => (
-                    <option key={flavor.name} value={flavor.name}>
-                      {flavor.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {normalizedProduct.hasExplicitFlavors && (
+                <label className="block">
+                  <span className="product-field-label">Flavor</span>
+                  <select
+                    value={selectedFlavor}
+                    onChange={(event) => setSelectedFlavor(event.target.value)}
+                    className="product-select"
+                  >
+                    {normalizedProduct.availableFlavors.map((flavor) => (
+                      <option key={flavor.name} value={flavor.name}>
+                        {flavor.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               <label className="block">
                 <span className="product-field-label">Weight</span>
@@ -272,7 +342,7 @@ const ProductDetails = () => {
                   onChange={(event) => setSelectedWeight(event.target.value)}
                   className="product-select"
                 >
-                  {normalizedProduct.availableWeights.map((weight) => (
+                  {filteredWeights.map((weight) => (
                     <option key={weight.label} value={weight.label}>
                       {weight.label}
                     </option>
@@ -280,6 +350,52 @@ const ProductDetails = () => {
                 </select>
               </label>
             </div>
+
+            {/* Egg type selector — always show available types */}
+            {(() => {
+              const eggOn =
+                normalizedProduct.isEgg !== false &&
+                isEggTypeAvailable(normalizedProduct, "egg");
+              const egglessOn =
+                normalizedProduct.isEggless === true &&
+                isEggTypeAvailable(normalizedProduct, "eggless");
+              if (!eggOn && !egglessOn) return null;
+              return (
+                <div className="mt-4">
+                  <span className="product-field-label">Type</span>
+                  <div className="mt-2 flex gap-3">
+                    {eggOn && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEggType("egg")}
+                        className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                          selectedEggType === "egg"
+                            ? "border-red-400 bg-red-50 text-red-700 ring-1 ring-red-300"
+                            : "border-primary-200 bg-cream-50 text-primary-600 hover:bg-cream-100"
+                        }`}
+                      >
+                        <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-red-500" />
+                        Egg
+                      </button>
+                    )}
+                    {egglessOn && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEggType("eggless")}
+                        className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                          selectedEggType === "eggless"
+                            ? "border-green-400 bg-green-50 text-green-700 ring-1 ring-green-300"
+                            : "border-primary-200 bg-cream-50 text-primary-600 hover:bg-cream-100"
+                        }`}
+                      >
+                        <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-green-500" />
+                        Eggless
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="product-quantity-row">
               <span className="product-field-label">Quantity</span>

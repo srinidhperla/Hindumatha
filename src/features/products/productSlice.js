@@ -7,6 +7,8 @@ import {
   patchProductInventory,
   deleteExistingProduct,
   postProductReview,
+  renameCategoryAPI,
+  deleteCategoryAPI,
 } from "../../services/productAPI";
 
 const getErrorPayload = (error, fallbackMessage) =>
@@ -101,10 +103,41 @@ export const addProductReview = createAsyncThunk(
   },
 );
 
+export const renameCategory = createAsyncThunk(
+  "products/renameCategory",
+  async ({ oldName, newName }, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await renameCategoryAPI(oldName, newName);
+      dispatch(fetchProducts());
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        getErrorPayload(error, "Failed to rename category"),
+      );
+    }
+  },
+);
+
+export const deleteCategory = createAsyncThunk(
+  "products/deleteCategory",
+  async (name, { rejectWithValue, dispatch }) => {
+    try {
+      const result = await deleteCategoryAPI(name);
+      dispatch(fetchProducts());
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        getErrorPayload(error, "Failed to delete category"),
+      );
+    }
+  },
+);
+
 const initialState = {
   products: [],
   product: null,
   loading: false,
+  loaded: false,
   error: null,
 };
 
@@ -119,15 +152,20 @@ const productSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchProducts.pending, (state) => {
-        state.loading = true;
+        // Only show spinner on first load; subsequent refreshes are silent
+        if (state.products.length === 0) {
+          state.loading = true;
+        }
         state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
+        state.loaded = true;
         state.products = action.payload;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
+        state.loaded = true;
         state.error = action.payload?.message || "Failed to fetch products";
       })
       .addCase(fetchProductById.pending, (state) => {

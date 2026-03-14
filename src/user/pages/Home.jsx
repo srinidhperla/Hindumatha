@@ -29,7 +29,7 @@ const getAverageRating = (products = []) => {
 const Home = () => {
   const { businessInfo, deliverySettings } = useSelector((state) => state.site);
   const { products } = useSelector((state) => state.products);
-  const featuredProducts = products.slice(0, 3);
+  const featuredProducts = products.slice(0, 8);
   const currentYear = new Date().getFullYear();
   const establishedYear = Number(businessInfo.establishedYear) || 1976;
   const yearsExperience = Math.max(1, currentYear - establishedYear);
@@ -39,7 +39,7 @@ const Home = () => {
   ).size;
 
   return (
-    <div className="home-page">
+    <div className="home-page bg-cream-50">
       <HeroSection
         businessInfo={businessInfo}
         establishedYear={establishedYear}
