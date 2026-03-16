@@ -24,7 +24,11 @@ const OrderSummary = ({
             <div>
               <p className="commerce-summary-name">{item.product.name}</p>
               <p className="commerce-summary-copy">
-                {item.selectedWeight} • {item.selectedFlavor} • Qty{" "}
+                {item.selectedWeight}
+                {item.selectedEggType
+                  ? ` • ${item.selectedEggType === "egg" ? "Egg" : "Eggless"}`
+                  : ""}
+                {item.selectedFlavor ? ` • ${item.selectedFlavor}` : ""} • Qty{" "}
                 {item.quantity}
               </p>
             </div>

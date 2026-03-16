@@ -18,7 +18,9 @@ import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  getVariantPrice,
   isProductPurchasable,
+  normalizeFlavorOptions,
 } from "../../../utils/productOptions";
 import { normalizeUserSavedAddresses } from "../../components/order/orderHelpers";
 import AddressPickerModal from "../../../components/address/AddressPickerModal";
@@ -26,25 +28,40 @@ import AddressPickerModal from "../../../components/address/AddressPickerModal";
 const DEFAULT_COUPON_INPUT = "";
 
 const getResolvedCartItem = (item) => {
+  const hasExplicitFlavors = normalizeFlavorOptions(item.product).length > 0;
+  const availableEggTypes = [
+    ...(item.product?.isEgg !== false ? ["egg"] : []),
+    ...(item.product?.isEggless === true ? ["eggless"] : []),
+  ];
+  const selectedEggType = availableEggTypes.includes(item.selectedEggType)
+    ? item.selectedEggType
+    : availableEggTypes.length === 1
+      ? availableEggTypes[0]
+      : "";
   const availableFlavors = getAvailableFlavorOptions(item.product);
-  const selectedFlavor =
-    availableFlavors.find((option) => option.name === item.selectedFlavor)
-      ?.name ||
-    availableFlavors[0]?.name ||
-    "";
+  const selectedFlavor = hasExplicitFlavors
+    ? availableFlavors.find((option) => option.name === item.selectedFlavor)
+        ?.name ||
+      availableFlavors[0]?.name ||
+      ""
+    : "";
+  const flavorForWeightFilter =
+    selectedFlavor || availableFlavors[0]?.name || "";
   const availableWeights = getAvailableWeightOptions(
     item.product,
-    selectedFlavor,
+    flavorForWeightFilter,
+    selectedEggType,
   );
   const selectedWeight =
     availableWeights.find((option) => option.label === item.selectedWeight)
       ?.label ||
     availableWeights[0]?.label ||
     "";
-  const weightOption =
-    availableWeights.find((option) => option.label === selectedWeight) || null;
-  const unitPrice =
-    Number(item.product.price || 0) * (weightOption?.multiplier || 1);
+  const unitPrice = getVariantPrice(item.product, {
+    flavorName: selectedFlavor,
+    weightLabel: selectedWeight,
+    eggType: selectedEggType,
+  });
 
   return {
     ...item,
@@ -52,11 +69,15 @@ const getResolvedCartItem = (item) => {
     availableWeights,
     selectedFlavor,
     selectedWeight,
+    selectedEggType,
+    availableEggTypes,
+    hasExplicitFlavors,
     unitPrice,
     lineTotal: unitPrice * item.quantity,
     canOrder:
       isProductPurchasable(item.product) &&
-      Boolean(selectedFlavor) &&
+      (!hasExplicitFlavors || Boolean(selectedFlavor)) &&
+      (availableEggTypes.length <= 1 || Boolean(selectedEggType)) &&
       Boolean(selectedWeight),
   };
 };
@@ -261,27 +282,54 @@ const Cart = () => {
                     </div>
 
                     <div className="commerce-variant-grid">
-                      <label className="block">
-                        <span className="commerce-field-label">Flavor</span>
-                        <select
-                          value={item.selectedFlavor}
-                          onChange={(event) =>
-                            dispatch(
-                              updateCartItemOptions({
-                                id: item.id,
-                                selectedFlavor: event.target.value,
-                              }),
-                            )
-                          }
-                          className="commerce-input"
-                        >
-                          {item.availableFlavors.map((flavor) => (
-                            <option key={flavor.name} value={flavor.name}>
-                              {flavor.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      {item.availableEggTypes.length > 1 && (
+                        <label className="block">
+                          <span className="commerce-field-label">Type</span>
+                          <select
+                            value={item.selectedEggType}
+                            onChange={(event) =>
+                              dispatch(
+                                updateCartItemOptions({
+                                  id: item.id,
+                                  selectedEggType: event.target.value,
+                                }),
+                              )
+                            }
+                            className="commerce-input"
+                          >
+                            <option value="">Select type</option>
+                            {item.availableEggTypes.map((eggType) => (
+                              <option key={eggType} value={eggType}>
+                                {eggType === "egg" ? "Egg" : "Eggless"}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+
+                      {item.hasExplicitFlavors && (
+                        <label className="block">
+                          <span className="commerce-field-label">Flavor</span>
+                          <select
+                            value={item.selectedFlavor}
+                            onChange={(event) =>
+                              dispatch(
+                                updateCartItemOptions({
+                                  id: item.id,
+                                  selectedFlavor: event.target.value,
+                                }),
+                              )
+                            }
+                            className="commerce-input"
+                          >
+                            {item.availableFlavors.map((flavor) => (
+                              <option key={flavor.name} value={flavor.name}>
+                                {flavor.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
 
                       <label className="block">
                         <span className="commerce-field-label">Weight</span>
@@ -345,6 +393,12 @@ const Cart = () => {
 
                     <div className="commerce-meta-row">
                       <div className="commerce-meta-chips">
+                        {item.selectedEggType && (
+                          <span className="commerce-chip commerce-chip--muted">
+                            Type:{" "}
+                            {item.selectedEggType === "egg" ? "Egg" : "Eggless"}
+                          </span>
+                        )}
                         <span className="commerce-chip commerce-chip--muted">
                           Unit: Rs.{item.unitPrice.toLocaleString("en-IN")}
                         </span>

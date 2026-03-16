@@ -3,7 +3,6 @@ import { hasValidCoordinates } from "./orderHelpers";
 import AddressPickerModal from "../../../components/address/AddressPickerModal";
 
 const OrderAddressStep = ({
-  formData,
   savedAddresses,
   addressMode,
   editingAddressId,
@@ -19,7 +18,6 @@ const OrderAddressStep = ({
   hasConfiguredStoreLocation,
   loading,
   error,
-  onChange,
   onSavedAddressSelect,
   onStartNewAddress,
   onEditSavedAddress,
@@ -166,32 +164,6 @@ const OrderAddressStep = ({
           <p className="mt-2 text-xs text-slate-500">
             Delivery radius: {maxDeliveryRadiusKm} km from store location.
           </p>
-        </div>
-
-        <div className="commerce-form-grid">
-          <label className="block">
-            <span className="commerce-field-label">Full Name</span>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={onChange}
-              required
-              className="commerce-input"
-            />
-          </label>
-
-          <label className="block">
-            <span className="commerce-field-label">Phone Number</span>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={onChange}
-              required
-              className="commerce-input"
-            />
-          </label>
         </div>
       </div>
 

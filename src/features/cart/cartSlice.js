@@ -20,7 +20,15 @@ const persistCartItems = (items) => {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
 };
 
+const hasExplicitFlavors = (product) =>
+  (Array.isArray(product?.flavorOptions) && product.flavorOptions.length > 0) ||
+  (Array.isArray(product?.flavors) && product.flavors.length > 0);
+
 const resolveDefaultFlavor = (product, selectedFlavor) => {
+  if (!hasExplicitFlavors(product)) {
+    return "";
+  }
+
   const flavors = getAvailableFlavorOptions(product);
 
   if (!flavors.length) {
@@ -33,8 +41,17 @@ const resolveDefaultFlavor = (product, selectedFlavor) => {
   return matchedFlavor?.name || flavors[0].name;
 };
 
-const resolveDefaultWeight = (product, selectedWeight) => {
-  const weights = getAvailableWeightOptions(product);
+const resolveDefaultWeight = (
+  product,
+  selectedWeight,
+  selectedFlavor = "",
+  selectedEggType = "",
+) => {
+  const weights = getAvailableWeightOptions(
+    product,
+    selectedFlavor,
+    selectedEggType,
+  );
 
   if (!weights.length) {
     return "";
@@ -69,8 +86,13 @@ const cartSlice = createSlice({
         selectedEggType,
       } = action.payload;
       const resolvedFlavor = resolveDefaultFlavor(product, selectedFlavor);
-      const resolvedWeight = resolveDefaultWeight(product, selectedWeight);
       const resolvedEggType = selectedEggType || "";
+      const resolvedWeight = resolveDefaultWeight(
+        product,
+        selectedWeight,
+        resolvedFlavor,
+        resolvedEggType,
+      );
       const identity = createCartIdentity(
         product._id,
         resolvedFlavor,
@@ -108,10 +130,12 @@ const cartSlice = createSlice({
       persistCartItems(state.items);
     },
     updateCartItemOptions: (state, action) => {
-      const { id, selectedFlavor, selectedWeight } = action.payload;
+      const { id, selectedFlavor, selectedWeight, selectedEggType } =
+        action.payload;
       const targetItem = state.items.find((item) => item.id === id);
 
       if (targetItem) {
+        const nextEggType = selectedEggType ?? targetItem.selectedEggType ?? "";
         const nextFlavor = resolveDefaultFlavor(
           targetItem.product,
           selectedFlavor ?? targetItem.selectedFlavor,
@@ -119,14 +143,18 @@ const cartSlice = createSlice({
         const nextWeight = resolveDefaultWeight(
           targetItem.product,
           selectedWeight ?? targetItem.selectedWeight,
+          nextFlavor,
+          nextEggType,
         );
 
         targetItem.selectedFlavor = nextFlavor;
         targetItem.selectedWeight = nextWeight;
+        targetItem.selectedEggType = nextEggType;
         targetItem.identity = createCartIdentity(
           targetItem.product._id,
           nextFlavor,
           nextWeight,
+          nextEggType,
         );
       }
 

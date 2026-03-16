@@ -11,6 +11,7 @@ import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  getVariantPrice,
   isEggTypeAvailable,
   isProductPurchasable,
   normalizeFlavorOptions,
@@ -77,7 +78,11 @@ const ProductDetails = () => {
 
   React.useEffect(() => {
     if (normalizedProduct) {
-      setSelectedFlavor(normalizedProduct.availableFlavors[0]?.name || "");
+      setSelectedFlavor(
+        normalizedProduct.hasExplicitFlavors
+          ? normalizedProduct.availableFlavors[0]?.name || ""
+          : "",
+      );
       const hasEgg =
         normalizedProduct.isEgg !== false &&
         isEggTypeAvailable(normalizedProduct, "egg");
@@ -165,8 +170,11 @@ const ProductDetails = () => {
     filteredWeights[0] ||
     normalizedProduct.availableWeights[0];
   const unitPrice = Math.round(
-    Number(normalizedProduct.price || 0) *
-      Number(selectedWeightOption?.multiplier || 1),
+    getVariantPrice(normalizedProduct, {
+      flavorName: selectedFlavor,
+      weightLabel: selectedWeightOption?.label || "",
+      eggType: selectedEggType,
+    }),
   );
   const relatedProducts = products
     .filter(
@@ -185,7 +193,9 @@ const ProductDetails = () => {
       addToCart({
         product: normalizedProduct,
         quantity,
-        selectedFlavor,
+        selectedFlavor: normalizedProduct.hasExplicitFlavors
+          ? selectedFlavor
+          : "",
         selectedWeight,
         selectedEggType,
       }),

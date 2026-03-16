@@ -24,7 +24,11 @@ const OrderReviewStep = ({ checkoutItems, invalidItems }) => (
                 {item.product.name}
               </h3>
               <p className="mt-1 text-sm text-primary-600">
-                {item.selectedWeight} • {item.selectedFlavor} • Qty{" "}
+                {item.selectedWeight}
+                {item.selectedEggType
+                  ? ` • ${item.selectedEggType === "egg" ? "Egg" : "Eggless"}`
+                  : ""}
+                {item.selectedFlavor ? ` • ${item.selectedFlavor}` : ""} • Qty{" "}
                 {item.quantity}
               </p>
             </div>

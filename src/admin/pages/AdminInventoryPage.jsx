@@ -13,6 +13,7 @@ import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  getPortionTypeMeta,
   isProductPurchasable,
   normalizeFlavorOptions,
   normalizeFlavorWeightAvailability,
@@ -28,6 +29,42 @@ const buildInventoryPayload = (product, overrides = {}) => {
     payload.flavorWeightAvailability = overrides.flavorWeightAvailability;
   }
   return payload;
+};
+
+const getTypedRow = (source, typedKey) => {
+  if (!source || typeof source !== "object") return null;
+
+  const direct = source?.[typedKey] || source?.get?.(typedKey);
+  if (direct && typeof direct === "object") return direct;
+
+  const typedKeyLower = String(typedKey).toLowerCase();
+  const entries = Object.entries(source || {});
+  const match = entries.find(
+    ([key]) => String(key).toLowerCase() === typedKeyLower,
+  );
+  return match && typeof match[1] === "object" ? match[1] : null;
+};
+
+const getTypedKeyName = (source, typedKey) => {
+  if (!source || typeof source !== "object") return typedKey;
+  const typedKeyLower = String(typedKey).toLowerCase();
+  const match = Object.keys(source || {}).find(
+    (key) => String(key).toLowerCase() === typedKeyLower,
+  );
+  return match || typedKey;
+};
+
+const getRowValue = (row, label) => {
+  if (!row || typeof row !== "object") return undefined;
+  if (label in row) return row[label];
+
+  const lower = String(label).toLowerCase();
+  if (lower in row) return row[lower];
+
+  const match = Object.entries(row).find(
+    ([key]) => String(key).toLowerCase() === lower,
+  );
+  return match ? match[1] : undefined;
 };
 
 const AdminInventoryPage = ({ onToast }) => {
@@ -147,10 +184,10 @@ const AdminInventoryPage = ({ onToast }) => {
 
     const anyOn = flavorNames.some((fn) => {
       const typedKey = `${eggType}::${fn}`;
-      const row = raw[typedKey];
+      const row = getTypedRow(raw, typedKey);
       if (!row) return true;
       return weights.some(
-        (w) => row[w.label] !== false && row[w.label] !== null,
+        (w) => getRowValue(row, w.label) !== false && getRowValue(row, w.label) !== null,
       );
     });
 
@@ -162,17 +199,17 @@ const AdminInventoryPage = ({ onToast }) => {
     // Update the toggled egg type
     flavorNames.forEach((fn) => {
       const typedKey = `${eggType}::${fn}`;
-      const currentRow = raw[typedKey] || {};
+      const currentRow = getTypedRow(raw, typedKey) || {};
       const newRow = {};
       weights.forEach((w) => {
-        const cur = currentRow[w.label];
+        const cur = getRowValue(currentRow, w.label);
         if (cur === null) {
           newRow[w.label] = null;
         } else {
           newRow[w.label] = !anyOn;
         }
       });
-      nextMatrix[typedKey] = newRow;
+      nextMatrix[getTypedKeyName(raw, typedKey)] = newRow;
 
       // Ensure other egg type has an entry so it's not lost
       if (hasOtherType) {
@@ -227,16 +264,18 @@ const AdminInventoryPage = ({ onToast }) => {
     const raw = product.flavorWeightAvailability || {};
     const typedKey = `${eggType}::${flavorName}`;
     const weights = normalizeWeightOptions(product);
-    const currentRow = raw[typedKey] || {};
-    const offeredWeights = weights.filter((w) => currentRow[w.label] !== null);
+    const currentRow = getTypedRow(raw, typedKey) || {};
+    const offeredWeights = weights.filter(
+      (w) => getRowValue(currentRow, w.label) !== null,
+    );
     if (!offeredWeights.length && Object.keys(currentRow).length > 0) return;
     const anyOn =
       offeredWeights.length > 0
-        ? offeredWeights.some((w) => currentRow[w.label] !== false)
+        ? offeredWeights.some((w) => getRowValue(currentRow, w.label) !== false)
         : true;
     const newRow = {};
     weights.forEach((w) => {
-      const cur = currentRow[w.label];
+      const cur = getRowValue(currentRow, w.label);
       if (cur === null) newRow[w.label] = null;
       else newRow[w.label] = !anyOn;
     });
@@ -245,7 +284,7 @@ const AdminInventoryPage = ({ onToast }) => {
     Object.keys(raw).forEach((key) => {
       if (key.includes("::")) nextMatrix[key] = { ...raw[key] };
     });
-    nextMatrix[typedKey] = newRow;
+    nextMatrix[getTypedKeyName(raw, typedKey)] = newRow;
 
     // Ensure other egg type has entries
     const otherType = eggType === "egg" ? "eggless" : "egg";
@@ -312,7 +351,8 @@ const AdminInventoryPage = ({ onToast }) => {
   ) => {
     const raw = product.flavorWeightAvailability || {};
     const typedKey = `${eggType}::${flavorName}`;
-    const rawVal = raw[typedKey]?.[weightLabel];
+    const existingRow = getTypedRow(raw, typedKey) || {};
+    const rawVal = getRowValue(existingRow, weightLabel);
     if (rawVal === null) return;
     const currentValue = rawVal !== undefined ? rawVal !== false : true;
 
@@ -320,8 +360,8 @@ const AdminInventoryPage = ({ onToast }) => {
     Object.keys(raw).forEach((key) => {
       if (key.includes("::")) nextMatrix[key] = { ...raw[key] };
     });
-    nextMatrix[typedKey] = {
-      ...(raw[typedKey] || {}),
+    nextMatrix[getTypedKeyName(raw, typedKey)] = {
+      ...existingRow,
       [weightLabel]: !currentValue,
     };
 
@@ -359,8 +399,9 @@ const AdminInventoryPage = ({ onToast }) => {
   const getTypedAvailability = (product, eggType, flavorName, weightLabel) => {
     const raw = product.flavorWeightAvailability || {};
     const typedKey = `${eggType}::${flavorName}`;
-    if (raw[typedKey]?.[weightLabel] !== undefined) {
-      const val = raw[typedKey][weightLabel];
+    const row = getTypedRow(raw, typedKey);
+    const val = getRowValue(row, weightLabel);
+    if (val !== undefined) {
       if (val === null) return null;
       return val !== false;
     }
@@ -436,6 +477,7 @@ const AdminInventoryPage = ({ onToast }) => {
           {filteredProducts.map((product) => {
             const flavorOptions = normalizeFlavorOptions(product);
             const weightOptions = normalizeWeightOptions(product);
+            const portionTypeMeta = getPortionTypeMeta(product.portionType);
             const availableFlavorCount =
               getAvailableFlavorOptions(product).length;
             const availableWeightCount =
@@ -487,8 +529,8 @@ const AdminInventoryPage = ({ onToast }) => {
                           ? `${availableFlavorCount}/${flavorOptions.length} flavors · `
                           : ""}
                         {weightOptions.length > 0
-                          ? `${availableWeightCount}/${weightOptions.length} weights`
-                          : "No weights"}
+                          ? `${availableWeightCount}/${weightOptions.length} ${portionTypeMeta.heading.toLowerCase()}`
+                          : `No ${portionTypeMeta.heading.toLowerCase()}`}
                       </p>
                     </div>
                   </div>

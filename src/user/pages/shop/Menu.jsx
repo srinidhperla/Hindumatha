@@ -96,7 +96,7 @@ const Menu = () => {
   const openQuickAdd = (product) => {
     if (!product.canOrder) return;
     setQuickAddProductId(product._id);
-    // For no-flavor products, use the Cake fallback internally
+    // Keep fallback only for internal weight availability filtering.
     if (!product.hasExplicitFlavors) {
       setQuickAddFlavor(product.availableFlavors[0]?.name || "Cake");
     } else {
@@ -124,10 +124,13 @@ const Menu = () => {
 
   // Dynamically compute available weights based on selected flavor + egg type
   const quickAddWeights = useMemo(() => {
-    if (!quickAddProduct || !quickAddFlavor) return [];
+    if (!quickAddProduct) return [];
+    const flavorForWeightFilter =
+      quickAddFlavor || quickAddProduct.availableFlavors[0]?.name || "";
+    if (!flavorForWeightFilter) return [];
     return getAvailableWeightOptions(
       quickAddProduct,
-      quickAddFlavor,
+      flavorForWeightFilter,
       quickAddEggType,
     );
   }, [quickAddProduct, quickAddFlavor, quickAddEggType]);
@@ -147,10 +150,11 @@ const Menu = () => {
     const hasEgg = quickAddProduct?.isEgg !== false;
     const hasEggless = quickAddProduct?.isEggless === true;
     const needsEggType = hasEgg && hasEggless;
+    const needsFlavorSelection = quickAddProduct?.hasExplicitFlavors;
 
     if (
       !quickAddProduct ||
-      !quickAddFlavor ||
+      (needsFlavorSelection && !quickAddFlavor) ||
       !quickAddWeight ||
       (needsEggType && !quickAddEggType)
     ) {
@@ -582,7 +586,7 @@ const Menu = () => {
                   type="button"
                   onClick={handleQuickAdd}
                   disabled={
-                    !quickAddFlavor ||
+                    (quickAddProduct?.hasExplicitFlavors && !quickAddFlavor) ||
                     !quickAddWeight ||
                     (quickAddProduct?.isEgg !== false &&
                       quickAddProduct?.isEggless === true &&

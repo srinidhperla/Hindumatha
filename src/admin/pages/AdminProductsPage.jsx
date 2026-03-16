@@ -15,8 +15,10 @@ import {
 } from "./adminShared";
 import {
   createDefaultProductForm,
+  getDefaultOptionsForPortionType,
   normalizeFlavorOptions,
   normalizeFlavorWeightAvailability,
+  normalizePortionType,
   normalizeWeightOptions,
 } from "../../utils/productOptions";
 import ProductFormModal from "../components/modals/ProductFormModal";
@@ -33,7 +35,6 @@ const AdminProductsPage = ({ onToast }) => {
   const [customCategory, setCustomCategory] = useState("");
   const [customFlavor, setCustomFlavor] = useState("");
   const [customWeightLabel, setCustomWeightLabel] = useState("");
-  const [customWeightMultiplier, setCustomWeightMultiplier] = useState("1");
   const [imageItems, setImageItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -75,6 +76,134 @@ const AdminProductsPage = ({ onToast }) => {
     [products, searchTerm, selectedCategory],
   );
 
+  const getVariantAxes = (data) => {
+    const validLabels = new Set();
+    (data?.weightOptions || [])
+      .map((option) => option.label)
+      .filter(Boolean)
+      .forEach((label) => {
+        validLabels.add(String(label));
+        validLabels.add(String(label).toLowerCase());
+      });
+    const flavorNames =
+      Array.isArray(data?.flavorOptions) && data.flavorOptions.length > 0
+        ? data.flavorOptions.map((option) => option.name).filter(Boolean)
+        : ["Cake"];
+    const eggTypes = [
+      data?.isEgg ? "egg" : null,
+      data?.isEggless ? "eggless" : null,
+    ].filter(Boolean);
+
+    const validTypedKeys = new Set();
+    eggTypes.forEach((eggType) => {
+      flavorNames.forEach((flavorName) => {
+        const typedKey = `${eggType}::${flavorName}`;
+        validTypedKeys.add(typedKey);
+        validTypedKeys.add(typedKey.toLowerCase());
+      });
+    });
+
+    return { validLabels, validTypedKeys };
+  };
+
+  const getMinimumVariantPrice = (
+    variantPrices,
+    flavorWeightAvailability = {},
+    axes = {},
+  ) => {
+    if (!variantPrices || typeof variantPrices !== "object") {
+      return null;
+    }
+
+    const getRowEntries = (source) => {
+      if (source instanceof Map) {
+        return Array.from(source.entries());
+      }
+      return Object.entries(source || {});
+    };
+
+    const findRowByTypedKey = (source, typedKey) => {
+      if (!source || typeof source !== "object") return null;
+      const direct =
+        source?.[typedKey] ||
+        source?.get?.(typedKey) ||
+        source?.[String(typedKey).toLowerCase()] ||
+        source?.get?.(String(typedKey).toLowerCase());
+      if (direct && typeof direct === "object") {
+        return direct;
+      }
+
+      const typedKeyLower = String(typedKey).toLowerCase();
+      const entries =
+        source instanceof Map
+          ? Array.from(source.entries())
+          : Object.entries(source || {});
+      const matched = entries.find(
+        ([key]) => String(key).toLowerCase() === typedKeyLower,
+      );
+      return matched && typeof matched[1] === "object" ? matched[1] : null;
+    };
+
+    const readRowValue = (row, unitLabel) => {
+      if (!row || typeof row !== "object") return undefined;
+
+      const label = String(unitLabel || "").trim();
+      if (label in row) return row[label];
+
+      const lower = label.toLowerCase();
+      if (lower in row) return row[lower];
+
+      const entries = Object.entries(row || {});
+      const matched = entries.find(
+        ([key]) => String(key || "").trim().toLowerCase() === lower,
+      );
+      return matched ? matched[1] : undefined;
+    };
+
+    const getCellEnabled = (typedKey, unitLabel) => {
+      const row = findRowByTypedKey(flavorWeightAvailability, typedKey);
+
+      if (!row || typeof row !== "object") {
+        return true;
+      }
+
+      const value = readRowValue(row, unitLabel);
+
+      return value !== false && value !== null;
+    };
+
+    let minimum = null;
+    getRowEntries(variantPrices).forEach(([typedKey, row]) => {
+      if (
+        axes?.validTypedKeys instanceof Set &&
+        axes.validTypedKeys.size > 0 &&
+        !axes.validTypedKeys.has(typedKey) &&
+        !axes.validTypedKeys.has(String(typedKey).toLowerCase())
+      ) {
+        return;
+      }
+
+      if (!row || typeof row !== "object") return;
+      Object.entries(row).forEach(([unitLabel, raw]) => {
+        const normalizedLabel = String(unitLabel || "").trim();
+        if (
+          axes?.validLabels instanceof Set &&
+          axes.validLabels.size > 0 &&
+          !axes.validLabels.has(normalizedLabel) &&
+          !axes.validLabels.has(normalizedLabel.toLowerCase())
+        ) {
+          return;
+        }
+        if (!getCellEnabled(typedKey, unitLabel)) return;
+        const numeric = Number(raw);
+        if (!Number.isFinite(numeric) || numeric <= 0) return;
+        minimum = minimum === null ? numeric : Math.min(minimum, numeric);
+      });
+    });
+
+    return minimum;
+  };
+
   const resetForm = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
@@ -83,7 +212,6 @@ const AdminProductsPage = ({ onToast }) => {
     setCustomCategory("");
     setCustomFlavor("");
     setCustomWeightLabel("");
-    setCustomWeightMultiplier("1");
     setImageItems([]);
   };
 
@@ -212,7 +340,6 @@ const AdminProductsPage = ({ onToast }) => {
 
   const handleAddWeight = () => {
     const normalizedLabel = customWeightLabel.trim();
-    const normalizedMultiplier = Number(customWeightMultiplier);
 
     if (!normalizedLabel) {
       return;
@@ -234,7 +361,7 @@ const AdminProductsPage = ({ onToast }) => {
           ...currentFormData.weightOptions,
           {
             label: normalizedLabel,
-            multiplier: normalizedMultiplier > 0 ? normalizedMultiplier : 1,
+            multiplier: 1,
             isAvailable: true,
           },
         ],
@@ -242,7 +369,6 @@ const AdminProductsPage = ({ onToast }) => {
     });
 
     setCustomWeightLabel("");
-    setCustomWeightMultiplier("1");
   };
 
   const handleRemoveWeight = (label) => {
@@ -255,10 +381,48 @@ const AdminProductsPage = ({ onToast }) => {
   };
 
   const handleFlavorWeightAvailabilityChange = (nextMatrix) => {
+    setFormData((currentFormData) => {
+      const resolvedMatrix = nextMatrix || {};
+      const axes = getVariantAxes(currentFormData);
+      const minimumPrice = getMinimumVariantPrice(
+        currentFormData.variantPrices,
+        resolvedMatrix,
+        axes,
+      );
+
+      return {
+        ...currentFormData,
+        flavorWeightAvailability: resolvedMatrix,
+        price: minimumPrice !== null ? minimumPrice : 0,
+      };
+    });
+  };
+
+  const handlePortionTypeChange = (nextType) => {
+    const normalizedType = normalizePortionType(nextType);
     setFormData((currentFormData) => ({
       ...currentFormData,
-      flavorWeightAvailability: nextMatrix || {},
+      portionType: normalizedType,
+      weightOptions: getDefaultOptionsForPortionType(normalizedType),
+      flavorWeightAvailability: {},
+      variantPrices: {},
     }));
+  };
+
+  const handleVariantPricesChange = (nextVariantPrices) => {
+    setFormData((currentFormData) => {
+      const axes = getVariantAxes(currentFormData);
+      const minimumPrice = getMinimumVariantPrice(
+        nextVariantPrices,
+        currentFormData.flavorWeightAvailability,
+        axes,
+      );
+      return {
+        ...currentFormData,
+        variantPrices: nextVariantPrices || {},
+        price: minimumPrice !== null ? minimumPrice : 0,
+      };
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -285,12 +449,26 @@ const AdminProductsPage = ({ onToast }) => {
 
     try {
       const productData = new FormData();
+      const axes = getVariantAxes(formData);
+      const minimumVariantPrice = getMinimumVariantPrice(
+        formData.variantPrices,
+        formData.flavorWeightAvailability,
+        axes,
+      );
+      const finalBasePrice =
+        minimumVariantPrice !== null
+          ? minimumVariantPrice
+          : 0;
       productData.append("name", formData.name.trim());
       productData.append("description", formData.description.trim());
-      productData.append("price", Number(formData.price));
+      productData.append("price", finalBasePrice);
       productData.append("category", finalCategory);
       productData.append("isEgg", formData.isEgg);
       productData.append("isEggless", formData.isEggless);
+      productData.append(
+        "portionType",
+        normalizePortionType(formData.portionType),
+      );
       productData.append(
         "flavorOptions",
         JSON.stringify(formData.flavorOptions),
@@ -302,6 +480,10 @@ const AdminProductsPage = ({ onToast }) => {
       productData.append(
         "flavorWeightAvailability",
         JSON.stringify(formData.flavorWeightAvailability || {}),
+      );
+      productData.append(
+        "variantPrices",
+        JSON.stringify(formData.variantPrices || {}),
       );
 
       const existingImages = imageItems
@@ -349,32 +531,56 @@ const AdminProductsPage = ({ onToast }) => {
       product.flavorWeightAvailability instanceof Map
         ? Object.fromEntries(product.flavorWeightAvailability.entries())
         : product.flavorWeightAvailability || {};
+    const flavorOptions = normalizeFlavorOptions(product);
+    const weightOptions = normalizeWeightOptions(product);
+    const variantPrices =
+      product.variantPrices instanceof Map
+        ? Object.fromEntries(product.variantPrices.entries())
+        : product.variantPrices || {};
+    const flavorWeightAvailability = {
+      ...normalizeFlavorWeightAvailability(product),
+      ...rawFlavorWeightAvailability,
+    };
+    const isEgg = product.isEgg !== false;
+    const isEggless = product.isEggless === true;
+    const axes = getVariantAxes({
+      flavorOptions,
+      weightOptions,
+      isEgg,
+      isEggless,
+    });
+    const minimumVariantPrice = getMinimumVariantPrice(
+      variantPrices,
+      flavorWeightAvailability,
+      axes,
+    );
 
     setEditingProduct(product);
     setFormData({
       name: product.name,
       description: product.description,
-      price: product.price,
+      price:
+        minimumVariantPrice !== null
+          ? minimumVariantPrice
+          : Number(product.price) || 0,
+      portionType: normalizePortionType(product.portionType),
       category: product.category,
       image: product.image,
       images:
         product.images?.length > 0
           ? product.images
           : [product.image].filter(Boolean),
-      flavorOptions: normalizeFlavorOptions(product),
-      weightOptions: normalizeWeightOptions(product),
-      flavorWeightAvailability: {
-        ...normalizeFlavorWeightAvailability(product),
-        ...rawFlavorWeightAvailability,
-      },
-      isEgg: product.isEgg !== false,
-      isEggless: product.isEggless === true,
+      flavorOptions,
+      weightOptions,
+      flavorWeightAvailability,
+      variantPrices,
+      isEgg,
+      isEggless,
     });
     setUseCustomCategory(!categoryExists);
     setCustomCategory(categoryExists ? "" : product.category);
     setCustomFlavor("");
     setCustomWeightLabel("");
-    setCustomWeightMultiplier("1");
     setImageItems(
       (product.images?.length > 0
         ? product.images
@@ -458,7 +664,6 @@ const AdminProductsPage = ({ onToast }) => {
           customCategory={customCategory}
           customFlavor={customFlavor}
           customWeightLabel={customWeightLabel}
-          customWeightMultiplier={customWeightMultiplier}
           imageItems={imageItems}
           availableCategories={availableCategories}
           availableFlavors={availableFlavors}
@@ -471,13 +676,14 @@ const AdminProductsPage = ({ onToast }) => {
           onRemoveFlavor={handleRemoveFlavor}
           onAddFlavorOption={addFlavorOption}
           onCustomWeightLabelChange={setCustomWeightLabel}
-          onCustomWeightMultiplierChange={setCustomWeightMultiplier}
+          onPortionTypeChange={handlePortionTypeChange}
           onAddWeight={handleAddWeight}
           onRemoveWeight={handleRemoveWeight}
           onWeightFieldChange={handleWeightFieldChange}
           onFlavorWeightAvailabilityChange={
             handleFlavorWeightAvailabilityChange
           }
+          onVariantPricesChange={handleVariantPricesChange}
           onImageChange={handleImageChange}
           onMoveImage={moveImageItem}
           onRemoveImage={removeImageItem}

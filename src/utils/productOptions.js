@@ -11,6 +11,55 @@ export const DEFAULT_PRODUCT_FORM_WEIGHT_OPTIONS = [
   { label: "1kg", multiplier: 1, isAvailable: true },
 ];
 
+const DEFAULT_PORTION_OPTIONS = {
+  weight: DEFAULT_PRODUCT_FORM_WEIGHT_OPTIONS,
+  size: [
+    { label: "Small", multiplier: 1, isAvailable: true },
+    { label: "Medium", multiplier: 1, isAvailable: true },
+    { label: "Large", multiplier: 1, isAvailable: true },
+  ],
+  pieces: [
+    { label: "1 pc", multiplier: 1, isAvailable: true },
+    { label: "6 pcs", multiplier: 1, isAvailable: true },
+    { label: "12 pcs", multiplier: 1, isAvailable: true },
+  ],
+};
+
+export const PRODUCT_PORTION_TYPES = ["weight", "size", "pieces"];
+
+const PORTION_TYPE_META = {
+  weight: {
+    heading: "Weights",
+    singular: "weight",
+    example: "Example: 1kg",
+  },
+  size: {
+    heading: "Sizes",
+    singular: "size",
+    example: "Example: Small",
+  },
+  pieces: {
+    heading: "Pieces",
+    singular: "piece",
+    example: "Example: 6 pcs",
+  },
+};
+
+export const normalizePortionType = (value) =>
+  PRODUCT_PORTION_TYPES.includes(String(value || "").toLowerCase())
+    ? String(value).toLowerCase()
+    : "weight";
+
+export const getPortionTypeMeta = (value) =>
+  PORTION_TYPE_META[normalizePortionType(value)] || PORTION_TYPE_META.weight;
+
+export const getDefaultOptionsForPortionType = (value) => {
+  const type = normalizePortionType(value);
+  return (DEFAULT_PORTION_OPTIONS[type] || DEFAULT_PORTION_OPTIONS.weight).map(
+    (option) => ({ ...option }),
+  );
+};
+
 export const formatCategoryLabel = (value = "") =>
   value
     .split(/[-\s]+/)
@@ -60,6 +109,101 @@ export const normalizeWeightOptions = (product) => {
   return DEFAULT_WEIGHT_OPTIONS;
 };
 
+const readVariantPriceValue = (value) => {
+  if (Number.isFinite(Number(value)) && Number(value) > 0) {
+    return Number(value);
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    Number.isFinite(Number(value.price)) &&
+    Number(value.price) > 0
+  ) {
+    return Number(value.price);
+  }
+
+  return null;
+};
+
+const getObjectEntries = (source) => {
+  if (!source || typeof source !== "object") return [];
+  return source instanceof Map
+    ? Array.from(source.entries())
+    : Object.entries(source);
+};
+
+const resolveTypedRow = (source, typedKey) => {
+  if (!source || typeof source !== "object") return null;
+
+  const direct = source?.[typedKey] || source?.get?.(typedKey);
+  if (direct && typeof direct === "object") return direct;
+
+  const typedKeyLower = String(typedKey).toLowerCase();
+  const match = getObjectEntries(source).find(
+    ([key]) => String(key).toLowerCase() === typedKeyLower,
+  );
+  return match && typeof match[1] === "object" ? match[1] : null;
+};
+
+const readRowValue = (row, label) => {
+  if (!row || typeof row !== "object") return undefined;
+  if (label in row) return row[label];
+
+  const lowerLabel = String(label).toLowerCase();
+  if (lowerLabel in row) return row[lowerLabel];
+
+  const match = Object.entries(row).find(
+    ([key]) => String(key).toLowerCase() === lowerLabel,
+  );
+  return match ? match[1] : undefined;
+};
+
+const resolveVariantFlavorName = (product, flavorName = "") => {
+  if (flavorName) return flavorName;
+  return getAvailableFlavorOptions(product)[0]?.name || "Cake";
+};
+
+export const getVariantPrice = (
+  product,
+  { flavorName = "", weightLabel = "", eggType = "" } = {},
+) => {
+  const selectedWeight = normalizeWeightOptions(product).find(
+    (weight) => weight.label === weightLabel,
+  );
+
+  if (!selectedWeight) {
+    return Number(product?.price || 0);
+  }
+
+  const resolvedFlavor = resolveVariantFlavorName(product, flavorName);
+  const base =
+    Number(product?.price || 0) * Number(selectedWeight.multiplier || 1);
+
+  if (!eggType) {
+    return base;
+  }
+
+  const source = product?.variantPrices;
+  if (!source || typeof source !== "object") {
+    return base;
+  }
+
+  const typedKey = `${eggType}::${resolvedFlavor}`;
+  const typedRow = resolveTypedRow(source, typedKey);
+
+  if (!typedRow || typeof typedRow !== "object") {
+    return base;
+  }
+
+  const direct = readVariantPriceValue(readRowValue(typedRow, weightLabel));
+  if (direct !== null) {
+    return direct;
+  }
+
+  return base;
+};
+
 export const normalizeFlavorWeightAvailability = (product) => {
   const flavors = normalizeFlavorOptions(product);
   const weights = normalizeWeightOptions(product);
@@ -91,7 +235,7 @@ export const normalizeFlavorWeightAvailability = (product) => {
       else if (rawValue === false) row[label] = false;
       else row[label] = true;
     });
-    typedRows[key] = row;
+    typedRows[String(key).toLowerCase()] = row;
   });
 
   // Build plain flavor keys by aggregating typed keys.
@@ -102,7 +246,7 @@ export const normalizeFlavorWeightAvailability = (product) => {
   effectiveFlavors.forEach((flavor) => {
     const flavorName = flavor.name;
     const matchedTypedKeys = ["egg", "eggless"]
-      .map((t) => `${t}::${flavorName}`)
+      .map((t) => `${t}::${flavorName}`.toLowerCase())
       .filter((k) => typedRows[k]);
 
     const row = {};
@@ -179,10 +323,10 @@ export const getAvailableWeightOptions = (
   if (eggType) {
     const source = product?.flavorWeightAvailability || {};
     const typedKey = `${eggType}::${flavorName}`;
-    const row = source[typedKey];
+    const row = resolveTypedRow(source, typedKey);
     if (row) {
       return weightOptions.filter((w) => {
-        const val = row[w.label];
+        const val = readRowValue(row, w.label);
         return val !== false && val !== null;
       });
     }
@@ -202,10 +346,10 @@ export const isEggTypeAvailable = (product, eggType) => {
     flavors.length > 0 ? flavors.map((f) => f.name) : ["Cake"];
   return flavorNames.some((fn) => {
     const typedKey = `${eggType}::${fn}`;
-    const row = source[typedKey];
+    const row = resolveTypedRow(source, typedKey);
     if (!row) return true;
     return weights.some((w) => {
-      const val = row[w.label];
+      const val = readRowValue(row, w.label);
       return val !== false && val !== null;
     });
   });
@@ -243,6 +387,7 @@ export const createDefaultProductForm = () => ({
   name: "",
   description: "",
   price: "",
+  portionType: "weight",
   category: "cakes",
   image: "",
   images: [],
@@ -251,6 +396,7 @@ export const createDefaultProductForm = () => ({
     ...option,
   })),
   flavorWeightAvailability: {},
+  variantPrices: {},
   isEgg: true,
   isEggless: false,
   isFeatured: false,

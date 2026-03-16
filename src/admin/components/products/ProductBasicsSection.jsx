@@ -47,10 +47,12 @@ const ProductBasicsSection = ({
             min="0"
             step="0.01"
             value={formData.price}
-            onChange={onChange}
-            required
+            readOnly
             className={inputClassName}
           />
+          <p className="mt-1 text-xs text-slate-500">
+            Auto-calculated from the lowest value in Set Prices.
+          </p>
         </label>
       </div>
 

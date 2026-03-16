@@ -236,7 +236,12 @@ const Payment = () => {
                           Item {index + 1}
                         </p>
                         <p className="commerce-summary-copy">
-                          {item.size} | {item.flavor} | Qty {item.quantity}
+                          {item.size}
+                          {item.eggType
+                            ? ` | ${item.eggType === "egg" ? "Egg" : "Eggless"}`
+                            : ""}
+                          {item.flavor ? ` | ${item.flavor}` : ""} | Qty{" "}
+                          {item.quantity}
                         </p>
                       </div>
                       <p className="commerce-summary-price">

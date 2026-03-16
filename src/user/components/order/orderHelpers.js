@@ -1,7 +1,9 @@
 import {
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  getVariantPrice,
   isProductPurchasable,
+  normalizeFlavorOptions,
 } from "../../../utils/productOptions";
 
 const GOOGLE_MAPS_SCRIPT_ID = "bakery-google-maps-places";
@@ -27,35 +29,52 @@ export const hasValidCoordinates = (lat, lng) =>
   toCoordinate(lat, -90, 90) !== null && toCoordinate(lng, -180, 180) !== null;
 
 export const getResolvedCheckoutItem = (item) => {
+  const hasExplicitFlavors = normalizeFlavorOptions(item.product).length > 0;
+  const availableEggTypes = [
+    ...(item.product?.isEgg !== false ? ["egg"] : []),
+    ...(item.product?.isEggless === true ? ["eggless"] : []),
+  ];
+  const selectedEggType = availableEggTypes.includes(item.selectedEggType)
+    ? item.selectedEggType
+    : availableEggTypes.length === 1
+      ? availableEggTypes[0]
+      : "";
   const availableFlavors = getAvailableFlavorOptions(item.product);
-  const selectedFlavor =
-    availableFlavors.find((option) => option.name === item.selectedFlavor)
-      ?.name ||
-    availableFlavors[0]?.name ||
-    "";
+  const selectedFlavor = hasExplicitFlavors
+    ? availableFlavors.find((option) => option.name === item.selectedFlavor)
+        ?.name ||
+      availableFlavors[0]?.name ||
+      ""
+    : "";
+  const flavorForWeightFilter =
+    selectedFlavor || availableFlavors[0]?.name || "";
   const availableWeights = getAvailableWeightOptions(
     item.product,
-    selectedFlavor,
+    flavorForWeightFilter,
+    selectedEggType,
   );
   const selectedWeight =
     availableWeights.find((option) => option.label === item.selectedWeight)
       ?.label ||
     availableWeights[0]?.label ||
     "";
-  const weightOption =
-    availableWeights.find((option) => option.label === selectedWeight) || null;
-  const unitPrice =
-    Number(item.product.price || 0) * (weightOption?.multiplier || 1);
+  const unitPrice = getVariantPrice(item.product, {
+    flavorName: selectedFlavor,
+    weightLabel: selectedWeight,
+    eggType: selectedEggType,
+  });
 
   return {
     ...item,
+    selectedEggType,
     selectedFlavor,
     selectedWeight,
     unitPrice,
     lineTotal: unitPrice * item.quantity,
     canOrder:
       isProductPurchasable(item.product) &&
-      Boolean(selectedFlavor) &&
+      (!hasExplicitFlavors || Boolean(selectedFlavor)) &&
+      (availableEggTypes.length <= 1 || Boolean(selectedEggType)) &&
       Boolean(selectedWeight),
   };
 };

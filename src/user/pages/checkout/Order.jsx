@@ -577,6 +577,7 @@ const Order = () => {
           quantity: Number(item.quantity),
           size: item.selectedWeight,
           flavor: item.selectedFlavor,
+          eggType: item.selectedEggType || "",
           price: item.unitPrice,
         })),
         deliveryAddress: {
@@ -793,7 +794,6 @@ const Order = () => {
                     onBack={() => setStep(1)}
                   />
                   <OrderAddressStep
-                    formData={formData}
                     savedAddresses={savedAddresses}
                     addressMode={addressMode}
                     editingAddressId={editingAddressId}
@@ -809,7 +809,6 @@ const Order = () => {
                     hasConfiguredStoreLocation={hasConfiguredStoreLocation}
                     loading={loading}
                     error={error}
-                    onChange={handleChange}
                     onSavedAddressSelect={handleSavedAddressSelect}
                     onStartNewAddress={handleStartNewAddress}
                     onEditSavedAddress={handleEditSavedAddress}
