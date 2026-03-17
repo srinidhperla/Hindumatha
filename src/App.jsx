@@ -1,5 +1,5 @@
 ﻿import React, { Suspense, lazy, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
@@ -11,6 +11,7 @@ import AdminRoute from "./admin/components/routes/AdminRoute";
 import { getProfile } from "./features/auth/authSlice";
 import { fetchSiteContent } from "./features/site/siteSlice";
 import { fetchProducts } from "./features/products/productSlice";
+import { syncCartProducts } from "./features/cart/cartSlice";
 
 const Home = lazy(() => import("./user/pages/Home"));
 const Menu = lazy(() => import("./user/pages/shop/Menu"));
@@ -31,6 +32,31 @@ const RouteFallback = () => (
     Loading page...
   </div>
 );
+
+const RouteViewportReset = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const previousMode = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    return () => {
+      window.history.scrollRestoration = previousMode;
+    };
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+  }, [location.pathname, location.search]);
+
+  return null;
+};
 
 function App() {
   const dispatch = useDispatch();
@@ -62,8 +88,15 @@ function App() {
     }
   }, [dispatch, productsLoaded, productsLoading]);
 
+  useEffect(() => {
+    if (productsLoaded) {
+      dispatch(syncCartProducts(products));
+    }
+  }, [dispatch, products, productsLoaded]);
+
   return (
     <AdminOrderAlertsProvider>
+      <RouteViewportReset />
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <UserToast />

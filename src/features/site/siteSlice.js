@@ -28,6 +28,10 @@ const defaultSiteContent = {
   },
   deliverySettings: {
     enabled: true,
+    distanceFeeEnabled: true,
+    pricePerKm: 20,
+    freeDeliveryEnabled: true,
+    freeDeliveryMinAmount: 1500,
     maxDeliveryRadiusKm: 3,
     storeLocation: {
       lat: 0,

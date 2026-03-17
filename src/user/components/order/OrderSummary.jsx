@@ -1,5 +1,14 @@
 import React from "react";
 
+const getSafeUnitPrice = (item) =>
+  Number(
+    item.unitPrice ??
+      item.price ??
+      (Number(item.quantity || 0) > 0
+        ? Number(item.lineTotal || 0) / Number(item.quantity || 1)
+        : 0),
+  );
+
 const OrderSummary = ({
   checkoutItems,
   totalUnits,
@@ -23,14 +32,27 @@ const OrderSummary = ({
           <div className="commerce-summary-top">
             <div>
               <p className="commerce-summary-name">{item.product.name}</p>
-              <p className="commerce-summary-copy">
-                {item.selectedWeight}
-                {item.selectedEggType
-                  ? ` • ${item.selectedEggType === "egg" ? "Egg" : "Eggless"}`
-                  : ""}
-                {item.selectedFlavor ? ` • ${item.selectedFlavor}` : ""} • Qty{" "}
-                {item.quantity}
-              </p>
+              <div className="commerce-meta-chips mt-2">
+                <span className="commerce-chip commerce-chip--muted">
+                  {`${item.portionTypeMeta?.singular || "Option"}: ${item.selectedWeight}`}
+                </span>
+                {item.selectedEggType && (
+                  <span className="commerce-chip commerce-chip--muted">
+                    {`Type: ${item.selectedEggType === "egg" ? "Egg" : "Eggless"}`}
+                  </span>
+                )}
+                {item.selectedFlavor && (
+                  <span className="commerce-chip commerce-chip--muted">
+                    {`Flavor: ${item.selectedFlavor}`}
+                  </span>
+                )}
+                <span className="commerce-chip commerce-chip--muted">
+                  {`Qty: ${item.quantity}`}
+                </span>
+                <span className="commerce-chip commerce-chip--success">
+                  {`Price: Rs.${getSafeUnitPrice(item).toLocaleString("en-IN")}`}
+                </span>
+              </div>
             </div>
             <p className="commerce-summary-price">
               ₹{item.lineTotal.toLocaleString("en-IN")}

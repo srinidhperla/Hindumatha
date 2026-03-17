@@ -2,6 +2,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { clearCart } from "../../../features/cart/cartSlice";
+import { fetchProducts } from "../../../features/products/productSlice";
 import { createOrder } from "../../../features/orders/orderSlice";
 import { showToast } from "../../../features/uiSlice";
 import { updateProfile } from "../../../features/auth/authSlice";
@@ -11,6 +12,10 @@ import {
   normalizeCouponCode,
 } from "../../../utils/orderPricing";
 import {
+  DAY_LABELS,
+  getAvailableSlotsForDate,
+  getDeliveryDayKey,
+  getLeadTimeMinutes,
   haversineDistance,
   isWithinDeliveryRadius,
   normalizeDeliverySettings,
@@ -28,6 +33,91 @@ import OrderSummary from "../../components/order/OrderSummary";
 
 const stepLabels = ["Review", "Checkout"];
 const ENFORCED_DELIVERY_RADIUS_KM = 4;
+const scrollToPageTop = () => {
+  window.scrollTo({ top: 0, behavior: "auto" });
+};
+
+const toMinutes = (timeValue = "") => {
+  const [hours, minutes] = String(timeValue)
+    .split(":")
+    .map((value) => Number(value) || 0);
+  return hours * 60 + minutes;
+};
+
+const isTimeInsideAnySlotWindow = (timeValue, slots = []) => {
+  if (!timeValue) {
+    return false;
+  }
+
+  const candidateMinutes = toMinutes(String(timeValue).slice(0, 5));
+  return slots.some((slot) => {
+    const startMinutes = toMinutes(slot.startTime);
+    const endMinutes = toMinutes(slot.endTime);
+    return candidateMinutes >= startMinutes && candidateMinutes < endMinutes;
+  });
+};
+
+const toLocalDateKey = (dateValue = new Date()) => {
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, "0");
+  const day = String(dateValue.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatDisplayTime = (timeValue = "00:00") => {
+  const [hours, minutes] = String(timeValue)
+    .split(":")
+    .map((value) => Number(value) || 0);
+  const dateValue = new Date();
+  dateValue.setHours(hours, minutes, 0, 0);
+  return dateValue.toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const getDeliveryNowReason = (normalizedDeliverySettings, now = new Date()) => {
+  if (!normalizedDeliverySettings?.enabled) {
+    return "Delivery is currently turned off.";
+  }
+
+  if (normalizedDeliverySettings?.isPaused) {
+    return `Delivery is temporarily paused until ${new Date(normalizedDeliverySettings.pauseUntil).toLocaleString("en-IN")}.`;
+  }
+
+  const todayDateKey = toLocalDateKey(now);
+  const todayDayKey = getDeliveryDayKey(todayDateKey);
+  const daySchedule = normalizedDeliverySettings?.weeklySchedule?.[todayDayKey];
+
+  if (!daySchedule?.isOpen) {
+    return `Delivery is closed on ${DAY_LABELS[todayDayKey]}.`;
+  }
+
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const slots = (daySchedule.slots || [])
+    .map((slot) => ({
+      ...slot,
+      startMinutes: toMinutes(slot.startTime),
+      endMinutes: toMinutes(slot.endTime),
+    }))
+    .filter((slot) => slot.endMinutes > slot.startMinutes)
+    .sort((left, right) => left.startMinutes - right.startMinutes);
+
+  const inActiveWindow = slots.some(
+    (slot) => nowMinutes >= slot.startMinutes && nowMinutes < slot.endMinutes,
+  );
+
+  if (inActiveWindow) {
+    return "";
+  }
+
+  const nextWindow = slots.find((slot) => slot.startMinutes > nowMinutes);
+  if (nextWindow) {
+    return `Delivery opens today at ${formatDisplayTime(nextWindow.startTime)}.`;
+  }
+
+  return "Delivery is closed for today. Please schedule delivery.";
+};
 
 const Order = () => {
   const dispatch = useDispatch();
@@ -41,7 +131,7 @@ const Order = () => {
   const [step, setStep] = useState(1);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    deliveryMode: "now",
+    deliveryMode: "",
     deliveryDateTime: "",
     paymentMethod: "cash",
     specialInstructions: "",
@@ -52,6 +142,7 @@ const Order = () => {
     pincode: "",
     couponCode: normalizeCouponCode(location.state?.couponCode || ""),
   });
+  const [scheduledDeliveryDate, setScheduledDeliveryDate] = useState("");
   const [savedAddresses, setSavedAddresses] = useState(() =>
     normalizeUserSavedAddresses(user),
   );
@@ -66,6 +157,36 @@ const Order = () => {
     longitude: null,
   });
   const [addressQuery, setAddressQuery] = useState("");
+
+  useEffect(() => {
+    scrollToPageTop();
+    dispatch(fetchProducts());
+  }, [dispatch]);
+
+  useEffect(() => {
+    scrollToPageTop();
+  }, [step]);
+
+  useEffect(() => {
+    if (orderSuccess) {
+      scrollToPageTop();
+    }
+  }, [orderSuccess]);
+
+  useEffect(() => {
+    if (formData.deliveryMode !== "scheduled") {
+      return;
+    }
+
+    if (!scheduledDeliveryDate && formData.deliveryDateTime.includes("T")) {
+      setScheduledDeliveryDate(formData.deliveryDateTime.split("T")[0]);
+    }
+  }, [formData.deliveryDateTime, formData.deliveryMode, scheduledDeliveryDate]);
+
+  const handleStepChange = (nextStep) => {
+    setStep(nextStep);
+    scrollToPageTop();
+  };
 
   const checkoutItems = useMemo(
     () => items.map((item) => getResolvedCheckoutItem(item)),
@@ -84,20 +205,63 @@ const Order = () => {
     () => normalizeDeliverySettings(deliverySettings),
     [deliverySettings],
   );
-  const pricing = calculateOrderPricing({
-    subtotal,
-    couponCode: formData.couponCode,
-    coupons: availableCoupons,
-  });
   const minimumScheduleDateTime = useMemo(() => {
-    const prepMinutes = Number(
-      normalizedDeliverySettings.prepTimeMinutes || 45,
-    );
-    const nextTime = new Date(Date.now() + prepMinutes * 60 * 1000);
+    const leadMinutes = getLeadTimeMinutes(normalizedDeliverySettings);
+    const nextTime = new Date(Date.now() + leadMinutes * 60 * 1000);
     const offset = nextTime.getTimezoneOffset();
     const localDate = new Date(nextTime.getTime() - offset * 60 * 1000);
     return localDate.toISOString().slice(0, 16);
-  }, [normalizedDeliverySettings.prepTimeMinutes]);
+  }, [normalizedDeliverySettings]);
+  const minimumScheduleDate = minimumScheduleDateTime.slice(0, 10);
+  const scheduledDate = scheduledDeliveryDate;
+  const scheduledSlotStart = formData.deliveryDateTime
+    ? (formData.deliveryDateTime.split("T")[1] || "").slice(0, 5)
+    : "";
+  const availableSlotsForSelectedDate = useMemo(
+    () =>
+      scheduledDate || normalizedDeliverySettings.enabled === false
+        ? getAvailableSlotsForDate(
+            normalizedDeliverySettings,
+            scheduledDate,
+            new Date(),
+          )
+        : { isAvailable: true, reason: "", slots: [] },
+    [normalizedDeliverySettings, scheduledDate],
+  );
+  const availableScheduledSlots = availableSlotsForSelectedDate.slots || [];
+  const scheduleAvailabilityReason = !availableSlotsForSelectedDate.isAvailable
+    ? availableSlotsForSelectedDate.reason
+    : "";
+  const nowAvailabilityReason = useMemo(
+    () =>
+      formData.deliveryMode === "now"
+        ? getDeliveryNowReason(normalizedDeliverySettings, new Date())
+        : "",
+    [formData.deliveryMode, normalizedDeliverySettings],
+  );
+
+  useEffect(() => {
+    if (formData.deliveryMode !== "scheduled" || !scheduledDate) {
+      return;
+    }
+
+    const isSelectedSlotStillValid = isTimeInsideAnySlotWindow(
+      scheduledSlotStart,
+      availableScheduledSlots,
+    );
+
+    if (!isSelectedSlotStillValid && scheduledSlotStart) {
+      setFormData((prev) => ({
+        ...prev,
+        deliveryDateTime: "",
+      }));
+    }
+  }, [
+    availableScheduledSlots,
+    formData.deliveryMode,
+    scheduledDate,
+    scheduledSlotStart,
+  ]);
   const pauseUntilLabel = normalizedDeliverySettings.pauseUntil
     ? new Date(normalizedDeliverySettings.pauseUntil).toLocaleString("en-IN")
     : "";
@@ -121,6 +285,16 @@ const Order = () => {
           Number(addressMeta.longitude),
         )
       : null;
+  const estimatedDeliveryDistanceKm = Number.isFinite(distanceFromStoreKm)
+    ? distanceFromStoreKm
+    : 0;
+  const pricing = calculateOrderPricing({
+    subtotal,
+    couponCode: formData.couponCode,
+    coupons: availableCoupons,
+    deliveryDistanceKm: estimatedDeliveryDistanceKm,
+    deliverySettings: normalizedDeliverySettings,
+  });
   const isAddressServiceable =
     hasConfiguredStoreLocation &&
     isWithinDeliveryRadius(
@@ -250,6 +424,27 @@ const Order = () => {
         ...prev,
         deliveryMode: value,
         deliveryDateTime: value === "scheduled" ? prev.deliveryDateTime : "",
+      }));
+      if (value !== "scheduled") {
+        setScheduledDeliveryDate("");
+      }
+      return;
+    }
+
+    if (name === "deliveryDate") {
+      setScheduledDeliveryDate(value || "");
+      setFormData((prev) => ({
+        ...prev,
+        deliveryDateTime: "",
+      }));
+      return;
+    }
+
+    if (name === "deliverySlotTime") {
+      setFormData((prev) => ({
+        ...prev,
+        deliveryDateTime:
+          scheduledDate && value ? `${scheduledDate}T${value}` : "",
       }));
       return;
     }
@@ -431,10 +626,49 @@ const Order = () => {
     if (!checkoutItems.length || invalidItems.length > 0 || pricing.couponError)
       return;
 
+    if (!formData.deliveryMode) {
+      dispatch(
+        showToast({
+          message: "Please choose Deliver Now or Schedule Delivery.",
+          type: "error",
+        }),
+      );
+      return;
+    }
+
     if (formData.deliveryMode === "scheduled" && !formData.deliveryDateTime) {
       dispatch(
         showToast({
-          message: "Please choose exact delivery date and time.",
+          message: "Please choose delivery date and an available time slot.",
+          type: "error",
+        }),
+      );
+      return;
+    }
+
+    if (
+      formData.deliveryMode === "scheduled" &&
+      (!scheduledDate ||
+        !scheduledSlotStart ||
+        !isTimeInsideAnySlotWindow(scheduledSlotStart, availableScheduledSlots))
+    ) {
+      dispatch(
+        showToast({
+          message:
+            scheduleAvailabilityReason ||
+            "Selected schedule is not available. Please choose a valid slot.",
+          type: "error",
+        }),
+      );
+      return;
+    }
+
+    if (formData.deliveryMode === "now" && nowAvailabilityReason) {
+      dispatch(
+        showToast({
+          message:
+            nowAvailabilityReason ||
+            "Delivery is unavailable right now. Please schedule a time.",
           type: "error",
         }),
       );
@@ -630,6 +864,7 @@ const Order = () => {
           CHECKOUT_STORAGE_KEY,
           JSON.stringify(pendingCheckout),
         );
+        scrollToPageTop();
         navigate("/payment", { state: pendingCheckout });
         return;
       }
@@ -786,7 +1021,12 @@ const Order = () => {
                   <OrderDeliveryStep
                     formData={formData}
                     normalizedDeliverySettings={normalizedDeliverySettings}
-                    minimumScheduleDateTime={minimumScheduleDateTime}
+                    minimumScheduleDate={minimumScheduleDate}
+                    scheduledDate={scheduledDate}
+                    scheduledSlotStart={scheduledSlotStart}
+                    availableScheduledSlots={availableScheduledSlots}
+                    scheduleAvailabilityReason={scheduleAvailabilityReason}
+                    nowAvailabilityReason={nowAvailabilityReason}
                     pauseUntilLabel={pauseUntilLabel}
                     pricing={pricing}
                     availableCoupons={availableCoupons}
@@ -827,8 +1067,8 @@ const Order = () => {
               pricing={pricing}
               step={step}
               invalidItems={invalidItems}
-              onNext={() => setStep(2)}
-              onBack={() => setStep(1)}
+              onNext={() => handleStepChange(2)}
+              onBack={() => handleStepChange(1)}
               loading={loading}
               isAddressVerified={isAddressVerified}
               isAddressServiceable={isAddressServiceable}

@@ -8,6 +8,7 @@ import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  getPortionTypeMeta,
   getOrderableFlavors,
   getOrderableWeights,
   isEggTypeAvailable,
@@ -24,6 +25,7 @@ const Menu = () => {
   const [quickAddWeight, setQuickAddWeight] = useState("");
   const [quickAddEggType, setQuickAddEggType] = useState("");
   const [quickAddQuantity, setQuickAddQuantity] = useState(1);
+  const [imagePreview, setImagePreview] = useState(null);
   const { products, loading } = useSelector((state) => state.products);
   const { businessInfo, deliverySettings } = useSelector((state) => state.site);
 
@@ -40,6 +42,7 @@ const Menu = () => {
         ...product,
         primaryImage: product.images?.[0] || product.image,
         categoryLabel: formatCategoryLabel(product.category),
+        portionTypeMeta: getPortionTypeMeta(product.portionType),
         availableFlavors: getAvailableFlavorOptions(product),
         availableWeights: getAvailableWeightOptions(product),
         orderableFlavors: getOrderableFlavors(product),
@@ -64,6 +67,8 @@ const Menu = () => {
         : null,
     [quickAddProductId, normalizedProducts],
   );
+  const quickAddPortionMeta =
+    quickAddProduct?.portionTypeMeta || getPortionTypeMeta("weight");
 
   const categories = [
     "All",
@@ -120,6 +125,17 @@ const Menu = () => {
     setQuickAddWeight("");
     setQuickAddEggType("");
     setQuickAddQuantity(1);
+  };
+
+  const openImagePreview = (product) => {
+    setImagePreview({
+      src: product.primaryImage,
+      name: product.name,
+    });
+  };
+
+  const closeImagePreview = () => {
+    setImagePreview(null);
   };
 
   // Dynamically compute available weights based on selected flavor + egg type
@@ -245,9 +261,10 @@ const Menu = () => {
             </div>
             <div className="menu-featured-grid custom-scrollbar">
               {featuredProducts.map((product) => (
-                <Link
+                <button
                   key={product._id}
-                  to={`/products/${product._id}`}
+                  type="button"
+                  onClick={() => openImagePreview(product)}
                   className="menu-featured-card"
                 >
                   <img
@@ -265,7 +282,7 @@ const Menu = () => {
                       {Number(product.price || 0).toLocaleString("en-IN")}
                     </p>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
           </section>
@@ -323,12 +340,13 @@ const Menu = () => {
                       {/* Text side (left on mobile) */}
                       <div className="menu-product-body">
                         <div className="menu-product-header">
-                          <Link
-                            to={`/products/${product._id}`}
+                          <button
+                            type="button"
+                            onClick={() => openImagePreview(product)}
                             className="menu-product-title"
                           >
                             {product.name}
-                          </Link>
+                          </button>
                           <p className="menu-product-price">
                             ₹
                             {Number(product.price || 0).toLocaleString("en-IN")}
@@ -362,35 +380,46 @@ const Menu = () => {
                             product.orderableFlavors.length > 1) && (
                             <span>•</span>
                           )}
-                          <span>{product.orderableWeights.length} sizes</span>
+                          <span>
+                            {product.orderableWeights.length}{" "}
+                            {product.portionTypeMeta.heading.toLowerCase()}
+                          </span>
                         </div>
                       </div>
-                      {/* Image side (right on mobile) + ADD button */}
-                      <div className="menu-product-image-wrap">
-                        <Link to={`/products/${product._id}`}>
-                          <img
-                            src={product.primaryImage}
-                            alt={product.name}
-                            className="menu-product-image"
-                          />
-                        </Link>
-                        {!product.canOrder && (
-                          <span className="menu-product-badge-stock">
-                            Out of stock
-                          </span>
-                        )}
-                        {/* ADD overlaid at bottom-center of image */}
-                        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2">
+                      {/* Image side (right on mobile) + actions */}
+                      <div className="menu-product-side">
+                        <div className="menu-product-image-wrap">
+                          <button
+                            type="button"
+                            onClick={() => openImagePreview(product)}
+                            className="block h-full w-full"
+                          >
+                            <img
+                              src={product.primaryImage}
+                              alt={product.name}
+                              className="menu-product-image"
+                            />
+                          </button>
+                          {!product.canOrder && (
+                            <span className="menu-product-badge-stock">
+                              Out of stock
+                            </span>
+                          )}
+                        </div>
+                        <div className="menu-product-actions-row">
+                          <Link
+                            to="/cart"
+                            className="menu-product-view-cart-btn"
+                          >
+                            View Cart
+                          </Link>
                           <button
                             type="button"
                             disabled={!product.canOrder}
                             onClick={() => openQuickAdd(product)}
                             className="menu-product-add-btn"
                           >
-                            ADD{" "}
-                            <span className="ml-1 text-[15px] leading-none">
-                              +
-                            </span>
+                            Add +
                           </button>
                         </div>
                       </div>
@@ -419,6 +448,30 @@ const Menu = () => {
           </Link>
         </div>
 
+        {imagePreview && (
+          <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                closeImagePreview();
+              }
+            }}
+          >
+            <button
+              type="button"
+              onClick={closeImagePreview}
+              className="absolute right-4 top-4 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20"
+            >
+              Close
+            </button>
+            <img
+              src={imagePreview.src}
+              alt={imagePreview.name}
+              className="max-h-[88vh] w-auto max-w-[96vw] rounded-xl object-contain shadow-2xl"
+            />
+          </div>
+        )}
+
         {quickAddProduct && (
           <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-primary-950/60 backdrop-blur-sm animate-fadeIn"
@@ -440,7 +493,8 @@ const Menu = () => {
                     Add {quickAddProduct.name}
                   </h3>
                   <p className="mt-1.5 sm:mt-2 text-sm leading-6 text-primary-500">
-                    Choose the required flavor, weight, and quantity before
+                    Choose the required flavor,
+                    {` ${quickAddPortionMeta.singular},`} and quantity before
                     adding this product to cart.
                   </p>
                 </div>
@@ -526,14 +580,16 @@ const Menu = () => {
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-medium text-primary-700">
-                    Weight
+                    {quickAddPortionMeta.heading}
                   </span>
                   <select
                     value={quickAddWeight}
                     onChange={(event) => setQuickAddWeight(event.target.value)}
                     className="w-full rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-sm text-primary-800 outline-none transition focus:border-primary-600 focus:bg-white focus:ring-1 focus:ring-primary-600"
                   >
-                    <option value="">Select weight</option>
+                    <option value="">
+                      {`Select ${quickAddPortionMeta.singular}`}
+                    </option>
                     {quickAddWeights.map((weight) => (
                       <option key={weight.label} value={weight.label}>
                         {weight.label}

@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  getVariantPrice,
 } from "../../utils/productOptions";
 
 const CART_STORAGE_KEY = "cartItems";
@@ -71,10 +72,46 @@ const createCartIdentity = (
 ) =>
   `${productId}::${selectedFlavor || "none"}::${selectedWeight || "none"}::${selectedEggType || "none"}`;
 
+const createUnavailableSnapshot = (existingProduct = {}) => ({
+  ...existingProduct,
+  isAvailable: false,
+});
+
+const resolveComparableSelection = (item, productSnapshot) => {
+  const selectedFlavor = resolveDefaultFlavor(
+    productSnapshot,
+    item?.selectedFlavor || "",
+  );
+  const selectedEggType = item?.selectedEggType || "";
+  const selectedWeight = resolveDefaultWeight(
+    productSnapshot,
+    item?.selectedWeight || "",
+    selectedFlavor,
+    selectedEggType,
+  );
+
+  return {
+    flavorName: selectedFlavor,
+    eggType: selectedEggType,
+    weightLabel: selectedWeight,
+  };
+};
+
+const resolveComparableUnitPrice = (item, productSnapshot) => {
+  if (!productSnapshot) {
+    return Number(item?.product?.price || 0);
+  }
+
+  const selection = resolveComparableSelection(item, productSnapshot);
+  return Number(getVariantPrice(productSnapshot, selection) || 0);
+};
+
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
     items: loadCartItems(),
+    priceSyncNoticeVisible: false,
+    priceSyncUpdatedItemsCount: 0,
   },
   reducers: {
     addToCart: (state, action) => {
@@ -166,6 +203,57 @@ const cartSlice = createSlice({
     },
     clearCart: (state) => {
       state.items = [];
+      state.priceSyncNoticeVisible = false;
+      state.priceSyncUpdatedItemsCount = 0;
+      persistCartItems(state.items);
+    },
+    dismissPriceSyncNotice: (state) => {
+      state.priceSyncNoticeVisible = false;
+      state.priceSyncUpdatedItemsCount = 0;
+    },
+    syncCartProducts: (state, action) => {
+      const productCatalog = Array.isArray(action.payload)
+        ? action.payload
+        : [];
+      const productLookup = productCatalog.reduce((accumulator, product) => {
+        if (product?._id) {
+          accumulator[product._id] = product;
+        }
+        return accumulator;
+      }, {});
+
+      let priceSyncUpdatedItemsCount = 0;
+
+      state.items = state.items.map((item) => {
+        const productId = item?.product?._id;
+        if (!productId) {
+          return item;
+        }
+
+        const latestProduct = productLookup[productId];
+        const nextProduct =
+          latestProduct || createUnavailableSnapshot(item.product);
+        const previousUnitPrice = resolveComparableUnitPrice(
+          item,
+          item.product,
+        );
+        const nextUnitPrice = resolveComparableUnitPrice(item, nextProduct);
+
+        if (Math.abs(previousUnitPrice - nextUnitPrice) > 0.5) {
+          priceSyncUpdatedItemsCount += 1;
+        }
+
+        return {
+          ...item,
+          product: nextProduct,
+        };
+      });
+
+      if (priceSyncUpdatedItemsCount > 0) {
+        state.priceSyncNoticeVisible = true;
+        state.priceSyncUpdatedItemsCount = priceSyncUpdatedItemsCount;
+      }
+
       persistCartItems(state.items);
     },
   },
@@ -177,5 +265,7 @@ export const {
   updateCartItemOptions,
   removeFromCart,
   clearCart,
+  dismissPriceSyncNotice,
+  syncCartProducts,
 } = cartSlice.actions;
 export default cartSlice.reducer;

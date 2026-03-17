@@ -10,6 +10,9 @@ import {
 import { showToast } from "../../../features/uiSlice";
 
 const CHECKOUT_STORAGE_KEY = "bakeryPendingCheckout";
+const scrollToPageTop = () => {
+  window.scrollTo({ top: 0, behavior: "auto" });
+};
 
 const loadRazorpayScript = () => {
   if (window.Razorpay) {
@@ -38,6 +41,15 @@ const getPendingCheckout = (locationState) => {
   }
 };
 
+const getSafePaymentUnitPrice = (item) =>
+  Number(
+    item.price ??
+      item.unitPrice ??
+      (Number(item.quantity || 0) > 0
+        ? Number(item.lineTotal || 0) / Number(item.quantity || 1)
+        : 0),
+  );
+
 const Payment = () => {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -50,11 +62,37 @@ const Payment = () => {
   const [isLaunching, setIsLaunching] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
+  const deliveryDateTimeValue = checkoutData?.orderData?.deliveryDateTime
+    ? new Date(checkoutData.orderData.deliveryDateTime)
+    : null;
+  const hasValidDeliveryDateTime =
+    deliveryDateTimeValue instanceof Date &&
+    !Number.isNaN(deliveryDateTimeValue.getTime());
+  const deliverySummaryLabel =
+    checkoutData?.orderData?.deliveryMode === "scheduled" &&
+    hasValidDeliveryDateTime
+      ? `${deliveryDateTimeValue.toLocaleDateString("en-IN")} | ${deliveryDateTimeValue.toLocaleTimeString(
+          "en-IN",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          },
+        )}`
+      : "ASAP";
+
   useEffect(() => {
+    scrollToPageTop();
     if (!checkoutData) {
       navigate("/order", { replace: true });
     }
   }, [checkoutData, navigate]);
+
+  useEffect(() => {
+    if (isPaid) {
+      scrollToPageTop();
+    }
+  }, [isPaid]);
 
   useEffect(() => {
     return () => {
@@ -92,8 +130,8 @@ const Payment = () => {
           contact: checkoutData.customer?.phone || user?.phone || "",
         },
         notes: {
-          deliveryDate: checkoutData.orderData.deliveryDate,
-          deliveryTime: checkoutData.orderData.deliveryTime,
+          deliveryMode: checkoutData.orderData.deliveryMode || "now",
+          deliveryDateTime: checkoutData.orderData.deliveryDateTime || "",
         },
         theme: {
           color: "#db2777",
@@ -220,8 +258,7 @@ const Payment = () => {
               <h2 className="commerce-section-title">Payment details</h2>
               <p className="commerce-section-copy">
                 Method: {checkoutData.orderData.paymentMethod.toUpperCase()} |
-                Delivery: {checkoutData.orderData.deliveryDate} |{" "}
-                {checkoutData.orderData.deliveryTime}
+                Delivery: {deliverySummaryLabel}
               </p>
 
               <div className="commerce-summary-items">
@@ -235,14 +272,27 @@ const Payment = () => {
                         <p className="commerce-summary-name">
                           Item {index + 1}
                         </p>
-                        <p className="commerce-summary-copy">
-                          {item.size}
-                          {item.eggType
-                            ? ` | ${item.eggType === "egg" ? "Egg" : "Eggless"}`
-                            : ""}
-                          {item.flavor ? ` | ${item.flavor}` : ""} | Qty{" "}
-                          {item.quantity}
-                        </p>
+                        <div className="commerce-meta-chips mt-2">
+                          <span className="commerce-chip commerce-chip--muted">
+                            {`Option: ${item.size}`}
+                          </span>
+                          {item.eggType && (
+                            <span className="commerce-chip commerce-chip--muted">
+                              {`Type: ${item.eggType === "egg" ? "Egg" : "Eggless"}`}
+                            </span>
+                          )}
+                          {item.flavor && (
+                            <span className="commerce-chip commerce-chip--muted">
+                              {`Flavor: ${item.flavor}`}
+                            </span>
+                          )}
+                          <span className="commerce-chip commerce-chip--muted">
+                            {`Qty: ${item.quantity}`}
+                          </span>
+                          <span className="commerce-chip commerce-chip--success">
+                            {`Price: Rs.${getSafePaymentUnitPrice(item).toLocaleString("en-IN")}`}
+                          </span>
+                        </div>
                       </div>
                       <p className="commerce-summary-price">
                         Rs.

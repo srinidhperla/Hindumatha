@@ -11,6 +11,7 @@ import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  getPortionTypeMeta,
   getVariantPrice,
   isEggTypeAvailable,
   isProductPurchasable,
@@ -45,6 +46,7 @@ const ProductDetails = () => {
     return {
       ...product,
       categoryLabel: formatCategoryLabel(product.category),
+      portionTypeMeta: getPortionTypeMeta(product.portionType),
       availableFlavors,
       availableWeights,
       canOrder: isProductPurchasable(product),
@@ -346,7 +348,9 @@ const ProductDetails = () => {
               )}
 
               <label className="block">
-                <span className="product-field-label">Weight</span>
+                <span className="product-field-label">
+                  {normalizedProduct.portionTypeMeta.heading}
+                </span>
                 <select
                   value={selectedWeight}
                   onChange={(event) => setSelectedWeight(event.target.value)}

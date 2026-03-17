@@ -4,16 +4,18 @@ import {
   ActionButton,
   StatusChip,
   SurfaceCard,
+  Toggle,
 } from "../../components/ui/Primitives";
 import {
   createDefaultSlot,
   DAY_KEYS,
   DAY_LABELS,
-  getPauseUntilFromDuration,
   normalizeDeliverySettings,
 } from "../../utils/deliverySettings";
 import { updateSiteSettings } from "../../features/site/siteSlice";
 import { getErrorMessage } from "./adminShared";
+
+const EMPTY_PAUSE_TIME_PARTS = { hour: "", minute: "", period: "" };
 
 const formatTimeRangeLabel = (startTime, endTime) => {
   const formatTime = (value) => {
@@ -47,9 +49,23 @@ const toTwelveHourParts = (value) => {
 };
 
 const toTwentyFourHour = (hour12Value, minuteValue, periodValue) => {
-  const safeHour12 = Math.min(12, Math.max(1, Number(hour12Value) || 12));
-  const safeMinute = Math.min(59, Math.max(0, Number(minuteValue) || 0));
-  const normalizedPeriod = periodValue === "PM" ? "PM" : "AM";
+  if (!hour12Value || !minuteValue || !periodValue) {
+    return "";
+  }
+
+  const safeHour12 = Number(hour12Value);
+  const safeMinute = Number(minuteValue);
+  if (!Number.isFinite(safeHour12) || safeHour12 < 1 || safeHour12 > 12) {
+    return "";
+  }
+  if (!Number.isFinite(safeMinute) || safeMinute < 0 || safeMinute > 59) {
+    return "";
+  }
+
+  const normalizedPeriod = periodValue;
+  if (normalizedPeriod !== "AM" && normalizedPeriod !== "PM") {
+    return "";
+  }
 
   let hour24 = safeHour12 % 12;
   if (normalizedPeriod === "PM") {
@@ -74,6 +90,9 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
     normalizeDeliverySettings(savedDeliverySettings),
   );
   const [activeDeliveryDay, setActiveDeliveryDay] = useState(DAY_KEYS[0]);
+  const [pauseDateInput, setPauseDateInput] = useState("");
+  const [pauseTimeParts, setPauseTimeParts] = useState(EMPTY_PAUSE_TIME_PARTS);
+  const [pauseUnitSelection, setPauseUnitSelection] = useState("");
 
   const normalizedEditorDeliverySettings = useMemo(
     () => normalizeDeliverySettings(deliverySettings),
@@ -108,9 +127,10 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
     setDeliverySettings((currentValue) => ({
       ...currentValue,
       [name]:
-        name === "prepTimeMinutes" ||
         name === "advanceNoticeValue" ||
-        name === "pauseDurationValue"
+        name === "pauseDurationValue" ||
+        name === "pricePerKm" ||
+        name === "freeDeliveryMinAmount"
           ? Number(value) || 0
           : value,
     }));
@@ -120,6 +140,20 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
     setDeliverySettings((currentValue) => ({
       ...currentValue,
       enabled: event.target.checked,
+    }));
+  };
+
+  const handleDistanceFeeEnabledChange = (event) => {
+    setDeliverySettings((currentValue) => ({
+      ...currentValue,
+      distanceFeeEnabled: event.target.checked,
+    }));
+  };
+
+  const handleFreeDeliveryEnabledChange = (event) => {
+    setDeliverySettings((currentValue) => ({
+      ...currentValue,
+      freeDeliveryEnabled: event.target.checked,
     }));
   };
 
@@ -223,20 +257,53 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
   };
 
   const handlePauseDelivery = () => {
-    const pauseUntil = getPauseUntilFromDuration(
-      normalizedEditorDeliverySettings.pauseDurationValue,
-      normalizedEditorDeliverySettings.pauseDurationUnit,
+    const time24 = toTwentyFourHour(
+      pauseTimeParts.hour,
+      pauseTimeParts.minute,
+      pauseTimeParts.period,
     );
 
-    if (!pauseUntil) {
-      onToast("Enter a pause duration greater than 0.", "error");
+    if (!time24) {
+      onToast("Choose a valid pause resume time.", "error");
       return;
+    }
+
+    const [hours, minutes] = time24.split(":").map((item) => Number(item));
+    const now = new Date();
+    const pauseUntil = new Date(now);
+
+    if (normalizedEditorDeliverySettings.pauseDurationUnit === "days") {
+      if (!pauseDateInput) {
+        onToast("Choose a pause resume date.", "error");
+        return;
+      }
+      const pickedDate = new Date(pauseDateInput);
+      if (Number.isNaN(pickedDate.getTime())) {
+        onToast("Choose a valid pause resume date.", "error");
+        return;
+      }
+      pauseUntil.setFullYear(
+        pickedDate.getFullYear(),
+        pickedDate.getMonth(),
+        pickedDate.getDate(),
+      );
+    }
+
+    pauseUntil.setHours(hours, minutes, 0, 0);
+
+    if (pauseUntil <= now) {
+      if (normalizedEditorDeliverySettings.pauseDurationUnit === "hours") {
+        pauseUntil.setDate(pauseUntil.getDate() + 1);
+      } else {
+        onToast("Pause resume date and time should be in the future.", "error");
+        return;
+      }
     }
 
     setDeliverySettings((currentValue) => ({
       ...currentValue,
       enabled: true,
-      pauseUntil,
+      pauseUntil: pauseUntil.toISOString(),
     }));
     onToast("Delivery pause timer updated.");
   };
@@ -249,7 +316,10 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
     onToast("Delivery resumed.");
   };
 
-  const handleSaveDeliveryTiming = async () => {
+  const persistDeliverySettings = async ({
+    successMessage,
+    failureMessage,
+  }) => {
     try {
       const normalizedDelivery = normalizeDeliverySettings(deliverySettings);
       const flattenedTimeSlots = DAY_KEYS.flatMap((dayKey) =>
@@ -272,443 +342,618 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
           },
         }),
       ).unwrap();
-      onToast("Delivery timing saved successfully.");
+      onToast(successMessage);
     } catch (error) {
-      onToast(
-        getErrorMessage(error, "Failed to save delivery timing."),
-        "error",
-      );
+      onToast(getErrorMessage(error, failureMessage), "error");
     }
   };
 
+  const handleSaveDeliveryTiming = async () => {
+    await persistDeliverySettings({
+      successMessage: "Delivery timing saved successfully.",
+      failureMessage: "Failed to save delivery timing.",
+    });
+  };
+
+  const handleSaveDeliveryFee = async () => {
+    await persistDeliverySettings({
+      successMessage: "Delivery fee settings saved successfully.",
+      failureMessage: "Failed to save delivery fee settings.",
+    });
+  };
+
   return (
-    <SurfaceCard className="p-6">
-      <div className="overflow-hidden rounded-[28px] border border-orange-100 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_45%,#fdf2f8_100%)] p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">
-              Delivery Ops
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-              Delivery Timing
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Pause delivery means turn delivery off for a fixed number of hours
-              or days, then let it turn on automatically after that time ends.
-            </p>
-          </div>
-          <label className="inline-flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm lg:min-w-[260px]">
+    <div className="space-y-6">
+      <SurfaceCard className="p-6">
+        <div className="overflow-hidden rounded-[28px] border border-orange-100 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_45%,#fdf2f8_100%)] p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <span className="block text-sm font-semibold text-slate-900">
-                Accept delivery orders
-              </span>
-              <span className="mt-1 block text-xs text-slate-500">
-                Turn this off only when you want delivery stopped without an
-                auto-resume timer.
-              </span>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">
+                Delivery Ops
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+                Delivery Timing
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                Pause delivery means turn delivery off for a fixed number of
+                hours or days, then let it turn on automatically after that time
+                ends.
+              </p>
             </div>
-            <input
-              type="checkbox"
-              checked={normalizedEditorDeliverySettings.enabled !== false}
-              onChange={handleDeliveryEnabledChange}
-              className="h-5 w-5 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
-            />
-          </label>
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Status
-            </p>
-            <p
-              className={`mt-2 text-lg font-semibold ${normalizedEditorDeliverySettings.acceptingOrders ? "text-emerald-700" : "text-rose-700"}`}
-            >
-              {normalizedEditorDeliverySettings.acceptingOrders
-                ? "Live"
-                : normalizedEditorDeliverySettings.isPaused
-                  ? "Temporarily paused"
-                  : "Permanently off"}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Auto Resume
-            </p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
-              {normalizedEditorDeliverySettings.isPaused
-                ? pauseUntilLabel
-                : "Not scheduled"}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Prep Time
-            </p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
-              {normalizedEditorDeliverySettings.prepTimeMinutes || 0} mins
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <label className="block text-sm font-medium text-slate-700">
-              Pause delivery for
+            <label className="flex w-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between lg:min-w-[260px] lg:w-auto">
+              <div className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-slate-900">
+                  Accept delivery orders
+                </span>
+                <span className="mt-1 block text-xs text-slate-500">
+                  Turn this off only when you want delivery stopped without an
+                  auto-resume timer.
+                </span>
+              </div>
+              <Toggle
+                checked={normalizedEditorDeliverySettings.enabled !== false}
+                onClick={() =>
+                  handleDeliveryEnabledChange({
+                    target: {
+                      checked:
+                        normalizedEditorDeliverySettings.enabled === false,
+                    },
+                  })
+                }
+                label="toggle accepting delivery orders"
+              />
             </label>
-            <input
-              type="number"
-              min="0"
-              name="pauseDurationValue"
-              value={normalizedEditorDeliverySettings.pauseDurationValue}
-              onChange={handleDeliverySettingChange}
-              className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-            />
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <label className="block text-sm font-medium text-slate-700">
-              Pause unit
-            </label>
-            <select
-              name="pauseDurationUnit"
-              value={normalizedEditorDeliverySettings.pauseDurationUnit}
-              onChange={handleDeliverySettingChange}
-              className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-            >
-              <option value="hours">Hours</option>
-              <option value="days">Days</option>
-            </select>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <label className="block text-sm font-medium text-slate-700">
-              Prep time in minutes
-            </label>
-            <input
-              type="number"
-              min="0"
-              name="prepTimeMinutes"
-              value={normalizedEditorDeliverySettings.prepTimeMinutes}
-              onChange={handleDeliverySettingChange}
-              className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-            />
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-3">
-          <ActionButton
-            type="button"
-            onClick={handlePauseDelivery}
-            variant="soft"
-          >
-            Pause delivery now
-          </ActionButton>
-          <ActionButton
-            type="button"
-            onClick={handleResumeDelivery}
-            variant="success"
-          >
-            Resume delivery now
-          </ActionButton>
-          <div className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-            Open days: {openDeliveryDaysCount} / {DAY_KEYS.length}
-          </div>
-        </div>
-
-        <div className="mt-6 rounded-2xl border border-dashed border-orange-200 bg-white/80 px-4 py-3 text-sm text-slate-600">
-          Customers can only book dates and slots that match this schedule.
-          Pause delivery turns delivery off only until the pause timer finishes.
-        </div>
-
-        <div className="mt-6 grid gap-3 lg:grid-cols-7">
-          {DAY_KEYS.map((dayKey) => {
-            const daySchedule = normalizedEditorDeliverySettings
-              .weeklySchedule?.[dayKey] || {
-              isOpen: true,
-              slots: [createDefaultSlot()],
-            };
-            const isActive = activeDeliveryDay === dayKey;
-
-            return (
-              <button
-                key={dayKey}
-                type="button"
-                onClick={() => setActiveDeliveryDay(dayKey)}
-                className={`rounded-2xl border px-4 py-4 text-left transition ${
-                  isActive
-                    ? "border-slate-900 bg-slate-900 text-white shadow-lg"
-                    : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50"
-                }`}
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Status
+              </p>
+              <p
+                className={`mt-2 text-lg font-semibold ${normalizedEditorDeliverySettings.acceptingOrders ? "text-emerald-700" : "text-rose-700"}`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold">
-                    {DAY_LABELS[dayKey].slice(0, 3)}
-                  </span>
-                  <StatusChip
-                    tone={daySchedule.isOpen ? "success" : "neutral"}
-                    className={isActive ? "bg-white/15 text-white" : ""}
-                  >
-                    {daySchedule.isOpen ? "Open" : "Closed"}
-                  </StatusChip>
+                {normalizedEditorDeliverySettings.acceptingOrders
+                  ? "Live"
+                  : normalizedEditorDeliverySettings.isPaused
+                    ? "Temporarily paused"
+                    : "Permanently off"}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Auto Resume
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">
+                {normalizedEditorDeliverySettings.isPaused
+                  ? pauseUntilLabel
+                  : "Not scheduled"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <label className="block text-sm font-medium text-slate-700">
+                Pause resume time
+              </label>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <select
+                  value={pauseTimeParts.hour}
+                  onChange={(event) =>
+                    setPauseTimeParts((currentValue) => ({
+                      ...currentValue,
+                      hour: event.target.value,
+                    }))
+                  }
+                  className="block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                >
+                  {Array.from({ length: 12 }, (_, index) =>
+                    String(index + 1),
+                  ).map((hourValue) => (
+                    <option key={hourValue} value={hourValue}>
+                      {hourValue.padStart(2, "0")}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={pauseTimeParts.minute}
+                  onChange={(event) =>
+                    setPauseTimeParts((currentValue) => ({
+                      ...currentValue,
+                      minute: event.target.value,
+                    }))
+                  }
+                  className="block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                >
+                  {Array.from({ length: 60 }, (_, index) =>
+                    String(index).padStart(2, "0"),
+                  ).map((minuteValue) => (
+                    <option key={minuteValue} value={minuteValue}>
+                      {minuteValue}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={pauseTimeParts.period}
+                  onChange={(event) =>
+                    setPauseTimeParts((currentValue) => ({
+                      ...currentValue,
+                      period: event.target.value,
+                    }))
+                  }
+                  className="block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <label className="block text-sm font-medium text-slate-700">
+                Pause unit
+              </label>
+              <select
+                name="pauseDurationUnit"
+                value={normalizedEditorDeliverySettings.pauseDurationUnit}
+                onChange={handleDeliverySettingChange}
+                className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              >
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+              </select>
+              {normalizedEditorDeliverySettings.pauseDurationUnit ===
+                "days" && (
+                <div className="mt-3">
+                  <label className="block text-xs font-medium text-slate-600">
+                    Resume date
+                  </label>
+                  <input
+                    type="date"
+                    value={pauseDateInput}
+                    onChange={(event) => setPauseDateInput(event.target.value)}
+                    className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                  />
                 </div>
-                <p
-                  className={`mt-3 text-xs leading-5 ${
-                    isActive ? "text-slate-200" : "text-slate-500"
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <ActionButton
+              type="button"
+              onClick={handlePauseDelivery}
+              variant="soft"
+            >
+              Pause delivery now
+            </ActionButton>
+            <ActionButton
+              type="button"
+              onClick={handleResumeDelivery}
+              variant="success"
+            >
+              Resume delivery now
+            </ActionButton>
+            <div className="flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+              Open days: {openDeliveryDaysCount} / {DAY_KEYS.length}
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-dashed border-orange-200 bg-white/80 px-4 py-3 text-sm text-slate-600">
+            Customers can only book dates and slots that match this schedule.
+            Pause delivery turns delivery off only until the pause timer
+            finishes.
+          </div>
+
+          <div className="mt-6 grid gap-3 lg:grid-cols-7">
+            {DAY_KEYS.map((dayKey) => {
+              const daySchedule = normalizedEditorDeliverySettings
+                .weeklySchedule?.[dayKey] || {
+                isOpen: true,
+                slots: [createDefaultSlot()],
+              };
+              const isActive = activeDeliveryDay === dayKey;
+
+              return (
+                <button
+                  key={dayKey}
+                  type="button"
+                  onClick={() => setActiveDeliveryDay(dayKey)}
+                  className={`rounded-2xl border px-4 py-4 text-left transition ${
+                    isActive
+                      ? "border-slate-900 bg-slate-900 text-white shadow-lg"
+                      : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
-                  {daySchedule.isOpen
-                    ? daySchedule.slots
-                        .map((slot) =>
-                          formatTimeRangeLabel(slot.startTime, slot.endTime),
-                        )
-                        .join(" | ")
-                    : "No delivery slots"}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Editing
-              </p>
-              <h3 className="mt-1 text-xl font-semibold text-slate-900">
-                {DAY_LABELS[activeDeliveryDay]}
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Use one or more time windows for this day. Customers will see
-                only these slots at checkout.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={activeDaySchedule.isOpen}
-                  onChange={(event) =>
-                    handleDeliveryDayOpenChange(
-                      activeDeliveryDay,
-                      event.target.checked,
-                    )
-                  }
-                  className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
-                />
-                Accept delivery orders this day
-              </label>
-              <ActionButton
-                type="button"
-                onClick={() => handleCopyDayToAll(activeDeliveryDay)}
-                variant="secondary"
-              >
-                Copy this day to all
-              </ActionButton>
-              <ActionButton
-                type="button"
-                onClick={() => handleAddDeliverySlot(activeDeliveryDay)}
-                variant="soft"
-              >
-                Add slot
-              </ActionButton>
-            </div>
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-            {activeDaySchedule.slots.map((slot, slotIndex) => (
-              <span
-                key={`${activeDeliveryDay}-summary-${slotIndex}`}
-                className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700"
-              >
-                {formatTimeRangeLabel(slot.startTime, slot.endTime)}
-              </span>
-            ))}
-          </div>
-
-          <div className="mt-5 space-y-3">
-            {activeDaySchedule.slots.map((slot, slotIndex) =>
-              (() => {
-                const startParts = toTwelveHourParts(slot.startTime);
-                const endParts = toTwelveHourParts(slot.endTime);
-
-                return (
-                  <div
-                    key={`${activeDeliveryDay}-${slotIndex}`}
-                    className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]"
-                  >
-                    <label className="block">
-                      <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Start
-                      </span>
-                      <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
-                        <select
-                          value={startParts.hour}
-                          onChange={(event) =>
-                            handleDeliverySlotTimePartChange(
-                              activeDeliveryDay,
-                              slotIndex,
-                              "startTime",
-                              "hour",
-                              event.target.value,
-                              slot.startTime,
-                            )
-                          }
-                          className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-                        >
-                          {Array.from({ length: 12 }, (_, index) =>
-                            String(index + 1),
-                          ).map((hour) => (
-                            <option key={hour} value={hour}>
-                              {hour}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={startParts.minute}
-                          onChange={(event) =>
-                            handleDeliverySlotTimePartChange(
-                              activeDeliveryDay,
-                              slotIndex,
-                              "startTime",
-                              "minute",
-                              event.target.value,
-                              slot.startTime,
-                            )
-                          }
-                          className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-                        >
-                          {Array.from({ length: 60 }, (_, index) =>
-                            String(index).padStart(2, "0"),
-                          ).map((minute) => (
-                            <option key={minute} value={minute}>
-                              {minute}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={startParts.period}
-                          onChange={(event) =>
-                            handleDeliverySlotTimePartChange(
-                              activeDeliveryDay,
-                              slotIndex,
-                              "startTime",
-                              "period",
-                              event.target.value,
-                              slot.startTime,
-                            )
-                          }
-                          className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-                        >
-                          <option value="AM">AM</option>
-                          <option value="PM">PM</option>
-                        </select>
-                      </div>
-                    </label>
-                    <div className="flex items-end justify-center pb-3 text-sm font-semibold text-slate-400">
-                      to
-                    </div>
-                    <label className="block">
-                      <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        End
-                      </span>
-                      <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
-                        <select
-                          value={endParts.hour}
-                          onChange={(event) =>
-                            handleDeliverySlotTimePartChange(
-                              activeDeliveryDay,
-                              slotIndex,
-                              "endTime",
-                              "hour",
-                              event.target.value,
-                              slot.endTime,
-                            )
-                          }
-                          className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-                        >
-                          {Array.from({ length: 12 }, (_, index) =>
-                            String(index + 1),
-                          ).map((hour) => (
-                            <option key={hour} value={hour}>
-                              {hour}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={endParts.minute}
-                          onChange={(event) =>
-                            handleDeliverySlotTimePartChange(
-                              activeDeliveryDay,
-                              slotIndex,
-                              "endTime",
-                              "minute",
-                              event.target.value,
-                              slot.endTime,
-                            )
-                          }
-                          className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-                        >
-                          {Array.from({ length: 60 }, (_, index) =>
-                            String(index).padStart(2, "0"),
-                          ).map((minute) => (
-                            <option key={minute} value={minute}>
-                              {minute}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={endParts.period}
-                          onChange={(event) =>
-                            handleDeliverySlotTimePartChange(
-                              activeDeliveryDay,
-                              slotIndex,
-                              "endTime",
-                              "period",
-                              event.target.value,
-                              slot.endTime,
-                            )
-                          }
-                          className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
-                        >
-                          <option value="AM">AM</option>
-                          <option value="PM">PM</option>
-                        </select>
-                      </div>
-                    </label>
-                    <div className="flex items-end">
-                      <ActionButton
-                        type="button"
-                        onClick={() =>
-                          handleRemoveDeliverySlot(activeDeliveryDay, slotIndex)
-                        }
-                        disabled={activeDaySchedule.slots.length === 1}
-                        variant="danger"
-                        className="w-full"
-                      >
-                        Remove
-                      </ActionButton>
-                    </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold">
+                      {DAY_LABELS[dayKey].slice(0, 3)}
+                    </span>
+                    <StatusChip
+                      tone={daySchedule.isOpen ? "success" : "neutral"}
+                      className={isActive ? "bg-white/15 text-white" : ""}
+                    >
+                      {daySchedule.isOpen ? "Open" : "Closed"}
+                    </StatusChip>
                   </div>
-                );
-              })(),
-            )}
+                  <p
+                    className={`mt-3 text-xs leading-5 ${
+                      isActive ? "text-slate-200" : "text-slate-500"
+                    }`}
+                  >
+                    {daySchedule.isOpen
+                      ? daySchedule.slots
+                          .map((slot) =>
+                            formatTimeRangeLabel(slot.startTime, slot.endTime),
+                          )
+                          .join(" | ")
+                      : "No delivery slots"}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Editing
+                </p>
+                <h3 className="mt-1 text-xl font-semibold text-slate-900">
+                  {DAY_LABELS[activeDeliveryDay]}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Use one or more time windows for this day. Customers will see
+                  only these slots at checkout.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                  <Toggle
+                    checked={activeDaySchedule.isOpen}
+                    onClick={() =>
+                      handleDeliveryDayOpenChange(
+                        activeDeliveryDay,
+                        !activeDaySchedule.isOpen,
+                      )
+                    }
+                    label="toggle day delivery status"
+                  />
+                  Accept delivery orders this day
+                </label>
+                <ActionButton
+                  type="button"
+                  onClick={() => handleCopyDayToAll(activeDeliveryDay)}
+                  variant="secondary"
+                >
+                  Copy this day to all
+                </ActionButton>
+                <ActionButton
+                  type="button"
+                  onClick={() => handleAddDeliverySlot(activeDeliveryDay)}
+                  variant="soft"
+                >
+                  Add slot
+                </ActionButton>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {activeDaySchedule.slots.map((slot, slotIndex) => (
+                <span
+                  key={`${activeDeliveryDay}-summary-${slotIndex}`}
+                  className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700"
+                >
+                  {formatTimeRangeLabel(slot.startTime, slot.endTime)}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {activeDaySchedule.slots.map((slot, slotIndex) =>
+                (() => {
+                  const startParts = toTwelveHourParts(slot.startTime);
+                  const endParts = toTwelveHourParts(slot.endTime);
+
+                  return (
+                    <div
+                      key={`${activeDeliveryDay}-${slotIndex}`}
+                      className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]"
+                    >
+                      <label className="block">
+                        <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          Start
+                        </span>
+                        <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
+                          <select
+                            value={startParts.hour}
+                            onChange={(event) =>
+                              handleDeliverySlotTimePartChange(
+                                activeDeliveryDay,
+                                slotIndex,
+                                "startTime",
+                                "hour",
+                                event.target.value,
+                                slot.startTime,
+                              )
+                            }
+                            className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                          >
+                            {Array.from({ length: 12 }, (_, index) =>
+                              String(index + 1),
+                            ).map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={startParts.minute}
+                            onChange={(event) =>
+                              handleDeliverySlotTimePartChange(
+                                activeDeliveryDay,
+                                slotIndex,
+                                "startTime",
+                                "minute",
+                                event.target.value,
+                                slot.startTime,
+                              )
+                            }
+                            className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                          >
+                            {Array.from({ length: 60 }, (_, index) =>
+                              String(index).padStart(2, "0"),
+                            ).map((minute) => (
+                              <option key={minute} value={minute}>
+                                {minute}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={startParts.period}
+                            onChange={(event) =>
+                              handleDeliverySlotTimePartChange(
+                                activeDeliveryDay,
+                                slotIndex,
+                                "startTime",
+                                "period",
+                                event.target.value,
+                                slot.startTime,
+                              )
+                            }
+                            className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                          >
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                          </select>
+                        </div>
+                      </label>
+                      <div className="flex items-end justify-center pb-3 text-sm font-semibold text-slate-400">
+                        to
+                      </div>
+                      <label className="block">
+                        <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          End
+                        </span>
+                        <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
+                          <select
+                            value={endParts.hour}
+                            onChange={(event) =>
+                              handleDeliverySlotTimePartChange(
+                                activeDeliveryDay,
+                                slotIndex,
+                                "endTime",
+                                "hour",
+                                event.target.value,
+                                slot.endTime,
+                              )
+                            }
+                            className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                          >
+                            {Array.from({ length: 12 }, (_, index) =>
+                              String(index + 1),
+                            ).map((hour) => (
+                              <option key={hour} value={hour}>
+                                {hour}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={endParts.minute}
+                            onChange={(event) =>
+                              handleDeliverySlotTimePartChange(
+                                activeDeliveryDay,
+                                slotIndex,
+                                "endTime",
+                                "minute",
+                                event.target.value,
+                                slot.endTime,
+                              )
+                            }
+                            className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                          >
+                            {Array.from({ length: 60 }, (_, index) =>
+                              String(index).padStart(2, "0"),
+                            ).map((minute) => (
+                              <option key={minute} value={minute}>
+                                {minute}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={endParts.period}
+                            onChange={(event) =>
+                              handleDeliverySlotTimePartChange(
+                                activeDeliveryDay,
+                                slotIndex,
+                                "endTime",
+                                "period",
+                                event.target.value,
+                                slot.endTime,
+                              )
+                            }
+                            className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                          >
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                          </select>
+                        </div>
+                      </label>
+                      <div className="flex items-end">
+                        <ActionButton
+                          type="button"
+                          onClick={() =>
+                            handleRemoveDeliverySlot(
+                              activeDeliveryDay,
+                              slotIndex,
+                            )
+                          }
+                          disabled={activeDaySchedule.slots.length === 1}
+                          variant="danger"
+                          className="w-full"
+                        >
+                          Remove
+                        </ActionButton>
+                      </div>
+                    </div>
+                  );
+                })(),
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <ActionButton
+              type="button"
+              onClick={handleSaveDeliveryTiming}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Delivery Timing"}
+            </ActionButton>
           </div>
         </div>
+      </SurfaceCard>
 
-        <div className="mt-6">
-          <ActionButton
-            type="button"
-            onClick={handleSaveDeliveryTiming}
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Save Delivery Timing"}
-          </ActionButton>
+      <SurfaceCard className="p-6">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">
+              Delivery Pricing
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+              Delivery Fee
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-600">
+              Configure distance-based delivery charges and optional free
+              delivery above an order amount.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 xl:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Delivery Fee by Distance
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    When enabled, delivery fee is calculated as distance from
+                    store x price per km.
+                  </p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <Toggle
+                    checked={
+                      normalizedEditorDeliverySettings.distanceFeeEnabled
+                    }
+                    onClick={() =>
+                      handleDistanceFeeEnabledChange({
+                        target: {
+                          checked:
+                            !normalizedEditorDeliverySettings.distanceFeeEnabled,
+                        },
+                      })
+                    }
+                    label="toggle delivery fee by distance"
+                  />
+                  On
+                </label>
+              </div>
+
+              <label className="mt-4 block text-sm font-medium text-slate-700">
+                Price per 1 km
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  name="pricePerKm"
+                  value={normalizedEditorDeliverySettings.pricePerKm}
+                  onChange={handleDeliverySettingChange}
+                  className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                />
+              </label>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Free Delivery Above Amount
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    When enabled, orders at or above this subtotal get zero
+                    delivery fee.
+                  </p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <Toggle
+                    checked={
+                      normalizedEditorDeliverySettings.freeDeliveryEnabled
+                    }
+                    onClick={() =>
+                      handleFreeDeliveryEnabledChange({
+                        target: {
+                          checked:
+                            !normalizedEditorDeliverySettings.freeDeliveryEnabled,
+                        },
+                      })
+                    }
+                    label="toggle free delivery threshold"
+                  />
+                  On
+                </label>
+              </div>
+
+              <label className="mt-4 block text-sm font-medium text-slate-700">
+                Minimum subtotal for free delivery
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  name="freeDeliveryMinAmount"
+                  value={normalizedEditorDeliverySettings.freeDeliveryMinAmount}
+                  onChange={handleDeliverySettingChange}
+                  className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <ActionButton
+              type="button"
+              onClick={handleSaveDeliveryFee}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Delivery Fee"}
+            </ActionButton>
+          </div>
         </div>
-      </div>
-    </SurfaceCard>
+      </SurfaceCard>
+    </div>
   );
 };
 

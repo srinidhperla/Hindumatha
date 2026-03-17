@@ -1,12 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  FiArrowRight,
-  FiPhone,
-  FiStar,
-  FiClock,
-  FiUsers,
-} from "react-icons/fi";
+import { FiArrowRight, FiPhone, FiStar, FiUsers } from "react-icons/fi";
 
 const SPARKLES = [
   { top: "12%", left: "8%", size: 4, delay: 0 },
@@ -24,7 +18,6 @@ const HeroSection = ({
   establishedYear,
   averageRating,
   categoryCount,
-  deliverySettings,
 }) => (
   <section className="relative overflow-hidden bg-gradient-to-br from-cream-50 via-cream-100 to-primary-50 pt-24 pb-16 lg:pt-32 lg:pb-24">
     {/* Gradient mesh overlay */}
@@ -148,19 +141,6 @@ const HeroSection = ({
               {categoryCount || 6}+
             </p>
             <p className="text-sm text-primary-600">Categories</p>
-          </div>
-        </div>
-
-        {/* Prep Time */}
-        <div className="animate-fadeInUp anim-delay-5 hero-stat-card bg-white/70 backdrop-blur-xl border border-berry-200/50 rounded-2xl shadow-soft px-5 py-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-berry-400 to-berry-500 flex items-center justify-center shadow-sm hero-icon-glow-berry">
-            <FiClock className="w-6 h-6 text-white" />
-          </div>
-          <div className="text-left">
-            <p className="text-lg font-bold text-primary-900">
-              {deliverySettings.prepTimeMinutes || 30} min
-            </p>
-            <p className="text-sm text-primary-600">Avg. Prep Time</p>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import {
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
+  getPortionTypeMeta,
   getVariantPrice,
   isProductPurchasable,
   normalizeFlavorOptions,
@@ -66,6 +67,7 @@ export const getResolvedCheckoutItem = (item) => {
 
   return {
     ...item,
+    portionTypeMeta: getPortionTypeMeta(item.product?.portionType),
     selectedEggType,
     selectedFlavor,
     selectedWeight,
