@@ -257,6 +257,11 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
   };
 
   const handlePauseDelivery = () => {
+    if (!pauseUnitSelection) {
+      onToast("Select pause unit.", "error");
+      return;
+    }
+
     const time24 = toTwentyFourHour(
       pauseTimeParts.hour,
       pauseTimeParts.minute,
@@ -272,7 +277,7 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
     const now = new Date();
     const pauseUntil = new Date(now);
 
-    if (normalizedEditorDeliverySettings.pauseDurationUnit === "days") {
+    if (pauseUnitSelection === "days") {
       if (!pauseDateInput) {
         onToast("Choose a pause resume date.", "error");
         return;
@@ -292,7 +297,7 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
     pauseUntil.setHours(hours, minutes, 0, 0);
 
     if (pauseUntil <= now) {
-      if (normalizedEditorDeliverySettings.pauseDurationUnit === "hours") {
+      if (pauseUnitSelection === "hours") {
         pauseUntil.setDate(pauseUntil.getDate() + 1);
       } else {
         onToast("Pause resume date and time should be in the future.", "error");
@@ -303,6 +308,7 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
     setDeliverySettings((currentValue) => ({
       ...currentValue,
       enabled: true,
+      pauseDurationUnit: pauseUnitSelection,
       pauseUntil: pauseUntil.toISOString(),
     }));
     onToast("Delivery pause timer updated.");
@@ -448,6 +454,7 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
                   }
                   className="block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                 >
+                  <option value="">HH</option>
                   {Array.from({ length: 12 }, (_, index) =>
                     String(index + 1),
                   ).map((hourValue) => (
@@ -466,6 +473,7 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
                   }
                   className="block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                 >
+                  <option value="">MM</option>
                   {Array.from({ length: 60 }, (_, index) =>
                     String(index).padStart(2, "0"),
                   ).map((minuteValue) => (
@@ -484,6 +492,7 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
                   }
                   className="block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                 >
+                  <option value="">AM/PM</option>
                   <option value="AM">AM</option>
                   <option value="PM">PM</option>
                 </select>
@@ -495,16 +504,15 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
                 Pause unit
               </label>
               <select
-                name="pauseDurationUnit"
-                value={normalizedEditorDeliverySettings.pauseDurationUnit}
-                onChange={handleDeliverySettingChange}
+                value={pauseUnitSelection}
+                onChange={(event) => setPauseUnitSelection(event.target.value)}
                 className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
               >
+                <option value="">Select unit</option>
                 <option value="hours">Hours</option>
                 <option value="days">Days</option>
               </select>
-              {normalizedEditorDeliverySettings.pauseDurationUnit ===
-                "days" && (
+              {pauseUnitSelection === "days" && (
                 <div className="mt-3">
                   <label className="block text-xs font-medium text-slate-600">
                     Resume date
