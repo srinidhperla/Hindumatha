@@ -46,20 +46,20 @@ const WhyChooseUs = () => {
   ];
 
   return (
-    <section className="py-14 sm:py-20 lg:py-28 bg-gradient-to-b from-primary-50 via-cream-50 to-white relative overflow-hidden">
+    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#120c02_0%,#1b1307_48%,#251909_100%)] py-14 sm:py-20 lg:py-28">
       {/* Decorative blobs */}
-      <div className="absolute top-10 left-0 w-60 h-60 bg-caramel-200/30 rounded-full blur-[80px]" />
-      <div className="absolute bottom-0 right-0 w-72 h-72 bg-sage-200/20 rounded-full blur-[80px]" />
+      <div className="absolute top-10 left-0 h-60 w-60 rounded-full bg-[#c9a84c2e] blur-[80px]" />
+      <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[#e8d08a22] blur-[80px]" />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-10 sm:mb-16 animate-fadeInUp">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-caramel-200/60 text-caramel-700 text-sm font-semibold mb-4 shadow-sm">
+          <span className="mb-4 inline-block rounded-full border border-[#c9a84c55] bg-white/10 px-4 py-1.5 text-sm font-semibold text-[#e8d08a] backdrop-blur-sm shadow-sm">
             Why Us
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-800 mb-3 sm:mb-4 tracking-tight">
+          <h2 className="mb-3 font-playfair text-2xl font-bold tracking-tight text-white sm:mb-4 sm:text-3xl md:text-4xl">
             Why Choose Us?
           </h2>
-          <p className="max-w-2xl mx-auto text-primary-500 text-sm sm:text-base">
+          <p className="mx-auto max-w-2xl text-sm text-white/70 sm:text-base">
             We take pride in delivering the best quality cakes with exceptional
             service
           </p>
@@ -69,7 +69,7 @@ const WhyChooseUs = () => {
           {features.map((feature, idx) => (
             <div
               key={feature.title}
-              className={`animate-fadeInUp anim-delay-${idx + 1} bg-white/70 backdrop-blur-xl rounded-2xl p-5 sm:p-8 text-center group hover:-translate-y-2 active:scale-[0.97] transition-all duration-300 shadow-soft hover:shadow-warm-lg border border-white/80`}
+              className={`animate-fadeInUp anim-delay-${idx + 1} group rounded-2xl border border-[#c9a84c3d] bg-[linear-gradient(155deg,rgba(255,255,255,.15),rgba(255,255,255,.05))] p-5 text-center shadow-[0_12px_28px_rgba(0,0,0,0.28)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_34px_rgba(0,0,0,0.34)] active:scale-[0.97] sm:p-8`}
             >
               <div
                 className={`w-11 h-11 sm:w-14 sm:h-14 mx-auto mb-3 sm:mb-5 bg-gradient-to-br ${feature.color} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg`}
@@ -78,10 +78,10 @@ const WhyChooseUs = () => {
                   className={`w-5 h-5 sm:w-6 sm:h-6 ${feature.iconColor}`}
                 />
               </div>
-              <h3 className="text-sm sm:text-lg font-bold text-primary-800 mb-1 sm:mb-2">
+              <h3 className="mb-1 text-sm font-bold text-[#f4dfac] sm:mb-2 sm:text-lg">
                 {feature.title}
               </h3>
-              <p className="text-primary-500 text-xs sm:text-sm leading-relaxed hidden sm:block">
+              <p className="hidden text-xs leading-relaxed text-white/70 sm:block sm:text-sm">
                 {feature.description}
               </p>
             </div>
@@ -99,7 +99,7 @@ const AboutSection = ({
   yearsExperience,
   averageRating,
 }) => (
-  <section className="py-14 sm:py-20 lg:py-28 bg-white relative overflow-hidden">
+  <section className="relative overflow-hidden bg-[linear-gradient(180deg,#f8f1e0_0%,#fffaf0_55%,#f3e7cc_100%)] py-14 sm:py-20 lg:py-28">
     {/* Subtle background pattern */}
     <div
       className="absolute inset-0 opacity-[0.02]"
@@ -139,16 +139,16 @@ const AboutSection = ({
 
         {/* Content Side */}
         <div className="animate-fadeInUp anim-delay-2">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-primary-100 to-primary-200 text-primary-700 text-sm font-semibold mb-4">
+          <span className="mb-4 inline-block rounded-full border border-[#c9a84c66] bg-white/85 px-4 py-1.5 text-sm font-semibold text-[#8b6914]">
             About Us
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-800 mb-4 sm:mb-6 tracking-tight">
+          <h2 className="mb-4 font-playfair text-2xl font-bold tracking-tight text-[#2a1f0e] sm:mb-6 sm:text-3xl md:text-4xl">
             Baking Happiness at {businessInfo.storeName}
           </h2>
-          <p className="text-base sm:text-lg text-primary-600 mb-4 sm:mb-6 leading-relaxed">
+          <p className="mb-4 text-base leading-relaxed text-[#624a2a] sm:mb-6 sm:text-lg">
             {businessInfo.intro}
           </p>
-          <p className="text-sm sm:text-base text-primary-500 mb-6 sm:mb-8 leading-relaxed">
+          <p className="mb-6 text-sm leading-relaxed text-[#6a5130] sm:mb-8 sm:text-base">
             We currently serve {products.length || 0} live products across{" "}
             {categoryCount || 0} categories, with every order prepared around
             your selected flavor, weight, and occasion.
@@ -156,27 +156,27 @@ const AboutSection = ({
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <div className="text-center p-3 sm:p-4 rounded-xl bg-white/60 backdrop-blur-sm border border-cream-200/60 shadow-soft">
+            <div className="rounded-xl border border-[#c9a84c40] bg-white/70 p-3 text-center shadow-[0_8px_20px_rgba(18,12,2,0.09)] backdrop-blur-sm sm:p-4">
               <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
                 {products.length || 0}+
               </div>
-              <div className="text-[10px] sm:text-xs text-primary-500 mt-1 font-medium">
+              <div className="mt-1 text-[10px] font-medium text-[#6a5130] sm:text-xs">
                 Products
               </div>
             </div>
-            <div className="text-center p-3 sm:p-4 rounded-xl bg-white/60 backdrop-blur-sm border border-cream-200/60 shadow-soft">
+            <div className="rounded-xl border border-[#c9a84c40] bg-white/70 p-3 text-center shadow-[0_8px_20px_rgba(18,12,2,0.09)] backdrop-blur-sm sm:p-4">
               <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-caramel-500 to-caramel-600 bg-clip-text text-transparent">
                 {categoryCount || 0}+
               </div>
-              <div className="text-[10px] sm:text-xs text-primary-500 mt-1 font-medium">
+              <div className="mt-1 text-[10px] font-medium text-[#6a5130] sm:text-xs">
                 Categories
               </div>
             </div>
-            <div className="text-center p-3 sm:p-4 rounded-xl bg-white/60 backdrop-blur-sm border border-cream-200/60 shadow-soft">
+            <div className="rounded-xl border border-[#c9a84c40] bg-white/70 p-3 text-center shadow-[0_8px_20px_rgba(18,12,2,0.09)] backdrop-blur-sm sm:p-4">
               <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-berry-500 to-berry-600 bg-clip-text text-transparent">
                 {averageRating ? `${averageRating}★` : "5★"}
               </div>
-              <div className="text-[10px] sm:text-xs text-primary-500 mt-1 font-medium">
+              <div className="mt-1 text-[10px] font-medium text-[#6a5130] sm:text-xs">
                 Rating
               </div>
             </div>
@@ -184,7 +184,7 @@ const AboutSection = ({
 
           <Link
             to="/gallery"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-full shadow-warm hover:shadow-warm-lg hover:-translate-y-0.5 active:scale-95 transition-all duration-300"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] px-6 py-3 font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(122,92,15,0.32)] active:scale-95"
           >
             View Our Gallery
             <FiArrowRight className="w-5 h-5" />
@@ -221,17 +221,17 @@ const TestimonialsSection = () => {
   ];
 
   return (
-    <section className="py-14 sm:py-20 lg:py-28 bg-gradient-to-b from-cream-50 via-cream-100/50 to-cream-50 relative overflow-hidden">
+    <section className="relative overflow-hidden bg-[linear-gradient(180deg,#1b1307_0%,#120c02_100%)] py-14 sm:py-20 lg:py-28">
       {/* Decorative elements */}
-      <div className="absolute top-0 left-1/4 w-60 h-60 bg-berry-200/20 rounded-full blur-[80px]" />
-      <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-caramel-200/20 rounded-full blur-[80px]" />
+      <div className="absolute left-1/4 top-0 h-60 w-60 rounded-full bg-[#c9a84c26] blur-[80px]" />
+      <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-[#e8d08a1f] blur-[80px]" />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center mb-10 sm:mb-16 animate-fadeInUp">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-berry-200/60 text-berry-700 text-sm font-semibold mb-4 shadow-sm">
+          <span className="mb-4 inline-block rounded-full border border-[#c9a84c55] bg-white/10 px-4 py-1.5 text-sm font-semibold text-[#e8d08a] backdrop-blur-sm shadow-sm">
             Testimonials
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-800 mb-3 sm:mb-4 tracking-tight">
+          <h2 className="mb-3 font-playfair text-2xl font-bold tracking-tight text-white sm:mb-4 sm:text-3xl md:text-4xl">
             What Our Customers Say
           </h2>
         </div>
@@ -242,7 +242,7 @@ const TestimonialsSection = () => {
             {testimonials.map((t, idx) => (
               <div
                 key={t.initials}
-                className={`animate-fadeInUp anim-delay-${idx + 1} min-w-[280px] sm:min-w-[300px] md:min-w-0 snap-start bg-white/70 backdrop-blur-xl rounded-2xl p-6 sm:p-8 group hover:-translate-y-2 active:scale-[0.98] transition-all duration-300 shadow-soft hover:shadow-warm-lg border border-white/80`}
+                className={`animate-fadeInUp anim-delay-${idx + 1} min-w-[280px] snap-start rounded-2xl border border-[#c9a84c3b] bg-[linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.05))] p-6 shadow-[0_12px_28px_rgba(0,0,0,0.3)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_34px_rgba(0,0,0,0.36)] active:scale-[0.98] sm:min-w-[300px] sm:p-8 md:min-w-0`}
               >
                 {/* Star Rating */}
                 <div className="flex items-center gap-1 mb-3 sm:mb-4">
@@ -255,7 +255,7 @@ const TestimonialsSection = () => {
                 </div>
 
                 {/* Quote */}
-                <p className="text-primary-600 mb-5 sm:mb-6 leading-relaxed text-xs sm:text-sm">
+                <p className="mb-5 text-xs leading-relaxed text-white/75 sm:mb-6 sm:text-sm">
                   "{t.text}"
                 </p>
 
@@ -267,10 +267,10 @@ const TestimonialsSection = () => {
                     {t.initials}
                   </div>
                   <div className="ml-3">
-                    <div className="font-semibold text-sm sm:text-base text-primary-800">
+                    <div className="text-sm font-semibold text-[#f4dfac] sm:text-base">
                       {t.name}
                     </div>
-                    <div className="text-xs text-primary-500">{t.location}</div>
+                    <div className="text-xs text-white/65">{t.location}</div>
                   </div>
                 </div>
               </div>
@@ -283,7 +283,7 @@ const TestimonialsSection = () => {
 };
 
 const CTASection = () => (
-  <section className="py-14 sm:py-20 lg:py-28 bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900 relative overflow-hidden">
+  <section className="relative overflow-hidden bg-[linear-gradient(150deg,#120c02_0%,#201509_45%,#34220f_100%)] py-14 sm:py-20 lg:py-28">
     {/* Decorative elements */}
     <div className="absolute top-0 left-0 w-40 h-40 sm:w-64 sm:h-64 bg-caramel-400/20 rounded-full blur-[80px]" />
     <div className="absolute bottom-0 right-0 w-52 h-52 sm:w-96 sm:h-96 bg-berry-500/10 rounded-full blur-[80px]" />
@@ -299,25 +299,25 @@ const CTASection = () => (
 
     <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
       {/* Glass container */}
-      <div className="max-w-3xl mx-auto bg-white/[0.06] backdrop-blur-xl border border-white/10 rounded-3xl p-8 sm:p-12 lg:p-16 text-center">
-        <h2 className="animate-fadeInUp text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 sm:mb-6 tracking-tight">
+      <div className="mx-auto max-w-3xl rounded-3xl border border-[#c9a84c4d] bg-[linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.04))] p-8 text-center backdrop-blur-xl sm:p-12 lg:p-16">
+        <h2 className="animate-fadeInUp mb-4 font-playfair text-2xl font-bold tracking-tight text-white sm:mb-6 sm:text-3xl md:text-4xl">
           Ready to Order Your Dream Cake?
         </h2>
-        <p className="animate-fadeInUp anim-delay-1 max-w-2xl mx-auto text-base sm:text-lg text-cream-200/80 mb-8 sm:mb-10">
+        <p className="animate-fadeInUp anim-delay-1 mx-auto mb-8 max-w-2xl text-base text-[#f4dfaccc] sm:mb-10 sm:text-lg">
           Contact us today to discuss your custom cake requirements. We'll make
           your special moments even sweeter!
         </p>
         <div className="animate-fadeInUp anim-delay-2 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           <Link
             to="/contact"
-            className="inline-flex items-center justify-center gap-2 px-7 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-caramel-500 to-caramel-600 text-white font-semibold rounded-full shadow-lg shadow-caramel-500/30 hover:shadow-caramel-500/50 transform active:scale-[0.97] hover:-translate-y-0.5 transition-all duration-300"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] px-7 py-3.5 font-semibold text-white shadow-lg shadow-[#7a5c0f66] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[#7a5c0f99] active:scale-[0.97] sm:px-8 sm:py-4"
           >
             <FiMail className="w-5 h-5" />
             Contact Us
           </Link>
           <a
             href="tel:+919876543210"
-            className="inline-flex items-center justify-center gap-2 px-7 py-3.5 sm:px-8 sm:py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-full border border-white/20 hover:bg-white/20 active:scale-[0.97] transition-all duration-300"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c9a84c66] bg-[#120c02ba] px-7 py-3.5 font-semibold text-[#f4dfac] backdrop-blur-sm transition-all duration-300 hover:bg-[#120c02] active:scale-[0.97] sm:px-8 sm:py-4"
           >
             <FiPhone className="w-5 h-5" />
             Call Now

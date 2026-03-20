@@ -7,13 +7,70 @@ import {
   updateProfileData,
 } from "../../services/authAPI";
 
+const readStoredToken = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return localStorage.getItem("token") || sessionStorage.getItem("token");
+};
+
+const readStoredUser = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const rawUser =
+    localStorage.getItem("authUser") || sessionStorage.getItem("authUser");
+
+  if (!rawUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawUser);
+  } catch {
+    return null;
+  }
+};
+
+const persistToken = (token) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.setItem("token", token);
+  sessionStorage.setItem("token", token);
+};
+
+const persistUser = (user) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const serializedUser = JSON.stringify(user || null);
+  localStorage.setItem("authUser", serializedUser);
+  sessionStorage.setItem("authUser", serializedUser);
+};
+
+const clearStoredToken = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.removeItem("token");
+  sessionStorage.removeItem("token");
+  localStorage.removeItem("authUser");
+  sessionStorage.removeItem("authUser");
+};
+
 // Async thunks
 export const register = createAsyncThunk(
   "auth/register",
   async (userData, { rejectWithValue }) => {
     try {
       const data = await registerUser(userData);
-      sessionStorage.setItem("token", data.token);
+      persistToken(data.token);
       return data;
     } catch (error) {
       return rejectWithValue(
@@ -28,7 +85,7 @@ export const login = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const data = await loginUser(credentials);
-      sessionStorage.setItem("token", data.token);
+      persistToken(data.token);
       return data;
     } catch (error) {
       return rejectWithValue(
@@ -43,7 +100,7 @@ export const googleLogin = createAsyncThunk(
   async (googleToken, { rejectWithValue }) => {
     try {
       const data = await googleLoginUser(googleToken);
-      sessionStorage.setItem("token", data.token);
+      persistToken(data.token);
       return data;
     } catch (error) {
       return rejectWithValue(
@@ -60,7 +117,12 @@ export const getProfile = createAsyncThunk(
       return await getProfileData();
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || { message: "Failed to get profile" },
+        error.response?.data
+          ? {
+              ...error.response.data,
+              statusCode: error.response.status,
+            }
+          : { message: "Failed to get profile", statusCode: 0 },
       );
     }
   },
@@ -79,10 +141,13 @@ export const updateProfile = createAsyncThunk(
   },
 );
 
+const storedToken = readStoredToken();
+const storedUser = readStoredUser();
+
 const initialState = {
-  user: null,
-  token: sessionStorage.getItem("token"),
-  isAuthenticated: false,
+  user: storedUser,
+  token: storedToken,
+  isAuthenticated: Boolean(storedToken && storedUser),
   loading: false,
   error: null,
 };
@@ -92,7 +157,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
-      sessionStorage.removeItem("token");
+      clearStoredToken();
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -114,6 +179,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        persistUser(action.payload.user);
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
@@ -129,6 +195,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        persistUser(action.payload.user);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -143,6 +210,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        persistUser(action.payload.user);
       })
       .addCase(googleLogin.rejected, (state, action) => {
         state.loading = false;
@@ -157,14 +225,23 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload;
+        persistUser(action.payload);
       })
       .addCase(getProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Failed to get profile";
-        sessionStorage.removeItem("token");
-        state.token = null;
-        state.isAuthenticated = false;
-        state.user = null;
+        const statusCode = Number(action.payload?.statusCode || 0);
+
+        if (statusCode === 401 || statusCode === 403) {
+          clearStoredToken();
+          state.token = null;
+          state.isAuthenticated = false;
+          state.user = null;
+          return;
+        }
+
+        // Keep current session data for transient network/server issues.
+        state.isAuthenticated = Boolean(state.token && state.user);
       })
       .addCase(updateProfile.pending, (state) => {
         state.loading = true;
@@ -173,6 +250,7 @@ const authSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
+        persistUser(action.payload);
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;

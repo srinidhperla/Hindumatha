@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   ActionButton,
@@ -394,10 +394,10 @@ const AdminSettingsPage = ({ onToast }) => {
       <SurfaceCard className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-primary-900">
               Payment Gateway Status
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-primary-600">
               Online UPI and card payments use Razorpay. Cash on delivery stays
               enabled even if online keys are missing.
             </p>
@@ -405,16 +405,16 @@ const AdminSettingsPage = ({ onToast }) => {
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               Gateway
             </p>
-            <p className="mt-2 text-sm font-semibold uppercase text-gray-900">
+            <p className="mt-2 text-sm font-semibold uppercase text-primary-900">
               {paymentStatus.gateway || "razorpay"}
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               Online Payments
             </p>
             <p
@@ -423,19 +423,19 @@ const AdminSettingsPage = ({ onToast }) => {
               {paymentStatus.configured ? "Ready" : "Keys missing"}
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               Key ID
             </p>
-            <p className="mt-2 break-all text-sm font-semibold text-gray-900">
+            <p className="mt-2 break-all text-sm font-semibold text-primary-900">
               {paymentStatus.keyIdPreview || "Not configured"}
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               Methods
             </p>
-            <p className="mt-2 text-sm font-semibold text-gray-900">
+            <p className="mt-2 text-sm font-semibold text-primary-900">
               {(paymentStatus.supportedMethods || []).join(", ").toUpperCase()}
             </p>
           </div>
@@ -445,10 +445,10 @@ const AdminSettingsPage = ({ onToast }) => {
       <SurfaceCard className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-primary-900">
               Alert Email Status
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-primary-600">
               Pending orders trigger an immediate alert email and then repeat
               every {alertStatus.reminderIntervalMinutes || 5} minutes until
               accepted.
@@ -464,8 +464,8 @@ const AdminSettingsPage = ({ onToast }) => {
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               SMTP
             </p>
             <p
@@ -474,27 +474,27 @@ const AdminSettingsPage = ({ onToast }) => {
               {alertStatus.configured ? "Configured" : "Not configured"}
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               Recipient
             </p>
-            <p className="mt-2 break-all text-sm font-semibold text-gray-900">
+            <p className="mt-2 break-all text-sm font-semibold text-primary-900">
               {alertStatus.recipient || "No recipient configured"}
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               From
             </p>
-            <p className="mt-2 break-all text-sm font-semibold text-gray-900">
+            <p className="mt-2 break-all text-sm font-semibold text-primary-900">
               {alertStatus.from || "Not configured"}
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
               Pending Orders
             </p>
-            <p className="mt-2 text-sm font-semibold text-gray-900">
+            <p className="mt-2 text-sm font-semibold text-primary-900">
               {alertStatus.pendingOrderCount || 0}
             </p>
           </div>
@@ -502,23 +502,23 @@ const AdminSettingsPage = ({ onToast }) => {
       </SurfaceCard>
 
       <SurfaceCard className="p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+        <h2 className="mb-4 text-lg font-semibold text-primary-900">
           Business Information
         </h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Store Name
             </label>
             <input
               name="storeName"
               value={businessInfo.storeName}
               onChange={handleBusinessChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Established Year
             </label>
             <input
@@ -527,33 +527,33 @@ const AdminSettingsPage = ({ onToast }) => {
               name="establishedYear"
               value={businessInfo.establishedYear ?? ""}
               onChange={handleBusinessChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Support Email
             </label>
             <input
               name="email"
               value={businessInfo.email}
               onChange={handleBusinessChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Contact Number
             </label>
             <input
               name="phone"
               value={businessInfo.phone}
               onChange={handleBusinessChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Address
             </label>
             <textarea
@@ -561,11 +561,11 @@ const AdminSettingsPage = ({ onToast }) => {
               rows={2}
               value={businessInfo.address}
               onChange={handleBusinessChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Welcome Message
             </label>
             <textarea
@@ -573,78 +573,78 @@ const AdminSettingsPage = ({ onToast }) => {
               rows={3}
               value={businessInfo.intro}
               onChange={handleBusinessChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
         </div>
       </SurfaceCard>
 
       <SurfaceCard className="p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+        <h2 className="mb-4 text-lg font-semibold text-primary-900">
           Store Hours
         </h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Weekdays
             </label>
             <input
               name="weekdays"
               value={storeHours.weekdays}
               onChange={handleHoursChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Weekends
             </label>
             <input
               name="weekends"
               value={storeHours.weekends}
               onChange={handleHoursChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
         </div>
       </SurfaceCard>
 
       <SurfaceCard className="p-6">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+        <h2 className="mb-4 text-lg font-semibold text-primary-900">
           Social Links
         </h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Instagram
             </label>
             <input
               name="instagram"
               value={socialLinks.instagram}
               onChange={handleLinksChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               Facebook
             </label>
             <input
               name="facebook"
               value={socialLinks.facebook}
               onChange={handleLinksChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-primary-700">
               WhatsApp
             </label>
             <input
               name="whatsapp"
               value={socialLinks.whatsapp}
               onChange={handleLinksChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </div>
         </div>
@@ -653,10 +653,10 @@ const AdminSettingsPage = ({ onToast }) => {
       <SurfaceCard className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-primary-900">
               Delivery Coverage
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-primary-600">
               Configure store GPS location and delivery radius used for checkout
               serviceability checks.
             </p>
@@ -709,7 +709,7 @@ const AdminSettingsPage = ({ onToast }) => {
 
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <label className="block">
-            <span className="block text-sm font-medium text-gray-700">
+            <span className="block text-sm font-medium text-primary-700">
               Delivery Enabled
             </span>
             <input
@@ -717,12 +717,12 @@ const AdminSettingsPage = ({ onToast }) => {
               name="enabled"
               checked={deliverySettings.enabled !== false}
               onChange={handleDeliverySettingsChange}
-              className="mt-3 h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+              className="mt-3 h-4 w-4 rounded border-gold-300 text-primary-700 focus:ring-gold-300"
             />
           </label>
 
           <label className="block">
-            <span className="block text-sm font-medium text-gray-700">
+            <span className="block text-sm font-medium text-primary-700">
               Max Radius (km)
             </span>
             <input
@@ -732,12 +732,12 @@ const AdminSettingsPage = ({ onToast }) => {
               name="maxDeliveryRadiusKm"
               value={deliverySettings.maxDeliveryRadiusKm ?? ""}
               onChange={handleDeliverySettingsChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </label>
 
           <label className="block">
-            <span className="block text-sm font-medium text-gray-700">
+            <span className="block text-sm font-medium text-primary-700">
               Store Latitude
             </span>
             <input
@@ -746,12 +746,12 @@ const AdminSettingsPage = ({ onToast }) => {
               name="storeLat"
               value={deliverySettings.storeLocation?.lat ?? ""}
               onChange={handleDeliverySettingsChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </label>
 
           <label className="block">
-            <span className="block text-sm font-medium text-gray-700">
+            <span className="block text-sm font-medium text-primary-700">
               Store Longitude
             </span>
             <input
@@ -760,13 +760,13 @@ const AdminSettingsPage = ({ onToast }) => {
               name="storeLng"
               value={deliverySettings.storeLocation?.lng ?? ""}
               onChange={handleDeliverySettingsChange}
-              className="mt-1 block w-full rounded-xl border border-gray-200 px-3 py-2 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+              className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
             />
           </label>
         </div>
 
         <div className="mt-5">
-          <p className="mb-2 text-sm font-medium text-gray-700">
+          <p className="mb-2 text-sm font-medium text-primary-700">
             Click on the map to set store location and preview delivery radius
           </p>
           <StoreLocationPicker
@@ -784,7 +784,7 @@ const AdminSettingsPage = ({ onToast }) => {
                 href={`https://maps.google.com/?q=${deliverySettings.storeLocation.lat},${deliverySettings.storeLocation.lng}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-sm font-semibold text-pink-600 hover:text-pink-700"
+                className="text-sm font-semibold text-primary-700 hover:text-primary-900"
               >
                 Open Store Location in Maps
               </a>
@@ -813,3 +813,4 @@ const AdminSettingsPage = ({ onToast }) => {
 };
 
 export default AdminSettingsPage;
+

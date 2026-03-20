@@ -1,10 +1,6 @@
 import React, { useState } from "react";
 import { formatCategoryLabel } from "../../../utils/productOptions";
-import {
-  SurfaceCard,
-  Toggle,
-  ActionButton,
-} from "../../../components/ui/Primitives";
+import { SurfaceCard, Toggle } from "../../../components/ui/Primitives";
 
 const ProductBasicsSection = ({
   formData,
@@ -23,13 +19,13 @@ const ProductBasicsSection = ({
   const [editValue, setEditValue] = useState("");
 
   return (
-    <SurfaceCard className="p-4 sm:p-5">
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+    <SurfaceCard className="p-4 sm:p-5 admin-motion hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(18,12,2,0.16)]">
+      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-primary-600">
         Basics
       </h3>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Name</span>
+          <span className="text-sm font-medium text-primary-700">Name</span>
           <input
             type="text"
             name="name"
@@ -40,7 +36,9 @@ const ProductBasicsSection = ({
           />
         </label>
         <label className="block">
-          <span className="text-sm font-medium text-slate-700">Base Price</span>
+          <span className="text-sm font-medium text-primary-700">
+            Base Price
+          </span>
           <input
             type="number"
             name="price"
@@ -50,14 +48,16 @@ const ProductBasicsSection = ({
             readOnly
             className={inputClassName}
           />
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-primary-600">
             Auto-calculated from the lowest value in Set Prices.
           </p>
         </label>
       </div>
 
       <label className="mt-4 block">
-        <span className="text-sm font-medium text-slate-700">Description</span>
+        <span className="text-sm font-medium text-primary-700">
+          Description
+        </span>
         <textarea
           name="description"
           rows={3}
@@ -69,7 +69,7 @@ const ProductBasicsSection = ({
       </label>
 
       <label className="mt-4 block">
-        <span className="text-sm font-medium text-slate-700">Category</span>
+        <span className="text-sm font-medium text-primary-700">Category</span>
         <select
           value={useCustomCategory ? "__new__" : formData.category}
           onChange={onCategoryChange}
@@ -89,16 +89,16 @@ const ProductBasicsSection = ({
           <button
             type="button"
             onClick={() => setManagingCategories(!managingCategories)}
-            className="text-xs font-medium text-fuchsia-600 hover:text-fuchsia-800 transition-colors"
+            className="text-xs font-medium text-primary-700 admin-motion hover:text-primary-900"
           >
             {managingCategories ? "Hide" : "Manage"} categories
           </button>
           {managingCategories && (
-            <div className="mt-2 space-y-1.5 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+            <div className="mt-2 space-y-1.5 rounded-xl border border-gold-200/60 bg-gold-50/50 p-2.5">
               {availableCategories.map((cat) => (
                 <div
                   key={cat}
-                  className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-1.5 text-sm"
+                  className="flex items-center gap-2 rounded-lg bg-white/90 px-2.5 py-1.5 text-sm admin-motion hover:bg-white"
                 >
                   {editingCat === cat ? (
                     <>
@@ -106,7 +106,7 @@ const ProductBasicsSection = ({
                         type="text"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="flex-1 min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs focus:border-fuchsia-500 focus:outline-none"
+                        className="flex-1 min-w-0 rounded-lg border border-gold-200/70 bg-white px-2 py-1 text-xs text-primary-800 focus:border-gold-400 focus:outline-none"
                       />
                       <button
                         type="button"
@@ -116,21 +116,21 @@ const ProductBasicsSection = ({
                           }
                           setEditingCat(null);
                         }}
-                        className="text-xs font-semibold text-emerald-600 hover:text-emerald-800"
+                        className="text-xs font-semibold text-primary-700 hover:text-primary-900"
                       >
                         Save
                       </button>
                       <button
                         type="button"
                         onClick={() => setEditingCat(null)}
-                        className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+                        className="text-xs font-semibold text-primary-500 hover:text-primary-700"
                       >
                         Cancel
                       </button>
                     </>
                   ) : (
                     <>
-                      <span className="flex-1 text-xs font-medium text-slate-700">
+                      <span className="flex-1 text-xs font-medium text-primary-700">
                         {formatCategoryLabel(cat)}
                       </span>
                       <button
@@ -139,7 +139,7 @@ const ProductBasicsSection = ({
                           setEditingCat(cat);
                           setEditValue(cat);
                         }}
-                        className="text-xs text-blue-500 hover:text-blue-700"
+                        className="text-xs text-primary-600 hover:text-primary-800"
                       >
                         ✏️
                       </button>
@@ -161,7 +161,7 @@ const ProductBasicsSection = ({
 
       {useCustomCategory && (
         <label className="mt-4 block">
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-primary-700">
             New Category Name
           </span>
           <input
@@ -176,8 +176,8 @@ const ProductBasicsSection = ({
       )}
 
       {/* Egg / Eggless toggles */}
-      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <p className="mb-3 text-sm font-semibold text-slate-700">Egg Type</p>
+      <div className="mt-4 rounded-xl border border-gold-200/60 bg-gold-50/50 p-4 admin-motion hover:border-gold-300/70 hover:bg-gold-50/70">
+        <p className="mb-3 text-sm font-semibold text-primary-700">Egg Type</p>
         <div className="flex flex-wrap gap-6">
           <label className="flex items-center gap-3 cursor-pointer">
             <Toggle
@@ -193,7 +193,7 @@ const ProductBasicsSection = ({
               }
               label="Egg"
             />
-            <span className="text-sm font-medium text-slate-700">Egg</span>
+            <span className="text-sm font-medium text-primary-700">Egg</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <Toggle
@@ -209,10 +209,12 @@ const ProductBasicsSection = ({
               }
               label="Eggless"
             />
-            <span className="text-sm font-medium text-slate-700">Eggless</span>
+            <span className="text-sm font-medium text-primary-700">
+              Eggless
+            </span>
           </label>
         </div>
-        <p className="mt-2 text-xs text-slate-400">
+        <p className="mt-2 text-xs text-primary-500">
           Toggle to indicate whether this product is available in Egg and/or
           Eggless variants.
         </p>

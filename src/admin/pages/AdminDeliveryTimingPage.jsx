@@ -568,7 +568,7 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
                   key={dayKey}
                   type="button"
                   onClick={() => setActiveDeliveryDay(dayKey)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition ${
+                  className={`rounded-2xl border px-4 py-4 text-left admin-motion ${
                     isActive
                       ? "border-slate-900 bg-slate-900 text-white shadow-lg"
                       : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50"

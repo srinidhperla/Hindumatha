@@ -38,12 +38,12 @@ const AdminProductsToolbar = ({
           value={searchTerm}
           onChange={(event) => onSearch(event.target.value)}
           placeholder="Search products"
-          className="rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-200"
+          className="rounded-xl border border-gold-200/70 bg-white/80 px-3 py-2 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
         />
         <div className="flex gap-2">
           <Link
             to="/admin/inventory"
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-center text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center rounded-xl border border-gold-200/70 bg-white/80 px-4 py-2 text-center text-xs sm:text-sm font-semibold text-primary-700 admin-motion hover:-translate-y-0.5 hover:border-gold-300 hover:bg-gold-50/70"
           >
             Inventory
           </Link>

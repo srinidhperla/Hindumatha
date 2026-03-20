@@ -47,20 +47,20 @@ const SavedAddressSection = ({
   };
 
   return (
-    <div className="mt-8 border-t border-cream-200 pt-8">
+    <div className="mt-8 border-t border-[rgba(201,168,76,0.28)] pt-8">
       <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-primary-800">
+          <h2 className="text-lg sm:text-xl font-bold text-[#2a1f0e]">
             Delivery Addresses
           </h2>
-          <p className="text-sm text-primary-500 mt-0.5">
+          <p className="mt-0.5 text-sm text-[#6a5130]">
             Manage your saved addresses for quick checkout.
           </p>
         </div>
         <button
           type="button"
           onClick={handleStartAdd}
-          className="mt-3 sm:mt-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary-600 to-primary-700 text-white text-sm font-semibold shadow-warm hover:shadow-warm-lg active:scale-95 transition-all"
+          className="mt-3 sm:mt-0 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(122,92,15,0.3)] transition-all hover:brightness-110 active:scale-95"
         >
           <svg
             className="w-4 h-4"
@@ -89,12 +89,12 @@ const SavedAddressSection = ({
               onDragOver={(event) => onDragOver(event, index)}
               onDrop={() => onDrop(index)}
               onDragEnd={onDragEnd}
-              className={`relative rounded-2xl border bg-white p-4 sm:p-5 transition-all duration-200 hover:shadow-warm ${
+              className={`relative rounded-2xl border bg-white/90 p-4 sm:p-5 transition-all duration-200 hover:shadow-[0_14px_28px_rgba(18,12,2,0.16)] ${
                 address.isDefault
-                  ? "border-primary-300 ring-1 ring-primary-100 shadow-soft"
+                  ? "border-[#c9a84c99] ring-1 ring-[#c9a84c55] shadow-[0_12px_24px_rgba(18,12,2,0.12)]"
                   : dragOverIndex === index
-                    ? "border-primary-400 ring-2 ring-primary-100"
-                    : "border-cream-200 shadow-sm"
+                    ? "border-[#c9a84c] ring-2 ring-[#e8d08a66]"
+                    : "border-[rgba(201,168,76,0.3)] shadow-sm"
               }`}
             >
               {/* Label & default badge */}
@@ -104,8 +104,8 @@ const SavedAddressSection = ({
                     address.label === "Home"
                       ? "bg-sage-100 text-sage-600"
                       : address.label === "Work"
-                        ? "bg-caramel-100 text-caramel-600"
-                        : "bg-primary-100 text-primary-600"
+                        ? "bg-[#efe1b8] text-[#7a5c0f]"
+                        : "bg-[#f7ecd2] text-[#7a5c0f]"
                   }`}
                 >
                   <svg
@@ -138,33 +138,33 @@ const SavedAddressSection = ({
                     )}
                   </svg>
                 </div>
-                <span className="font-semibold text-sm text-primary-800">
+                <span className="text-sm font-semibold text-[#2a1f0e]">
                   {address.label}
                 </span>
                 {address.isDefault && (
-                  <span className="ml-auto rounded-full bg-primary-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                  <span className="ml-auto rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                     Default
                   </span>
                 )}
               </div>
 
               {/* Address text */}
-              <p className="text-sm text-primary-600 leading-relaxed mb-1 line-clamp-2">
+              <p className="mb-1 line-clamp-2 text-sm leading-relaxed text-[#6a5130]">
                 {[address.street, address.city, address.state, address.zipCode]
                   .filter(Boolean)
                   .join(", ")}
               </p>
-              <p className="text-xs font-medium text-primary-500">
+              <p className="text-xs font-medium text-[#8f7859]">
                 {address.phone || "No phone"}
               </p>
 
               {/* Action buttons */}
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-cream-100">
+              <div className="mt-3 flex items-center gap-2 border-t border-[rgba(201,168,76,0.25)] pt-3">
                 {!address.isDefault && (
                   <button
                     type="button"
                     onClick={() => onSetDefaultAddress(index)}
-                    className="text-xs font-semibold text-primary-600 hover:text-primary-800 active:scale-95 transition"
+                    className="text-xs font-semibold text-[#7a5c0f] transition hover:text-[#2a1f0e] active:scale-95"
                   >
                     Set Default
                   </button>
@@ -172,7 +172,7 @@ const SavedAddressSection = ({
                 <button
                   type="button"
                   onClick={() => handleEdit(address, index)}
-                  className="text-xs font-semibold text-caramel-600 hover:text-caramel-800 active:scale-95 transition"
+                  className="text-xs font-semibold text-[#8b6914] transition hover:text-[#5b4312] active:scale-95"
                 >
                   Edit
                 </button>
@@ -188,10 +188,10 @@ const SavedAddressSection = ({
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border-2 border-dashed border-cream-300 bg-cream-50/50 px-6 py-10 text-center">
-          <div className="mx-auto mb-3 w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+        <div className="rounded-2xl border-2 border-dashed border-[rgba(201,168,76,0.35)] bg-[#f7ecd275] px-6 py-10 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#efe1b8]">
             <svg
-              className="w-6 h-6 text-primary-400"
+              className="h-6 w-6 text-[#8b6914]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -210,10 +210,10 @@ const SavedAddressSection = ({
               />
             </svg>
           </div>
-          <p className="text-sm font-medium text-primary-700">
+          <p className="text-sm font-medium text-[#2a1f0e]">
             No saved addresses yet
           </p>
-          <p className="text-xs text-primary-500 mt-1">
+          <p className="mt-1 text-xs text-[#6a5130]">
             Add your first delivery address to speed up checkout.
           </p>
         </div>

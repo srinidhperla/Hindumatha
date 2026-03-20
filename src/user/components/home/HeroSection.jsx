@@ -1,169 +1,320 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiArrowRight, FiPhone, FiStar, FiUsers } from "react-icons/fi";
+import { FiArrowRight, FiSearch, FiStar, FiTruck } from "react-icons/fi";
 
-const SPARKLES = [
-  { top: "12%", left: "8%", size: 4, delay: 0 },
-  { top: "20%", right: "12%", size: 3, delay: 1.2 },
-  { top: "55%", left: "4%", size: 5, delay: 0.6 },
-  { top: "65%", right: "6%", size: 3, delay: 1.8 },
-  { top: "80%", left: "18%", size: 4, delay: 2.4 },
-  { top: "35%", right: "20%", size: 3, delay: 0.3 },
-  { top: "75%", right: "25%", size: 4, delay: 1.5 },
-  { top: "15%", left: "30%", size: 3, delay: 2.1 },
+const heroSlides = [
+  {
+    image:
+      "https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=1400&auto=format&fit=crop&q=85",
+    alt: "Signature cake",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=1400&auto=format&fit=crop&q=85",
+    alt: "Chocolate cake",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1587668178277-295251f900ce?w=1400&auto=format&fit=crop&q=85",
+    alt: "Wedding cake",
+  },
+];
+
+const typedWords = [
+  "Birthday Cakes",
+  "Wedding Tiers",
+  "Chocolate Dreams",
+  "Custom Creations",
+  "Eggless Delights",
+];
+
+const quickTags = [
+  "Birthday",
+  "Wedding",
+  "Cupcakes",
+  "Chocolate",
+  "Photo Cakes",
+  "Eggless",
 ];
 
 const HeroSection = ({
   businessInfo,
-  establishedYear,
   averageRating,
   categoryCount,
-}) => (
-  <section className="relative overflow-hidden bg-gradient-to-br from-cream-50 via-cream-100 to-primary-50 pt-24 pb-16 lg:pt-32 lg:pb-24">
-    {/* Gradient mesh overlay */}
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,rgba(217,119,6,0.08),transparent_60%),radial-gradient(ellipse_at_80%_20%,rgba(168,85,247,0.06),transparent_50%),radial-gradient(ellipse_at_50%_80%,rgba(244,114,182,0.05),transparent_50%)]" />
+  deliverySettings,
+}) => {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState(0);
+  const [wordIndex, setWordIndex] = useState(0);
+  const [typedText, setTypedText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
-    {/* Decorative background blobs with float animation */}
-    <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-caramel-200/30 blur-3xl hero-float-slow" />
-    <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-primary-200/20 blur-3xl hero-float-reverse" />
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-berry-100/10 blur-3xl hero-float-slow" />
+  const deliveryRadiusKm = Number(deliverySettings?.deliveryRadiusKm || 4);
 
-    {/* Floating geometric accents */}
-    <div className="absolute top-28 right-[15%] w-16 h-16 rounded-2xl border-2 border-caramel-300/30 rotate-12 hero-float-slow hidden lg:block" />
-    <div className="absolute bottom-32 left-[10%] w-10 h-10 rounded-full bg-gradient-to-br from-caramel-300/40 to-caramel-400/20 hero-float-reverse hidden lg:block" />
-    <div className="absolute top-[40%] right-[8%] w-6 h-6 rounded-full bg-primary-300/30 hero-float-slow hidden lg:block" />
-    <div className="absolute top-[30%] left-[5%] w-20 h-20 rounded-3xl border border-primary-200/20 -rotate-6 hero-float-reverse hidden lg:block" />
+  const categoryStrip = useMemo(
+    () => [
+      {
+        label: "Birthday",
+        image:
+          "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&auto=format&fit=crop",
+      },
+      {
+        label: "Wedding",
+        image:
+          "https://images.unsplash.com/photo-1587668178277-295251f900ce?w=80&auto=format&fit=crop",
+      },
+      {
+        label: "Cupcakes",
+        image:
+          "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=80&auto=format&fit=crop",
+      },
+      {
+        label: "Chocolate",
+        image:
+          "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=80&auto=format&fit=crop",
+      },
+      {
+        label: "Pastries",
+        image:
+          "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=80&auto=format&fit=crop",
+      },
+      {
+        label: "Custom",
+        image:
+          "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=80&auto=format&fit=crop",
+      },
+      {
+        label: "Photo Cakes",
+        image:
+          "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&auto=format&fit=crop",
+      },
+    ],
+    [],
+  );
 
-    {/* Animated ring accent */}
-    <div className="absolute top-[18%] right-[22%] hidden lg:block">
-      <div className="w-24 h-24 rounded-full border-2 border-dashed border-caramel-300/25 hero-spin-slow" />
-    </div>
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % heroSlides.length);
+    }, 5500);
+    return () => window.clearInterval(interval);
+  }, []);
 
-    {/* Floating sparkle dots */}
-    {SPARKLES.map((s, i) => (
-      <div
-        key={i}
-        className="absolute rounded-full bg-caramel-400/50 hero-sparkle hidden sm:block"
-        style={{
-          top: s.top,
-          left: s.left,
-          right: s.right,
-          width: s.size,
-          height: s.size,
-          animationDelay: `${s.delay}s`,
-        }}
-      />
-    ))}
+  useEffect(() => {
+    const word = typedWords[wordIndex];
+    const speed = isDeleting ? 60 : 90;
 
-    {/* Shimmer line */}
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="hero-shimmer absolute top-0 left-0 w-full h-full" />
-    </div>
+    const timeout = window.setTimeout(() => {
+      if (!isDeleting) {
+        const next = word.slice(0, typedText.length + 1);
+        setTypedText(next);
 
-    <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-      {/* Welcome Badge */}
-      <div className="animate-fadeInUp inline-flex items-center gap-2 px-5 py-2.5 bg-white/80 backdrop-blur-md border border-caramel-200/60 rounded-full text-sm font-semibold text-primary-700 mb-8 shadow-warm hero-glass">
-        <span className="w-2 h-2 rounded-full bg-gradient-to-r from-caramel-400 to-caramel-500 animate-pulse" />
-        Welcome to Hindumatha's Cake World
-      </div>
+        if (next === word) {
+          window.setTimeout(() => setIsDeleting(true), 1200);
+        }
+        return;
+      }
 
-      {/* Main Heading with staggered entrance */}
-      <h1 className="animate-fadeInUp anim-delay-1 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-900 mb-6 leading-[1.1] tracking-tight">
-        <span className="hero-text-reveal inline-block">Crafting Sweet</span>{" "}
-        <span
-          className="relative inline-block hero-text-reveal"
-          style={{ animationDelay: "0.3s" }}
+      const next = word.slice(0, typedText.length - 1);
+      setTypedText(next);
+
+      if (!next) {
+        setIsDeleting(false);
+        setWordIndex((current) => (current + 1) % typedWords.length);
+      }
+    }, speed);
+
+    return () => window.clearTimeout(timeout);
+  }, [typedText, wordIndex, isDeleting]);
+
+  const jumpToSlide = (index) => setActiveSlide(index);
+
+  return (
+    <section className="relative min-h-[620px] overflow-hidden sm:min-h-[640px] lg:h-screen">
+      {heroSlides.map((slide, index) => (
+        <div
+          key={slide.image}
+          className={`absolute inset-0 transition-opacity duration-1000 ${
+            index === activeSlide ? "opacity-100" : "opacity-0"
+          }`}
         >
-          <span className="relative z-10 bg-gradient-to-r from-caramel-500 via-primary-500 to-caramel-600 bg-clip-text text-transparent bg-[length:200%_auto] hero-gradient-shift">
-            Memories
-          </span>
-          <span className="absolute bottom-2 left-0 w-full h-4 bg-caramel-200/60 -z-0 rounded hero-underline-grow" />
-        </span>
-        <br />
-        <span
-          className="hero-text-reveal text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent"
-          style={{ animationDelay: "0.5s" }}
-        >
-          Since {establishedYear}
-        </span>
-      </h1>
+          <img
+            src={slide.image}
+            alt={slide.alt}
+            className={`h-full w-full object-cover transition-transform duration-[8000ms] ${
+              index === activeSlide ? "scale-100" : "scale-105"
+            }`}
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(18,12,2,.9)_0%,rgba(18,12,2,.52)_44%,rgba(18,12,2,.12)_100%)]" />
+        </div>
+      ))}
 
-      {/* Description inside glass panel */}
-      <div className="animate-fadeInUp anim-delay-2 hero-glass-panel max-w-2xl mx-auto mb-10 px-6 py-4 rounded-2xl">
-        <p className="text-lg sm:text-xl text-primary-700/80 leading-relaxed">
-          {businessInfo.intro}
-        </p>
-      </div>
-
-      {/* CTA Buttons */}
-      <div className="animate-fadeInUp anim-delay-3 flex flex-col sm:flex-row gap-4 justify-center">
-        <Link
-          to="/menu"
-          className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-full shadow-warm hover:shadow-warm-lg transform hover:-translate-y-1 hover:scale-[1.03] transition-all duration-300 overflow-hidden"
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            Explore Our Menu
-            <FiArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform duration-300" />
-          </span>
-          <span className="absolute inset-0 bg-gradient-to-r from-caramel-500 to-primary-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        </Link>
-        <Link
-          to="/contact"
-          className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/70 backdrop-blur-md text-primary-700 font-semibold rounded-full border-2 border-primary-200 hover:border-caramel-400 hover:bg-caramel-50 transform hover:-translate-y-0.5 transition-all duration-300 shadow-soft"
-        >
-          <FiPhone className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-          Contact Us
-        </Link>
-      </div>
-
-      {/* Stats Row with staggered pop-in */}
-      <div className="mt-16 flex flex-wrap justify-center items-center gap-6 lg:gap-8">
-        {/* Rating */}
-        <div className="animate-fadeInUp anim-delay-3 hero-stat-card bg-white/70 backdrop-blur-xl border border-caramel-200/50 rounded-2xl shadow-soft px-5 py-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-caramel-400 to-caramel-500 flex items-center justify-center shadow-sm hero-icon-glow-caramel">
-            <FiStar className="w-6 h-6 text-white" />
+      <div className="absolute inset-0 z-10 flex flex-col justify-center px-4 pb-36 pt-24 sm:px-8 sm:pb-40 sm:pt-28 lg:px-12 lg:pb-36">
+        <div className="max-w-3xl">
+          <div className="animate-fadeInUp mb-4 inline-flex items-center gap-2">
+            <span className="h-px w-5 bg-[#c9a84c]" />
+            <span className="text-[10px] uppercase tracking-[0.35em] text-[#e8d08a]">
+              {businessInfo?.storeName || "Hyderabad's Finest Artisan Bakery"}
+            </span>
+            <span className="h-px w-5 bg-[#c9a84c]" />
           </div>
-          <div className="text-left">
-            <p className="text-lg font-bold text-primary-900">
-              {averageRating ? `${averageRating}/5` : "5/5"}
-            </p>
-            <p className="text-sm text-primary-600">Customer Rating</p>
+
+          <h1 className="animate-fadeInUp anim-delay-1 font-serif text-[2.4rem] leading-[1.02] text-white sm:text-6xl lg:text-7xl">
+            <em className="text-[#c9a84c] not-italic">Crafted</em> with
+            <br />
+            Pure Gold Love
+          </h1>
+
+          <p className="animate-fadeInUp anim-delay-2 mt-3 min-h-8 text-lg italic text-white/75 sm:text-2xl">
+            We bake <span className="home-typed-caret">{typedText}</span>
+          </p>
+
+          <div className="animate-fadeInUp anim-delay-3 mt-6 flex max-w-[520px] items-center gap-2 rounded-[28px] border border-[#c9a84c4d] bg-white/95 px-3 py-2 shadow-2xl backdrop-blur sm:rounded-[40px] sm:px-5">
+            <FiSearch className="h-4 w-4 text-[#c9a84c]" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search cakes, flavours, occasions..."
+              className="h-10 w-full border-none bg-transparent text-[13px] text-[#2a1f0e] outline-none sm:text-sm"
+            />
+            <div className="h-6 w-px bg-black/10" />
+            <Link
+              to="/menu"
+              className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-white transition hover:brightness-110 sm:px-5 sm:text-xs"
+            >
+              Find <FiArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <div className="animate-fadeInUp anim-delay-4 mt-5 flex flex-wrap gap-2">
+            {quickTags.map((tag, index) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setQuery(tag)}
+                className={`rounded-2xl border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition hover:scale-105 ${
+                  index < 3
+                    ? "border-[#c9a84c80] bg-[#c9a84c38] text-[#e8d08a]"
+                    : "border-white/25 bg-white/10 text-white/85"
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Categories */}
-        <div className="animate-fadeInUp anim-delay-4 hero-stat-card bg-white/70 backdrop-blur-xl border border-sage-200/50 rounded-2xl shadow-soft px-5 py-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sage-400 to-sage-500 flex items-center justify-center shadow-sm hero-icon-glow-sage">
-            <FiUsers className="w-6 h-6 text-white" />
+      <div className="absolute right-5 top-1/2 z-20 hidden -translate-y-1/2 flex-col gap-3 lg:flex">
+        <div className="animate-fadeInUp rounded-2xl border border-white/20 bg-white/15 px-4 py-3 text-white backdrop-blur">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c9a84c33]">
+              <FiStar className="h-5 w-5 text-[#e8d08a]" />
+            </span>
+            <div>
+              <p className="text-xs font-bold">
+                {averageRating || "4.9"} Rating
+              </p>
+              <p className="text-[10px] text-white/70">1000+ Reviews</p>
+            </div>
           </div>
-          <div className="text-left">
-            <p className="text-lg font-bold text-primary-900">
-              {categoryCount || 6}+
-            </p>
-            <p className="text-sm text-primary-600">Categories</p>
+        </div>
+        <div className="animate-fadeInUp anim-delay-1 rounded-2xl border border-white/20 bg-white/15 px-4 py-3 text-white backdrop-blur">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c9a84c33]">
+              <FiTruck className="h-5 w-5 text-[#e8d08a]" />
+            </span>
+            <div>
+              <p className="text-xs font-bold">Same Day Delivery</p>
+              <p className="text-[10px] text-white/70">
+                Within {deliveryRadiusKm} km
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="animate-fadeInUp anim-delay-2 rounded-2xl border border-white/20 bg-white/15 px-4 py-3 text-white backdrop-blur">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c9a84c33] text-[#e8d08a]">
+              ✦
+            </span>
+            <div>
+              <p className="text-xs font-bold text-[#e8d08a]">Today's Offer</p>
+              <p className="text-[10px] text-white/70">
+                {categoryCount || 6}+ cake categories
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    {/* Bottom wave divider */}
-    <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
-      <svg
-        className="relative block w-full h-8 sm:h-12"
-        viewBox="0 0 1200 60"
-        preserveAspectRatio="none"
-      >
-        <path
-          d="M0,30 C200,60 400,0 600,30 C800,60 1000,0 1200,30 L1200,60 L0,60 Z"
-          className="fill-white/40"
-        />
-        <path
-          d="M0,40 C300,60 600,20 900,40 C1050,50 1150,30 1200,40 L1200,60 L0,60 Z"
-          className="fill-white/60"
-        />
-      </svg>
-    </div>
-  </section>
-);
+      <div className="absolute bottom-[72px] left-4 z-20 flex items-center gap-2 sm:bottom-[74px] sm:left-10">
+        {heroSlides.map((slide, index) => (
+          <button
+            key={slide.image}
+            type="button"
+            onClick={() => jumpToSlide(index)}
+            className={`h-1.5 rounded-full transition-all ${
+              index === activeSlide ? "w-7 bg-[#c9a84c]" : "w-1.5 bg-white/40"
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      <div className="absolute bottom-[68px] right-4 z-20 font-serif text-sm text-white/45 sm:bottom-[70px] sm:right-10">
+        <strong className="text-2xl text-white">
+          {String(activeSlide + 1).padStart(2, "0")}
+        </strong>{" "}
+        / {String(heroSlides.length).padStart(2, "0")}
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 z-20 flex gap-2 overflow-x-auto border-t border-[#c9a84c1f] bg-gradient-to-t from-[#120c02ee] to-[#120c0280] px-3 py-3 backdrop-blur-sm sm:px-4">
+        {categoryStrip.map((category, index) => (
+          <button
+            key={category.label}
+            type="button"
+            onClick={() => {
+              setActiveCategory(index);
+              setQuery(category.label);
+            }}
+            className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 transition ${
+              activeCategory === index
+                ? "border-[#c9a84c] bg-[#c9a84c33]"
+                : "border-white/10 bg-white/5 hover:border-[#c9a84c80] hover:bg-[#c9a84c22]"
+            }`}
+          >
+            <img
+              src={category.image}
+              alt={category.label}
+              className="h-7 w-7 rounded-full border border-[#c9a84c66] object-cover"
+            />
+            <span className="whitespace-nowrap text-xs font-semibold text-white/85">
+              {category.label}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <style>{`
+        .home-typed-caret {
+          border-right: 2px solid #c9a84c;
+          padding-right: 2px;
+          animation: homeCaretBlink 0.9s step-end infinite;
+        }
+
+        @keyframes homeCaretBlink {
+          0%,
+          49% {
+            border-right-color: #c9a84c;
+          }
+          50%,
+          100% {
+            border-right-color: transparent;
+          }
+        }
+      `}</style>
+    </section>
+  );
+};
 
 export default HeroSection;

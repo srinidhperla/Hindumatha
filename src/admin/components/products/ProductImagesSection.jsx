@@ -9,10 +9,10 @@ const ProductImagesSection = ({
   onRemoveImage,
 }) => (
   <SurfaceCard className="p-3 sm:p-5">
-    <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+    <h3 className="text-base sm:text-lg font-semibold text-primary-900">
       Images
     </h3>
-    <p className="mt-1 text-xs sm:text-sm text-slate-500">
+    <p className="mt-1 text-xs sm:text-sm text-primary-600">
       Upload multiple images. First image = cover.
     </p>
     <input
@@ -20,7 +20,7 @@ const ProductImagesSection = ({
       accept="image/*"
       multiple
       onChange={onImageChange}
-      className="mt-3 block w-full text-sm text-slate-500"
+      className="mt-3 block w-full text-sm text-primary-600"
     />
 
     {imageItems.length > 0 && (
@@ -28,14 +28,14 @@ const ProductImagesSection = ({
         {imageItems.map((item, index) => (
           <div
             key={item.id}
-            className="overflow-hidden rounded-2xl border border-slate-200"
+            className="overflow-hidden rounded-2xl border border-gold-200/60 bg-white/80"
           >
             <img
               src={item.preview}
               alt={`${formData.name || "Product"} ${index + 1}`}
               className="h-28 sm:h-36 w-full object-cover"
             />
-            <div className="flex items-center gap-1 border-t border-slate-200 p-1.5 sm:p-2">
+            <div className="flex items-center gap-1 border-t border-gold-200/60 p-1.5 sm:p-2">
               <ActionButton
                 type="button"
                 variant="soft"

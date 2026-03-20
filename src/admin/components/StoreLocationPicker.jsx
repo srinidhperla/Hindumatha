@@ -121,7 +121,7 @@ const StoreLocationPicker = ({ lat, lng, radiusKm, onPickLocation }) => {
           <button
             type="submit"
             disabled={searchLoading}
-            className="rounded-xl border border-pink-200 px-4 py-2 text-sm font-semibold text-pink-700 transition hover:bg-pink-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl border border-pink-200 px-4 py-2 text-sm font-semibold text-pink-700 admin-motion hover:bg-pink-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {searchLoading ? "Searching..." : "Search"}
           </button>
@@ -140,7 +140,7 @@ const StoreLocationPicker = ({ lat, lng, radiusKm, onPickLocation }) => {
                 key={`${result.place_id}-${result.osm_id || ""}`}
                 type="button"
                 onClick={() => handleSelectSearchResult(result)}
-                className="w-full border-b border-slate-100 px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                className="w-full border-b border-slate-100 px-3 py-2 text-left text-sm text-slate-700 admin-motion hover:bg-slate-50"
               >
                 {result.display_name}
               </button>

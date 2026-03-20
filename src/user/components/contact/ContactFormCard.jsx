@@ -2,7 +2,7 @@ import React from "react";
 
 const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
   <div className="contact-form-card animate-fadeInUp anim-delay-2">
-    <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-primary-800">
+    <h2 className="font-playfair mb-4 text-xl font-bold text-[#2a1f0e] sm:mb-6 sm:text-2xl">
       Send us a Message
     </h2>
 
@@ -11,7 +11,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
         <div>
           <label
             htmlFor="name"
-            className="mb-2 block text-sm font-medium text-primary-700"
+            className="mb-2 block text-sm font-medium text-[#6a4c16]"
           >
             Full Name
           </label>
@@ -22,14 +22,14 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
             value={formData.name}
             onChange={onChange}
             required
-            className="w-full rounded-xl border border-cream-300 px-4 py-3 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-300"
+            className="w-full rounded-xl border border-[#c9a84c55] bg-white/90 px-4 py-3 text-[#2a1f0e] transition-colors focus:border-[#8b6914] focus:ring-2 focus:ring-[#c9a84c66]"
             placeholder="John Doe"
           />
         </div>
         <div>
           <label
             htmlFor="email"
-            className="mb-2 block text-sm font-medium text-primary-700"
+            className="mb-2 block text-sm font-medium text-[#6a4c16]"
           >
             Email Address
           </label>
@@ -40,7 +40,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
             value={formData.email}
             onChange={onChange}
             required
-            className="w-full rounded-xl border border-cream-300 px-4 py-3 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-300"
+            className="w-full rounded-xl border border-[#c9a84c55] bg-white/90 px-4 py-3 text-[#2a1f0e] transition-colors focus:border-[#8b6914] focus:ring-2 focus:ring-[#c9a84c66]"
             placeholder="john@example.com"
           />
         </div>
@@ -50,7 +50,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
         <div>
           <label
             htmlFor="phone"
-            className="mb-2 block text-sm font-medium text-primary-700"
+            className="mb-2 block text-sm font-medium text-[#6a4c16]"
           >
             Phone Number
           </label>
@@ -61,14 +61,14 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
             value={formData.phone}
             onChange={onChange}
             required
-            className="w-full rounded-xl border border-cream-300 px-4 py-3 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-300"
+            className="w-full rounded-xl border border-[#c9a84c55] bg-white/90 px-4 py-3 text-[#2a1f0e] transition-colors focus:border-[#8b6914] focus:ring-2 focus:ring-[#c9a84c66]"
             placeholder="+91 98765 43210"
           />
         </div>
         <div>
           <label
             htmlFor="subject"
-            className="mb-2 block text-sm font-medium text-primary-700"
+            className="mb-2 block text-sm font-medium text-[#6a4c16]"
           >
             Subject
           </label>
@@ -78,7 +78,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
             value={formData.subject}
             onChange={onChange}
             required
-            className="w-full rounded-xl border border-cream-300 px-4 py-3 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-300"
+            className="w-full rounded-xl border border-[#c9a84c55] bg-white/90 px-4 py-3 text-[#2a1f0e] transition-colors focus:border-[#8b6914] focus:ring-2 focus:ring-[#c9a84c66]"
           >
             <option value="">Select a subject</option>
             <option value="order">Place an Order</option>
@@ -93,7 +93,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
       <div>
         <label
           htmlFor="message"
-          className="mb-2 block text-sm font-medium text-primary-700"
+          className="mb-2 block text-sm font-medium text-[#6a4c16]"
         >
           Message
         </label>
@@ -104,7 +104,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
           value={formData.message}
           onChange={onChange}
           required
-          className="w-full resize-none rounded-xl border border-cream-300 px-4 py-3 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-300"
+          className="w-full resize-none rounded-xl border border-[#c9a84c55] bg-white/90 px-4 py-3 text-[#2a1f0e] transition-colors focus:border-[#8b6914] focus:ring-2 focus:ring-[#c9a84c66]"
           placeholder="Tell us about your requirements..."
         />
       </div>
@@ -112,7 +112,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
       <button
         type="submit"
         disabled={status.type === "loading"}
-        className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 py-3.5 sm:py-4 font-semibold text-white transition-all hover:from-primary-700 hover:to-primary-800 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-warm hover:shadow-warm-lg"
+        className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] py-3.5 font-semibold text-white shadow-[0_10px_24px_rgba(122,92,15,0.3)] transition-all hover:brightness-110 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#8b6914] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:py-4"
       >
         {status.type === "loading" ? "Sending..." : "Send Message"}
       </button>

@@ -27,8 +27,8 @@ const ProductOptionsSection = ({
     <div className="space-y-4 sm:space-y-5">
       {/* Egg type info banner */}
       {(formData.isEgg || formData.isEggless) && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-fuchsia-100 bg-fuchsia-50/60 px-3 py-2.5">
-          <span className="text-xs font-semibold text-slate-600">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gold-200/60 bg-gold-50/50 px-3 py-2.5">
+          <span className="text-xs font-semibold text-primary-600">
             Applies to:
           </span>
           {formData.isEgg && (
@@ -41,7 +41,7 @@ const ProductOptionsSection = ({
               🌱 Eggless
             </span>
           )}
-          <span className="ml-auto text-[10px] text-slate-400">
+          <span className="ml-auto text-[10px] text-primary-500">
             Fine-tune per-type in Inventory
           </span>
         </div>
@@ -49,10 +49,10 @@ const ProductOptionsSection = ({
 
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
         <SurfaceCard className="p-3 sm:p-5">
-          <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+          <h3 className="text-base sm:text-lg font-semibold text-primary-900">
             Flavors
           </h3>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500">
+          <p className="mt-1 text-xs sm:text-sm text-primary-600">
             Add available flavors quickly. Inventory toggles stay in Inventory
             page.
           </p>
@@ -108,9 +108,9 @@ const ProductOptionsSection = ({
             {formData.flavorOptions.map((option) => (
               <div
                 key={option.name}
-                className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2"
+                className="flex items-center justify-between rounded-xl border border-gold-200/50 bg-gold-50/45 px-3 py-2"
               >
-                <span className="text-sm font-medium text-slate-800">
+                <span className="text-sm font-medium text-primary-800">
                   {option.name}
                 </span>
                 <ActionButton
@@ -127,22 +127,22 @@ const ProductOptionsSection = ({
         </SurfaceCard>
 
         <SurfaceCard className="p-3 sm:p-5">
-          <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+          <h3 className="text-base sm:text-lg font-semibold text-primary-900">
             {portionTypeMeta.heading}
           </h3>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500">
+          <p className="mt-1 text-xs sm:text-sm text-primary-600">
             Configure {portionTypeMeta.singular} labels. Prices are managed in
             Set Prices.
           </p>
 
           <div className="mt-3 sm:mt-4">
-            <label className="block text-xs font-semibold text-slate-600">
+            <label className="block text-xs font-semibold text-primary-600">
               Unit Type
             </label>
             <select
               value={formData.portionType || "weight"}
               onChange={(event) => onPortionTypeChange(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-200"
+              className="mt-1 w-full rounded-xl border border-gold-200/70 bg-white px-3 py-2 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
             >
               {PRODUCT_PORTION_TYPES.map((type) => (
                 <option key={type} value={type}>
@@ -175,7 +175,7 @@ const ProductOptionsSection = ({
             {formData.weightOptions.map((option, index) => (
               <div
                 key={option.label}
-                className="rounded-xl bg-slate-100 p-2 sm:p-3"
+                className="rounded-xl border border-gold-200/50 bg-gold-50/45 p-2 sm:p-3"
               >
                 <div className="flex gap-2 items-center">
                   <input
@@ -184,7 +184,7 @@ const ProductOptionsSection = ({
                     onChange={(event) =>
                       onWeightFieldChange(index, "label", event.target.value)
                     }
-                    className="flex-1 min-w-0 rounded-xl border border-slate-300 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-sm shadow-sm focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-200"
+                    className="flex-1 min-w-0 rounded-xl border border-gold-200/70 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
                   />
                   <ActionButton
                     type="button"

@@ -10,8 +10,8 @@ const AdminToast = ({ toast, onClose }) => {
       <div
         className={`rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-sm ${
           toast.type === "error"
-            ? "border-red-200 bg-red-50 text-red-800"
-            : "border-emerald-200 bg-emerald-50 text-emerald-800"
+            ? "border-red-200 bg-red-50/95 text-red-800"
+            : "border-[rgba(201,168,76,0.35)] bg-[linear-gradient(155deg,rgba(18,12,2,.96),rgba(45,31,13,.93))] text-[#f4dfac]"
         }`}
       >
         <div className="flex items-start justify-between gap-3">

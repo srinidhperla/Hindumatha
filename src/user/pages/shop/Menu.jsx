@@ -88,6 +88,9 @@ const Menu = () => {
   const featuredProducts = visibleProducts.filter(
     (product) => product.isFeatured && product.canOrder,
   );
+  const showcaseItems = (
+    featuredProducts.length ? featuredProducts : visibleProducts
+  ).slice(0, 3);
   const categorySections = categories
     .filter((category) => category !== "All")
     .map((category) => ({
@@ -204,6 +207,48 @@ const Menu = () => {
   return (
     <div className="menu-page">
       <div className="menu-shell menu-shell--compact">
+        <section className="menu-showcase animate-fadeInUp">
+          <div className="menu-showcase-copy">
+            <p className="menu-showcase-kicker">Artisan Collection</p>
+            <h1 className="menu-showcase-title">
+              Freshly baked menu, crafted for every celebration
+            </h1>
+            <p className="menu-showcase-subtitle">
+              Browse {visibleProducts.length} items across{" "}
+              {Math.max(0, categories.length - 1)} categories and customize
+              flavor, portion, and egg preference before checkout.
+            </p>
+            <div className="menu-showcase-chips">
+              <span>Same-day delivery</span>
+              <span>Custom cakes</span>
+              <span>{deliverySettings?.deliveryRadiusKm || 4} km radius</span>
+            </div>
+          </div>
+
+          <div className="menu-showcase-grid">
+            {showcaseItems.map((item) => (
+              <button
+                key={item._id}
+                type="button"
+                onClick={() => openImagePreview(item)}
+                className="menu-showcase-card"
+              >
+                <img
+                  src={item.primaryImage}
+                  alt={item.name}
+                  className="menu-showcase-image"
+                />
+                <div className="menu-showcase-overlay" />
+                <div className="menu-showcase-body">
+                  <span>{item.categoryLabel}</span>
+                  <h3>{item.name}</h3>
+                  <p>Rs.{Number(item.price || 0).toLocaleString("en-IN")}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <div className="menu-controls-sticky">
           <div className="menu-search-wrap">
             <svg
@@ -335,8 +380,14 @@ const Menu = () => {
                   </div>
                 </div>
                 <div className="menu-items-grid">
-                  {section.items.map((product) => (
-                    <article key={product._id} className="menu-product-card">
+                  {section.items.map((product, productIndex) => (
+                    <article
+                      key={product._id}
+                      className="menu-product-card animate-fadeInUp"
+                      style={{
+                        animationDelay: `${Math.min(productIndex, 8) * 60}ms`,
+                      }}
+                    >
                       {/* Text side (left on mobile) */}
                       <div className="menu-product-body">
                         <div className="menu-product-header">
@@ -370,7 +421,7 @@ const Menu = () => {
                                 Eggless
                               </span>
                             )}
-                          <span>
+                          <span className="menu-product-meta-text">
                             {product.orderableFlavors.length > 1 ||
                             product.hasExplicitFlavors
                               ? `${product.orderableFlavors.length} flavors`
@@ -378,9 +429,9 @@ const Menu = () => {
                           </span>
                           {(product.hasExplicitFlavors ||
                             product.orderableFlavors.length > 1) && (
-                            <span>•</span>
+                            <span className="menu-meta-separator">•</span>
                           )}
-                          <span>
+                          <span className="menu-product-meta-text">
                             {product.orderableWeights.length}{" "}
                             {product.portionTypeMeta.heading.toLowerCase()}
                           </span>

@@ -122,7 +122,7 @@ const AdminOrdersPage = ({ onToast }) => {
 
   return (
     <div className="flex flex-col">
-      <SurfaceCard className="mb-4 px-4 py-4 text-sm text-slate-700">
+      <SurfaceCard className="mb-4 px-4 py-4 text-sm text-primary-700">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-3">
             <StatusChip tone={audioEnabled ? "success" : "warning"}>
@@ -199,7 +199,7 @@ const AdminOrdersPage = ({ onToast }) => {
             Test Alert
           </ActionButton>
         </div>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-primary-500">
           "Not subscribed yet" means this browser has not finished push
           registration. Click "Enable background alerts" once and allow
           notifications.
@@ -207,7 +207,7 @@ const AdminOrdersPage = ({ onToast }) => {
       </SurfaceCard>
 
       {latestOrder && (
-        <SurfaceCard className="mb-4 border-pink-200 bg-pink-50 px-4 py-3 text-sm text-pink-700 shadow-none">
+        <SurfaceCard className="mb-4 border-gold-200/70 bg-gradient-to-r from-gold-50/70 via-white/70 to-cream-100/70 px-4 py-3 text-sm text-primary-700 shadow-none admin-motion hover:border-gold-300">
           Latest order:{" "}
           <span className="font-semibold">
             {latestOrder.user?.name || "Guest Customer"}
@@ -222,22 +222,25 @@ const AdminOrdersPage = ({ onToast }) => {
 
       <div className="grid gap-4">
         {orders?.map((order) => (
-          <SurfaceCard key={order._id} className="p-5">
+          <SurfaceCard
+            key={order._id}
+            className="p-5 admin-motion hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(18,12,2,0.14)]"
+          >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                   Order
                 </p>
-                <p className="mt-1 break-all text-sm font-semibold text-slate-900">
+                <p className="mt-1 break-all text-sm font-semibold text-primary-900">
                   {order._id}
                 </p>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-primary-700">
                   {order.user?.name || "Guest Customer"}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-primary-500">
                   {order.user?.email || "No email"}
                 </p>
-                <p className="text-xs font-semibold text-slate-700">
+                <p className="text-xs font-semibold text-primary-700">
                   {order.deliveryAddress?.phone ||
                     order.user?.phone ||
                     "No phone"}
@@ -261,26 +264,26 @@ const AdminOrdersPage = ({ onToast }) => {
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-3 admin-motion hover:border-gold-300/70 hover:bg-gold-50/65">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-500">
                   Order summary
                 </p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
+                <p className="mt-1 text-sm font-semibold text-primary-900">
                   {getOrderSummary(order)}
                 </p>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-primary-600">
                   Qty: {getOrderItemCount(order)}
                 </p>
                 {order.paymentGatewayOrderId && (
-                  <p className="mt-2 break-all text-xs text-slate-500">
+                  <p className="mt-2 break-all text-xs text-primary-500">
                     {order.paymentGateway || "gateway"}:{" "}
                     {order.paymentGatewayOrderId}
                   </p>
                 )}
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                <label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <div className="rounded-2xl border border-gold-200/60 bg-white/80 p-3 admin-motion hover:border-gold-300/70 hover:bg-white/95">
+                <label className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-500">
                   Update status
                 </label>
                 <select
@@ -288,7 +291,7 @@ const AdminOrdersPage = ({ onToast }) => {
                   onChange={(event) =>
                     handleStatusChange(order._id, event.target.value)
                   }
-                  className="mt-2 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-200"
+                  className="mt-2 block w-full rounded-xl border border-gold-200/70 bg-white px-3 py-2 text-sm text-primary-800 focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
                 >
                   {ORDER_STATUS_OPTIONS.map((statusOption) => (
                     <option key={statusOption.value} value={statusOption.value}>
@@ -333,7 +336,7 @@ const AdminOrdersPage = ({ onToast }) => {
           </SurfaceCard>
         ))}
         {!orders?.length && (
-          <SurfaceCard className="p-8 text-center text-slate-600">
+          <SurfaceCard className="p-8 text-center text-primary-600">
             No orders yet.
           </SurfaceCard>
         )}

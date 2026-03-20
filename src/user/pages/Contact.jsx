@@ -52,10 +52,10 @@ const Contact = () => {
         <div className="absolute bottom-0 right-0 w-52 h-52 bg-berry-500/15 rounded-full blur-3xl" />
 
         <div className="contact-shell pt-0 text-center relative z-10">
-          <h1 className="animate-fadeInUp mb-3 sm:mb-4 text-3xl sm:text-4xl md:text-5xl font-bold text-white">
+          <h1 className="font-playfair animate-fadeInUp mb-3 text-3xl font-bold text-white sm:mb-4 sm:text-4xl md:text-5xl">
             Get in Touch
           </h1>
-          <p className="animate-fadeInUp anim-delay-1 mx-auto max-w-2xl text-base sm:text-xl text-cream-100">
+          <p className="animate-fadeInUp anim-delay-1 mx-auto max-w-2xl text-base text-[#f4dfacc9] sm:text-xl">
             We'd love to hear from you. Send us a message and we'll respond as
             soon as possible.
           </p>

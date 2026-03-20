@@ -24,7 +24,7 @@ const tabs = [
 ];
 
 const AdminPageFallback = () => (
-  <div className="rounded-2xl border border-cream-300 bg-white p-10 text-center text-sm font-medium text-primary-500">
+  <div className="rounded-2xl border border-[rgba(201,168,76,0.3)] bg-white/90 p-10 text-center text-sm font-medium text-[#6a4c16]">
     Loading admin page...
   </div>
 );
@@ -57,25 +57,31 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <AdminToast toast={toast} onClose={() => setToast(null)} />
 
-      <div className="mb-12 text-center">
-        <h1 className="text-3xl font-extrabold text-primary-800 sm:text-4xl">
+      <div className="mb-8 rounded-3xl border border-[rgba(201,168,76,0.3)] bg-[linear-gradient(155deg,rgba(18,12,2,.96),rgba(45,31,13,.94))] px-6 py-8 text-center shadow-[0_14px_30px_rgba(18,12,2,0.28)] sm:px-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#e8d08a]">
+          Operations Center
+        </p>
+        <h1 className="font-playfair mt-2 text-3xl font-extrabold text-white sm:text-4xl">
           Admin Dashboard
         </h1>
       </div>
 
-      <div className="border-b border-cream-300">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+      <div className="rounded-2xl border border-[rgba(201,168,76,0.28)] bg-white/85 p-2 shadow-[0_10px_22px_rgba(18,12,2,0.1)] backdrop-blur-sm">
+        <nav
+          className="flex gap-2 overflow-x-auto no-scrollbar"
+          aria-label="Tabs"
+        >
           {tabs.map((tab) => (
             <Link
               key={tab.name}
               to={tab.href}
-              className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium ${
+              className={`whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-semibold admin-motion ${
                 location.pathname === tab.href
-                  ? "border-primary-500 text-primary-600"
-                  : "border-transparent text-primary-400 hover:border-cream-400 hover:text-primary-600"
+                  ? "bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] text-white shadow-[0_8px_16px_rgba(122,92,15,0.26)]"
+                  : "text-[#6a4c16] hover:bg-[#f8f0da]"
               }`}
             >
               {tab.name}

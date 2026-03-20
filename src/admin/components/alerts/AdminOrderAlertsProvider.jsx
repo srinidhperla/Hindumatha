@@ -12,7 +12,9 @@ import { io } from "socket.io-client";
 import { fetchOrders } from "../../../features/orders/orderSlice";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const ALERT_REPEAT_MS = 5000;
+const ALERT_RING_DURATION_MS = 5500;
+const ALERT_GAP_MS = 1000;
+const ALERT_REPEAT_MS = ALERT_RING_DURATION_MS + ALERT_GAP_MS;
 const ALERTS_ENABLED_STORAGE_KEY = "bakeryAdminAlertsEnabled";
 const PUSH_SUBSCRIBED_STORAGE_KEY = "bakeryAdminPushSubscribed";
 
@@ -30,6 +32,14 @@ const canUseServiceWorker = () =>
 
 const canUsePushManager = () =>
   typeof window !== "undefined" && "PushManager" in window;
+
+const getStoredToken = () => {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+};
 
 const urlBase64ToUint8Array = (base64String) => {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -56,7 +66,7 @@ const FloatingAlertUnlock = ({ onUnlock }) => (
         <button
           type="button"
           onClick={onUnlock}
-          className="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-500"
+          className="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white admin-motion hover:bg-amber-500"
         >
           Arm Sound
         </button>
@@ -157,28 +167,53 @@ export const AdminOrderAlertsProvider = ({ children }) => {
         return;
       }
 
-      [0, 0.22, 0.44].forEach((offset, index) => {
-        const oscillator = audioContextRef.current.createOscillator();
-        const gainNode = audioContextRef.current.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContextRef.current.destination);
-        oscillator.type = "square";
-        oscillator.frequency.value = index === 1 ? 1046 : 880;
-        gainNode.gain.setValueAtTime(
-          0.0001,
-          audioContextRef.current.currentTime + offset,
-        );
-        gainNode.gain.exponentialRampToValueAtTime(
-          0.24,
-          audioContextRef.current.currentTime + offset + 0.03,
-        );
-        gainNode.gain.exponentialRampToValueAtTime(
-          0.0001,
-          audioContextRef.current.currentTime + offset + 0.28,
-        );
-        oscillator.start(audioContextRef.current.currentTime + offset);
-        oscillator.stop(audioContextRef.current.currentTime + offset + 0.3);
-      });
+      const audioContext = audioContextRef.current;
+      const now = audioContext.currentTime;
+      const startTime = now + 0.02;
+      const ringDurationSec = ALERT_RING_DURATION_MS / 1000;
+      const endTime = startTime + ringDurationSec;
+
+      const compressor = audioContext.createDynamicsCompressor();
+      const masterGain = audioContext.createGain();
+      const highTone = audioContext.createOscillator();
+      const lowTone = audioContext.createOscillator();
+
+      // Phone-call style dual-tone ring (similar to classic call ringtone).
+      highTone.type = "sine";
+      lowTone.type = "sine";
+      highTone.frequency.setValueAtTime(480, startTime);
+      lowTone.frequency.setValueAtTime(440, startTime);
+
+      compressor.threshold.setValueAtTime(-18, startTime);
+      compressor.knee.setValueAtTime(24, startTime);
+      compressor.ratio.setValueAtTime(10, startTime);
+      compressor.attack.setValueAtTime(0.002, startTime);
+      compressor.release.setValueAtTime(0.14, startTime);
+
+      // Softer phone-like ring with higher perceived loudness.
+      const ringGain = 0.82;
+      const pulseOnSec = 0.62;
+      const pulseOffSec = 0.16;
+      let t = startTime;
+
+      masterGain.gain.setValueAtTime(0.0001, startTime);
+      while (t < endTime) {
+        const pulseEnd = Math.min(t + pulseOnSec, endTime);
+        masterGain.gain.exponentialRampToValueAtTime(ringGain, t + 0.03);
+        masterGain.gain.exponentialRampToValueAtTime(0.42, pulseEnd - 0.05);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, pulseEnd);
+        t += pulseOnSec + pulseOffSec;
+      }
+
+      highTone.connect(masterGain);
+      lowTone.connect(masterGain);
+      masterGain.connect(compressor);
+      compressor.connect(audioContext.destination);
+
+      highTone.start(startTime);
+      lowTone.start(startTime);
+      highTone.stop(endTime + 0.02);
+      lowTone.stop(endTime + 0.02);
     } catch {
       setAudioEnabled(false);
     }
@@ -213,7 +248,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   );
 
   const fetchPushStatus = useCallback(async () => {
-    const tokenValue = sessionStorage.getItem("token");
+    const tokenValue = getStoredToken();
     const response = await fetch(`${API_URL}/site/alerts/push-status`, {
       headers: {
         Authorization: `Bearer ${tokenValue}`,
@@ -254,7 +289,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       });
     }
 
-    const tokenValue = sessionStorage.getItem("token");
+    const tokenValue = getStoredToken();
     const response = await fetch(`${API_URL}/site/alerts/push-subscriptions`, {
       method: "POST",
       headers: {

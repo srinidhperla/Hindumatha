@@ -2,29 +2,29 @@ import React from "react";
 
 export const MetricCard = ({ title, value, subtitle, highlight = false }) => (
   <div
-    className={`rounded-2xl border p-6 shadow-sm transition-all duration-200 ${
+    className={`rounded-2xl border p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)] admin-motion hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(18,12,2,0.16)] ${
       highlight
-        ? "border-pink-200 bg-gradient-to-br from-pink-50 to-purple-50"
-        : "border-gray-100 bg-white"
+        ? "border-[rgba(201,168,76,0.4)] bg-[linear-gradient(155deg,rgba(255,252,240,.95),rgba(245,230,186,.62))]"
+        : "border-[rgba(201,168,76,0.3)] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))]"
     }`}
   >
-    <p className="text-sm font-medium text-gray-500">{title}</p>
-    <p className="mt-3 text-2xl font-bold text-gray-900">{value}</p>
-    <p className="mt-2 text-sm text-gray-500">{subtitle}</p>
+    <p className="text-sm font-medium text-[#7a5c0f]">{title}</p>
+    <p className="mt-3 text-2xl font-bold text-[#2a1f0e]">{value}</p>
+    <p className="mt-2 text-sm text-[#6a5130]">{subtitle}</p>
   </div>
 );
 
 export const LoadingState = () => (
   <div className="flex items-center justify-center h-40">
-    <div className="w-10 h-10 border-4 border-pink-200 border-t-pink-600 rounded-full animate-spin" />
+    <div className="w-10 h-10 rounded-full border-4 border-[#f3e4bc] border-t-[#7a5c0f] animate-spin" />
   </div>
 );
 
 export const EmptyState = ({ message }) => (
   <div className="flex flex-col items-center justify-center h-40 text-center">
-    <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center mb-3">
+    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f8eed2]">
       <svg
-        className="w-6 h-6 text-pink-400"
+        className="w-6 h-6 text-[#8b6914]"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -37,6 +37,6 @@ export const EmptyState = ({ message }) => (
         />
       </svg>
     </div>
-    <p className="text-sm text-gray-500">{message}</p>
+    <p className="text-sm text-[#6a5130]">{message}</p>
   </div>
 );

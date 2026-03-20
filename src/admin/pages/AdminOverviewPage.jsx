@@ -79,8 +79,8 @@ const AdminOverviewPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="rounded-2xl border border-[rgba(201,168,76,0.3)] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
+          <h2 className="mb-4 font-playfair text-lg font-semibold text-[#2a1f0e]">
             Recent Orders
           </h2>
           {ordersLoading ? (
@@ -90,21 +90,21 @@ const AdminOverviewPage = () => {
               {recentOrders.map((order) => (
                 <li
                   key={order._id}
-                  className="flex items-start justify-between p-4 bg-gray-50 rounded-xl"
+                  className="flex items-start justify-between rounded-xl border border-[rgba(201,168,76,0.22)] bg-white/85 p-4 admin-motion hover:-translate-y-0.5 hover:border-[rgba(201,168,76,0.4)] hover:bg-white"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-[#2a1f0e]">
                       {order.user?.name || "Guest Customer"}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-[#6a5130]">
                       {getOrderSummary(order)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-[#5b4312]">
                       ₹{order.totalAmount?.toLocaleString("en-IN")}
                     </p>
-                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-pink-50 text-pink-600">
+                    <span className="inline-flex items-center rounded-full border border-[rgba(201,168,76,0.3)] bg-[#f6ead0] px-2 py-1 text-xs font-medium text-[#7a5c0f]">
                       {order.status}
                     </span>
                   </div>
@@ -116,8 +116,8 @@ const AdminOverviewPage = () => {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="rounded-2xl border border-[rgba(201,168,76,0.3)] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
+          <h2 className="mb-4 font-playfair text-lg font-semibold text-[#2a1f0e]">
             Product Summary
           </h2>
           {productsLoading ? (
@@ -127,7 +127,7 @@ const AdminOverviewPage = () => {
               {products.slice(0, 6).map((product) => (
                 <li
                   key={product._id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
+                  className="flex items-center justify-between rounded-xl border border-[rgba(201,168,76,0.22)] bg-white/85 p-3 admin-motion hover:-translate-y-0.5 hover:border-[rgba(201,168,76,0.4)] hover:bg-white"
                 >
                   <div className="flex items-center space-x-3">
                     <img
@@ -136,15 +136,15 @@ const AdminOverviewPage = () => {
                       className="w-12 h-12 rounded-xl object-cover"
                     />
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-[#2a1f0e]">
                         {product.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[#6a5130]">
                         {product.category}
                       </p>
                     </div>
                   </div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-[#5b4312]">
                     ₹{product.price}
                   </p>
                 </li>

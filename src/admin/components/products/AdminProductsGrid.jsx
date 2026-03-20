@@ -29,12 +29,12 @@ const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
         return (
           <SurfaceCard
             key={product._id}
-            className="overflow-hidden flex flex-col"
+            className="group overflow-hidden flex flex-col admin-motion hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(18,12,2,0.16)]"
           >
             <img
               src={product.images?.[0] || product.image}
               alt={product.name}
-              className="h-36 sm:h-48 w-full object-cover"
+              className="h-36 sm:h-48 w-full object-cover admin-motion-transform group-hover:scale-[1.04]"
             />
             <div className="flex flex-1 flex-col p-3 sm:p-5">
               <div className="mb-2 sm:mb-3 flex items-start justify-between gap-3">
@@ -84,7 +84,7 @@ const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
                     </span>
                   ))}
                   {product.flavorOptions.length > 3 && (
-                    <span className="rounded-full bg-cream-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-slate-500">
+                    <span className="rounded-full bg-cream-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-primary-500">
                       +{product.flavorOptions.length - 3}
                     </span>
                   )}

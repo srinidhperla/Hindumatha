@@ -187,7 +187,9 @@ const AdminInventoryPage = ({ onToast }) => {
       const row = getTypedRow(raw, typedKey);
       if (!row) return true;
       return weights.some(
-        (w) => getRowValue(row, w.label) !== false && getRowValue(row, w.label) !== null,
+        (w) =>
+          getRowValue(row, w.label) !== false &&
+          getRowValue(row, w.label) !== null,
       );
     });
 
@@ -569,7 +571,7 @@ const AdminInventoryPage = ({ onToast }) => {
                               )
                             }
                             disabled={saving}
-                            className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
+                            className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs font-medium admin-motion disabled:opacity-50 ${
                               isOn
                                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                                 : "border-red-200 bg-red-50 text-red-600"
@@ -638,7 +640,7 @@ const AdminInventoryPage = ({ onToast }) => {
                                       )
                                     }
                                     disabled={saving}
-                                    className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
+                                    className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-1.5 text-xs font-medium admin-motion disabled:opacity-50 ${
                                       isOn
                                         ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                                         : "border-red-200 bg-red-50 text-red-600"

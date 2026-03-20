@@ -319,33 +319,35 @@ const Profile = () => {
     <div className="profile-page">
       <div className="profile-shell">
         {/* Profile Header */}
-        <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 p-6 sm:p-10 text-white">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-caramel-400/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-berry-500/10 rounded-full blur-3xl" />
+        <div className="relative mb-8 overflow-hidden rounded-3xl border border-[rgba(201,168,76,0.35)] bg-[linear-gradient(150deg,#120c02_0%,#1f1408_42%,#33210f_100%)] p-6 text-white shadow-[0_16px_32px_rgba(18,12,2,0.28)] sm:p-10">
+          <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-[#c9a84c33] blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-[#e8d08a1f] blur-3xl" />
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-5">
             {/* Avatar */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-2xl sm:text-3xl font-black text-white shadow-lg flex-shrink-0">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-[#c9a84c66] bg-[#f4dfac1f] text-2xl font-black text-[#f4dfac] shadow-lg backdrop-blur-sm sm:h-20 sm:w-20 sm:text-3xl">
               {(user?.name || "U").charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cream-300 mb-1">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.25em] text-[#e8d08a]">
                 My Profile
               </p>
-              <h1 className="text-2xl sm:text-3xl font-black truncate">
+              <h1 className="font-playfair truncate text-2xl font-black sm:text-3xl">
                 {user?.name || "Your Profile"}
               </h1>
-              <p className="mt-1 text-sm text-cream-200">{user?.email || ""}</p>
+              <p className="mt-1 text-sm text-[#f4dfacbf]">
+                {user?.email || ""}
+              </p>
             </div>
             <div className="flex gap-2 sm:gap-3 self-start sm:self-center">
               <Link
                 to="/orders"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-sm font-medium hover:bg-white/25 active:scale-95 transition-all"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#c9a84c66] bg-[#f4dfac1a] px-4 py-2 text-sm font-medium text-[#f4dfac] backdrop-blur-sm transition-all hover:bg-[#f4dfac2b] active:scale-95"
               >
                 My Orders
               </Link>
               <Link
                 to="/cart"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-primary-700 text-sm font-semibold hover:bg-cream-100 active:scale-95 transition-all shadow-sm"
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110 active:scale-95"
               >
                 Go to Cart
               </Link>
@@ -357,10 +359,10 @@ const Profile = () => {
         <div className="profile-card">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-primary-800 mb-1">
+              <h2 className="mb-1 text-lg font-bold text-[#2a1f0e] sm:text-xl">
                 Personal Details
               </h2>
-              <p className="text-sm text-primary-500">
+              <p className="text-sm text-[#6a5130]">
                 Keep your contact info up to date for faster checkout.
               </p>
             </div>
@@ -392,10 +394,10 @@ const Profile = () => {
             </div>
 
             {(error || user?.email) && (
-              <div className="flex items-center gap-3 rounded-2xl border border-cream-200 bg-cream-50/80 px-5 py-4 text-sm text-primary-600">
-                <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-3 rounded-2xl border border-[rgba(201,168,76,0.3)] bg-[#f7ecd2a8] px-5 py-4 text-sm text-[#6a5130]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#efe1b8]">
                   <svg
-                    className="w-5 h-5 text-primary-600"
+                    className="h-5 w-5 text-[#7a5c0f]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -411,7 +413,7 @@ const Profile = () => {
                 <div>
                   <p>
                     Signed in as{" "}
-                    <span className="font-semibold text-primary-800">
+                    <span className="font-semibold text-[#2a1f0e]">
                       {user?.email}
                     </span>
                   </p>

@@ -12,13 +12,13 @@ const GalleryHero = ({
     <div className="animation-delay-2000 absolute bottom-0 right-0 h-96 w-96 animate-pulse rounded-full bg-primary-400 opacity-30 mix-blend-multiply blur-3xl filter"></div>
 
     <div className="gallery-shell text-center">
-      <span className="mb-4 inline-block rounded-full bg-white/20 px-4 py-1 text-sm font-medium text-white backdrop-blur-sm">
+      <span className="mb-4 inline-block rounded-full border border-[#c9a84c66] bg-white/10 px-4 py-1 text-sm font-medium text-[#e8d08a] backdrop-blur-sm">
         Our Creations
       </span>
-      <h1 className="mb-6 text-4xl font-bold text-white sm:text-5xl lg:text-6xl">
+      <h1 className="font-playfair mb-6 text-4xl font-bold text-white sm:text-5xl lg:text-6xl">
         Cake Gallery
       </h1>
-      <p className="mx-auto mb-8 max-w-2xl text-xl text-cream-100">
+      <p className="mx-auto mb-8 max-w-2xl text-xl text-[#f4dfaccc]">
         Browse signature creations from {businessInfo.storeName} and get
         inspired for your next celebration.
       </p>
@@ -28,19 +28,19 @@ const GalleryHero = ({
           <div className="text-3xl font-bold text-white">
             {galleryItems.length}
           </div>
-          <div className="text-sm text-cream-200">Gallery Items</div>
+          <div className="text-sm text-[#f4dfacab]">Gallery Items</div>
         </div>
-        <div className="h-12 w-px bg-cream-300/30"></div>
+        <div className="h-12 w-px bg-[#c9a84c55]"></div>
         <div className="text-center">
           <div className="text-3xl font-bold text-white">{totalLikes}</div>
-          <div className="text-sm text-cream-200">Total Likes</div>
+          <div className="text-sm text-[#f4dfacab]">Total Likes</div>
         </div>
-        <div className="h-12 w-px bg-cream-300/30"></div>
+        <div className="h-12 w-px bg-[#c9a84c55]"></div>
         <div className="text-center">
           <div className="text-3xl font-bold text-white">
             {categories.length - 1}
           </div>
-          <div className="text-sm text-cream-200">Categories</div>
+          <div className="text-sm text-[#f4dfacab]">Categories</div>
         </div>
       </div>
     </div>
