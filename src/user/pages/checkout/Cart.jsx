@@ -15,6 +15,7 @@ import {
   DEFAULT_COUPONS,
   normalizeCouponCode,
 } from "../../../utils/orderPricing";
+import { normalizeDeliverySettings } from "../../../utils/deliverySettings";
 import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
@@ -90,6 +91,7 @@ const Cart = () => {
     useSelector((state) => state.cart);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const coupons = useSelector((state) => state.site.coupons);
+  const deliverySettings = useSelector((state) => state.site.deliverySettings);
   const [couponInput, setCouponInput] = React.useState(DEFAULT_COUPON_INPUT);
 
   useEffect(() => {
@@ -106,6 +108,16 @@ const Cart = () => {
   const unavailableCount = cartItems.filter((item) => !item.canOrder).length;
   const availableCoupons = (coupons?.length ? coupons : DEFAULT_COUPONS).filter(
     (coupon) => coupon.isActive !== false,
+  );
+  const normalizedDeliverySettings = useMemo(
+    () => normalizeDeliverySettings(deliverySettings),
+    [deliverySettings],
+  );
+  const freeDeliveryMinAmount =
+    Number(normalizedDeliverySettings?.freeDeliveryMinAmount) || 0;
+  const remainingForFreeDelivery = Math.max(
+    0,
+    freeDeliveryMinAmount - subtotal,
   );
   const pricing = calculateOrderPricing({
     subtotal,
@@ -364,7 +376,7 @@ const Cart = () => {
                             }),
                           );
                         }}
-                        className="rounded-2xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                        className="commerce-remove-button"
                       >
                         Remove
                       </button>
@@ -398,6 +410,18 @@ const Cart = () => {
                   -Rs.{pricing.discountAmount.toLocaleString("en-IN")}
                 </span>
               </div>
+              <div className="commerce-sidebar-row">
+                <span>
+                  {remainingForFreeDelivery === 0
+                    ? "Free Delivery"
+                    : "Delivery (at checkout)"}
+                </span>
+                <span className="font-semibold text-primary-800">
+                  {remainingForFreeDelivery === 0
+                    ? "Unlocked"
+                    : `Add Rs.${remainingForFreeDelivery.toLocaleString("en-IN")}`}
+                </span>
+              </div>
               <div className="commerce-sidebar-total">
                 <span className="commerce-sidebar-total-label">
                   Grand total
@@ -426,7 +450,7 @@ const Cart = () => {
                     onClick={() => {
                       /* value updates live via onChange */
                     }}
-                    className="rounded-2xl bg-primary-700 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-800"
+                    className="commerce-apply-button"
                   >
                     Apply
                   </button>
@@ -437,7 +461,7 @@ const Cart = () => {
                   {pricing.couponError}
                 </div>
               ) : pricing.appliedCoupon ? (
-                <div className="commerce-alert commerce-alert--warning mt-0 border-emerald-200 bg-emerald-50 text-emerald-700">
+                <div className="commerce-alert commerce-alert--success mt-0">
                   ✓ {pricing.appliedCoupon.code}:{" "}
                   {pricing.appliedCoupon.description}
                 </div>

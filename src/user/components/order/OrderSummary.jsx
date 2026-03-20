@@ -21,6 +21,7 @@ const OrderSummary = ({
   isAddressVerified,
   isAddressServiceable,
   paymentMethod,
+  freeDeliveryProgress,
 }) => (
   <aside className="commerce-sidebar">
     <p className="commerce-sidebar-kicker">Order Summary</p>
@@ -62,29 +63,46 @@ const OrderSummary = ({
       ))}
     </div>
 
-    <div className="commerce-sidebar-list border-t border-slate-200 pt-5">
+    <div className="commerce-sidebar-list border-t border-primary-200 pt-5">
       <div className="commerce-sidebar-row">
         <span>Total units</span>
-        <span className="font-semibold text-slate-900">{totalUnits}</span>
+        <span className="font-semibold text-primary-900">{totalUnits}</span>
       </div>
       <div className="commerce-sidebar-row">
         <span>Product lines</span>
-        <span className="font-semibold text-slate-900">
+        <span className="font-semibold text-primary-900">
           {checkoutItems.length}
         </span>
       </div>
       <div className="commerce-sidebar-row">
         <span>Subtotal</span>
-        <span className="font-semibold text-slate-900">
+        <span className="font-semibold text-primary-900">
           ₹{pricing.subtotal.toLocaleString("en-IN")}
         </span>
       </div>
       <div className="commerce-sidebar-row">
-        <span>Delivery Fee</span>
-        <span className="font-semibold text-slate-900">
-          ₹{pricing.deliveryFee.toLocaleString("en-IN")}
+        <span>
+          {pricing.deliveryFee === 0 ? "Free Delivery" : "Delivery (as usual)"}
+        </span>
+        <span className="font-semibold text-primary-900">
+          {pricing.deliveryFee === 0
+            ? "Free Delivery"
+            : `₹${pricing.deliveryFee.toLocaleString("en-IN")}`}
         </span>
       </div>
+      {pricing.deliveryFee > 0 &&
+        freeDeliveryProgress?.enabled &&
+        freeDeliveryProgress?.remainingAmount > 0 && (
+          <div className="commerce-sidebar-row text-xs text-primary-700">
+            <span>Add this much for free delivery</span>
+            <span className="font-semibold text-primary-800">
+              ₹
+              {Number(freeDeliveryProgress.remainingAmount).toLocaleString(
+                "en-IN",
+              )}
+            </span>
+          </div>
+        )}
       <div className="commerce-sidebar-row">
         <span>Discount</span>
         <span className="font-semibold text-emerald-700">

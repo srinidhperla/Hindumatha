@@ -1,6 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
+import {
+  FiMail,
+  FiLock,
+  FiEye,
+  FiEyeOff,
+  FiArrowRight,
+  FiUserPlus,
+  FiStar,
+} from "react-icons/fi";
 
 const LoginFormCard = ({
   formData,
@@ -13,26 +21,18 @@ const LoginFormCard = ({
   onSubmit,
   onTogglePassword,
 }) => (
-  <div className="flex flex-1 items-center justify-center overflow-y-auto bg-gradient-to-br from-cream-50 to-cream-100 p-6 sm:p-10">
-    <div className="w-full max-w-md">
-      {/* Mobile logo */}
-      <div className="mb-8 flex justify-center lg:hidden">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-md">
-            <span className="text-white font-bold text-lg">H</span>
-          </div>
-          <span className="text-xl font-bold text-primary-800">
-            Hindumatha's
-          </span>
-        </Link>
-      </div>
-
+  <div className="mx-auto w-full max-w-7xl">
+    <div className="mx-auto w-full max-w-xl rounded-[2rem] border border-gold-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.96),rgba(249,241,224,0.92))] p-6 shadow-[0_24px_60px_rgba(18,12,2,0.14)] backdrop-blur-md sm:p-8">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-primary-800">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-gold-200/80 bg-gold-50/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold-700">
+          <FiStar className="h-3.5 w-3.5" />
+          Member Login
+        </div>
+        <h2 className="font-playfair text-4xl font-bold tracking-tight text-primary-900">
           Welcome back
         </h2>
-        <p className="mt-2 text-primary-500">
+        <p className="mt-3 text-primary-600">
           New here?{" "}
           <Link
             to="/register"
@@ -119,11 +119,19 @@ const LoginFormCard = ({
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 py-3.5 font-semibold text-white shadow-warm transition-all hover:shadow-warm-lg hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] py-3.5 font-semibold text-white shadow-[0_12px_28px_rgba(122,92,15,0.28)] transition-all hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_16px_34px_rgba(122,92,15,0.35)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Signing in..." : "Sign in"}
           {!loading && <FiArrowRight className="h-5 w-5" />}
         </button>
+
+        <Link
+          to="/register"
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-gold-200 bg-white/90 py-3.5 font-semibold text-[#7a5c0f] transition-all hover:-translate-y-0.5 hover:border-[#c9a84c] hover:bg-[#fff7e8]"
+        >
+          <FiUserPlus className="h-5 w-5" />
+          Sign up
+        </Link>
 
         {/* Google login */}
         {googleEnabled && (
@@ -159,6 +167,10 @@ const LoginFormCard = ({
             </div>
           </div>
         )}
+
+        <p className="text-center text-xs text-primary-400">
+          Secure login with modern encryption and privacy-first protection.
+        </p>
       </form>
     </div>
   </div>

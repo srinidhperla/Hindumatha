@@ -197,7 +197,7 @@ const OrderDeliveryStep = ({
       </p>
 
       <div className="commerce-form-stack">
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+        <div className="rounded-2xl border border-primary-200 bg-primary-50/70 p-3">
           <p className="commerce-field-label mb-3">Delivery preference</p>
           <div className="grid gap-3 md:grid-cols-2">
             <button
@@ -211,14 +211,14 @@ const OrderDeliveryStep = ({
               disabled={isDeliveryTurnedOff}
               className={`rounded-2xl border px-4 py-3 text-left transition ${
                 isNowSelected
-                  ? "border-emerald-300 bg-emerald-50"
-                  : "border-slate-200 bg-white"
+                  ? "border-sage-300 bg-sage-50"
+                  : "border-primary-200 bg-white"
               } ${isDeliveryTurnedOff ? "cursor-not-allowed opacity-70" : ""}`}
             >
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-primary-800">
                 Deliver Now
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-primary-600">
                 Fastest possible delivery after prep.
               </p>
               {(isNowSelected || isDeliveryTurnedOff) && effectiveNowReason && (
@@ -241,14 +241,14 @@ const OrderDeliveryStep = ({
               disabled={isDeliveryTurnedOff}
               className={`rounded-2xl border px-4 py-3 text-left transition ${
                 isScheduled
-                  ? "border-fuchsia-300 bg-fuchsia-50"
-                  : "border-slate-200 bg-white"
+                  ? "border-caramel-300 bg-caramel-50"
+                  : "border-primary-200 bg-white"
               } ${isDeliveryTurnedOff ? "cursor-not-allowed opacity-70" : ""}`}
             >
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-primary-800">
                 Schedule Delivery
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-primary-600">
                 Choose exact date and time.
               </p>
               {(isScheduled || isDeliveryTurnedOff) &&
@@ -267,20 +267,20 @@ const OrderDeliveryStep = ({
         </div>
 
         {isScheduled && (
-          <div className="rounded-2xl border border-fuchsia-100 bg-fuchsia-50/40 p-3">
+          <div className="rounded-2xl border border-caramel-200 bg-caramel-50/50 p-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm font-semibold text-primary-800">
                   Scheduled delivery details
                 </p>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-primary-600">
                   Select exact date and time in hours and minutes.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowScheduleModal(true)}
-                className="rounded-xl border border-fuchsia-200 bg-white px-3 py-2 text-sm font-semibold text-fuchsia-700 hover:bg-fuchsia-50"
+                className="rounded-xl border border-caramel-200 bg-white px-3 py-2 text-sm font-semibold text-caramel-700 hover:bg-caramel-50"
               >
                 {scheduledDate && scheduledSlotStart
                   ? "Edit schedule"
@@ -288,7 +288,7 @@ const OrderDeliveryStep = ({
               </button>
             </div>
             {scheduledDate && scheduledSlotStart && (
-              <p className="mt-3 text-sm font-medium text-slate-700">
+              <p className="mt-3 text-sm font-medium text-primary-700">
                 Selected: {scheduledDate} at {scheduledSlotStart}
               </p>
             )}
@@ -296,16 +296,16 @@ const OrderDeliveryStep = ({
         )}
 
         {isScheduled && showScheduleModal && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-3 sm:items-center sm:p-4">
-            <div className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-primary-950/45 p-3 sm:items-center sm:p-4">
+            <div className="w-full max-w-lg rounded-2xl border border-primary-200 bg-white p-4 shadow-[0_24px_50px_rgba(18,12,2,0.22)] sm:p-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-slate-900">
+                <h3 className="text-lg font-semibold text-primary-800">
                   Schedule Delivery
                 </h3>
                 <button
                   type="button"
                   onClick={() => setShowScheduleModal(false)}
-                  className="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100"
+                  className="rounded-lg px-2 py-1 text-primary-500 hover:bg-primary-50"
                 >
                   Close
                 </button>
@@ -411,11 +411,11 @@ const OrderDeliveryStep = ({
               </div>
 
               {scheduledDate && availableSlotLabels.length > 0 && (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                <div className="mt-4 rounded-xl border border-primary-200 bg-primary-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">
                     Available windows
                   </p>
-                  <p className="mt-2 text-sm text-slate-700">
+                  <p className="mt-2 text-sm text-primary-700">
                     {availableSlotLabels.join(" | ")}
                   </p>
                 </div>

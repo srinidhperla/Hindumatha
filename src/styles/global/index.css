@@ -26,7 +26,7 @@
   }
 
   body {
-    @apply antialiased text-slate-800;
+    @apply antialiased text-primary-800;
     font-family:
       "Jost",
       system-ui,
@@ -36,6 +36,24 @@
     font-feature-settings:
       "ss01" on,
       "ss02" on;
+  }
+
+  #root {
+    font-family:
+      "Jost",
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Playfair Display", Georgia, serif;
+    letter-spacing: 0.01em;
   }
 
   ::selection {
@@ -335,25 +353,34 @@
 @layer components {
   /* ===== BUTTONS ===== */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 
-           bg-primary-600 text-white font-medium rounded-full 
-           shadow-warm hover:bg-primary-700 hover:shadow-warm-lg
-           transform hover:-translate-y-0.5 active:translate-y-0 
-           transition-all duration-300;
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold text-white transition-all duration-300;
+    background: linear-gradient(90deg, #7a5c0f 0%, #c9a84c 100%);
+    box-shadow: 0 12px 28px rgba(122, 92, 15, 0.28);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.07);
+    box-shadow: 0 16px 34px rgba(122, 92, 15, 0.35);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center px-6 py-3 
-           bg-white text-slate-700 border border-slate-200 
+           bg-white text-primary-700 border border-primary-200 
            font-medium rounded-full 
-           hover:border-primary-300 hover:text-primary-700 hover:bg-primary-50 
+           shadow-[0_8px_18px_rgba(18,12,2,0.08)]
+           hover:border-caramel-300 hover:text-primary-800 hover:bg-caramel-50 
            transition-all duration-300;
   }
 
   .btn-ghost {
     @apply inline-flex items-center justify-center px-4 py-2 
-           text-slate-600 font-medium rounded-full 
-           hover:bg-primary-100 hover:text-primary-700 
+           text-primary-600 font-medium rounded-full 
+           hover:bg-caramel-100 hover:text-primary-800 
            transition-all duration-200;
   }
 
@@ -368,7 +395,7 @@
   /* ===== CARDS ===== */
   .card {
     @apply bg-white rounded-2xl shadow-soft overflow-hidden 
-           border border-slate-100;
+           border border-primary-100;
   }
 
   .card-hover {
@@ -396,7 +423,7 @@
 
   .glass-input {
     @apply bg-white/60 backdrop-blur-lg 
-           border border-slate-200/50 rounded-xl px-4 py-3
+           border border-primary-200/60 rounded-xl px-4 py-3
            focus:bg-white focus:border-primary-400 
            outline-none transition-all duration-200;
   }
@@ -404,19 +431,19 @@
   /* ===== INPUTS ===== */
   .input-field {
     @apply w-full px-4 py-3.5 
-           bg-white border border-slate-200 rounded-xl 
+           bg-white border border-primary-200 rounded-xl 
            focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 
            outline-none transition-all duration-200
-           placeholder:text-slate-400;
+           placeholder:text-primary-400;
   }
 
   /* ===== TYPOGRAPHY ===== */
   .section-title {
-    @apply text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight;
+    @apply font-playfair text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-900 tracking-tight;
   }
 
   .section-subtitle {
-    @apply text-lg text-slate-500 max-w-2xl mx-auto font-normal;
+    @apply text-lg text-primary-600 max-w-2xl mx-auto font-normal;
   }
 
   .text-balance {
@@ -1467,6 +1494,41 @@
     font-weight: 700;
   }
 
+  .menu-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 9999px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    border: 1px solid transparent;
+  }
+
+  .menu-tag-icon {
+    display: inline-flex;
+    height: 14px;
+    width: 14px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+    background: #fff;
+  }
+
+  .menu-tag--egg {
+    color: #b42318;
+    background: #fff1f2;
+    border-color: #fecdd3;
+  }
+
+  .menu-tag--eggless {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+
   /* Actions */
   .menu-product-actions {
     margin-top: auto;
@@ -1941,11 +2003,11 @@
   }
 
   .commerce-title {
-    @apply mt-3 text-4xl font-black tracking-tight text-slate-800;
+    @apply mt-3 font-playfair text-4xl font-black tracking-tight text-primary-900;
   }
 
   .commerce-copy {
-    @apply mt-3 text-base leading-7 text-slate-600;
+    @apply mt-3 text-base leading-7 text-primary-600;
   }
 
   .commerce-header {
@@ -1985,15 +2047,32 @@
   }
 
   .commerce-price-box {
-    @apply rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 px-4 py-3 text-right text-white;
+    @apply rounded-[1.3rem] border px-4 py-3 text-right;
+    border-color: rgba(255, 255, 255, 0.22);
+    background:
+      radial-gradient(
+        circle at 18% 16%,
+        rgba(255, 255, 255, 0.14),
+        transparent 42%
+      ),
+      linear-gradient(145deg, #944634 0%, #783a30 100%);
+    box-shadow:
+      0 12px 28px rgba(120, 58, 48, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+
+  .commerce-price-box--compact {
+    @apply min-w-[150px];
   }
 
   .commerce-price-kicker {
-    @apply text-xs uppercase tracking-[0.2em] text-primary-300;
+    @apply text-[0.66rem] font-semibold uppercase tracking-[0.24em] text-white/80;
   }
 
   .commerce-price-value {
-    @apply mt-1 text-2xl font-black text-white;
+    @apply mt-1 text-[2.05rem] font-extrabold leading-none text-white;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
   }
 
   .commerce-variant-grid {
@@ -2001,11 +2080,11 @@
   }
 
   .commerce-field-label {
-    @apply mb-2 block text-sm font-semibold text-slate-700;
+    @apply mb-2 block text-sm font-semibold text-primary-700;
   }
 
   .commerce-input {
-    @apply w-full rounded-2xl border border-primary-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100;
+    @apply w-full rounded-2xl border border-primary-200 bg-white px-4 py-3 text-sm text-primary-800 outline-none transition focus:border-primary-500 focus:ring-4 focus:ring-primary-100;
   }
 
   .commerce-counter {
@@ -2013,11 +2092,11 @@
   }
 
   .commerce-counter-button {
-    @apply h-11 w-11 rounded-xl text-lg font-bold text-slate-700 transition hover:bg-white;
+    @apply h-11 w-11 rounded-xl text-lg font-bold text-primary-700 transition hover:bg-white;
   }
 
   .commerce-counter-value {
-    @apply w-12 text-center text-base font-bold text-slate-800;
+    @apply w-12 text-center text-base font-bold text-primary-900;
   }
 
   .commerce-meta-row {
@@ -2033,7 +2112,7 @@
   }
 
   .commerce-chip--muted {
-    @apply bg-primary-100 text-slate-700;
+    @apply bg-caramel-100 text-primary-700;
   }
 
   .commerce-chip--success {
@@ -2044,8 +2123,22 @@
     @apply bg-red-50 text-red-700;
   }
 
+  .commerce-remove-button {
+    @apply rounded-2xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50;
+  }
+
+  .commerce-apply-button {
+    @apply rounded-2xl px-4 py-2 text-sm font-semibold text-white transition;
+    background: linear-gradient(145deg, #944634 0%, #783a30 100%);
+    box-shadow: 0 8px 18px rgba(120, 58, 48, 0.26);
+  }
+
+  .commerce-apply-button:hover {
+    background: linear-gradient(145deg, #873f30 0%, #6f352b 100%);
+  }
+
   .commerce-sidebar {
-    @apply h-fit rounded-[2rem] border border-primary-100 bg-white p-6 text-slate-800 shadow-warm lg:sticky lg:top-28;
+    @apply h-fit rounded-[2rem] border border-primary-100 bg-white p-6 text-primary-800 shadow-warm lg:sticky lg:top-28;
   }
 
   .commerce-sidebar-kicker {
@@ -2053,11 +2146,11 @@
   }
 
   .commerce-sidebar-title {
-    @apply mt-3 text-3xl font-black text-slate-800;
+    @apply mt-3 font-playfair text-3xl font-black text-primary-900;
   }
 
   .commerce-sidebar-list {
-    @apply mt-8 space-y-4 text-sm text-slate-600;
+    @apply mt-8 space-y-4 text-sm text-primary-600;
   }
 
   .commerce-sidebar-row {
@@ -2069,7 +2162,7 @@
   }
 
   .commerce-sidebar-total-label {
-    @apply text-base font-semibold text-slate-800;
+    @apply text-base font-semibold text-primary-900;
   }
 
   .commerce-sidebar-total-value {
@@ -2088,8 +2181,12 @@
     @apply border border-primary-200 bg-primary-50 text-primary-800;
   }
 
+  .commerce-alert--success {
+    @apply border border-emerald-200 bg-emerald-50 text-emerald-700;
+  }
+
   .commerce-note {
-    @apply mt-6 rounded-2xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-slate-700;
+    @apply mt-6 rounded-2xl border border-caramel-200 bg-caramel-50 px-4 py-3 text-sm text-primary-700;
   }
 
   .commerce-actions {
@@ -2109,11 +2206,11 @@
   }
 
   .commerce-section-title {
-    @apply text-2xl font-black text-slate-800;
+    @apply font-playfair text-2xl font-black text-primary-900;
   }
 
   .commerce-section-copy {
-    @apply mt-2 text-slate-600;
+    @apply mt-2 text-primary-600;
   }
 
   .commerce-stepper {
@@ -2125,27 +2222,27 @@
   }
 
   .commerce-step-circle {
-    @apply flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold;
+    @apply flex h-11 w-11 items-center justify-center rounded-full text-sm font-extrabold shadow-sm;
   }
 
   .commerce-step-circle--active {
-    @apply bg-primary-500 text-white;
+    @apply bg-gradient-to-br from-primary-600 to-primary-500 text-cream-50 shadow-[0_8px_20px_rgba(148,92,35,0.32)];
   }
 
   .commerce-step-circle--inactive {
-    @apply bg-slate-200 text-slate-500;
+    @apply border border-primary-200 bg-cream-100 text-primary-700;
   }
 
   .commerce-step-label {
-    @apply hidden text-sm font-semibold sm:inline;
+    @apply hidden text-sm font-bold tracking-wide sm:inline;
   }
 
   .commerce-step-label--active {
-    @apply text-slate-800;
+    @apply text-primary-950;
   }
 
   .commerce-step-label--inactive {
-    @apply text-slate-500;
+    @apply text-primary-700;
   }
 
   .commerce-step-line {
@@ -2153,11 +2250,11 @@
   }
 
   .commerce-step-line--active {
-    @apply bg-primary-500;
+    @apply bg-gradient-to-r from-primary-600 to-primary-500;
   }
 
   .commerce-step-line--inactive {
-    @apply bg-slate-200;
+    @apply bg-cream-300;
   }
 
   .commerce-form-stack {
@@ -2185,11 +2282,11 @@
   }
 
   .commerce-summary-name {
-    @apply text-sm font-semibold text-slate-800;
+    @apply text-sm font-semibold text-primary-900;
   }
 
   .commerce-summary-copy {
-    @apply mt-1 text-xs text-slate-600;
+    @apply mt-1 text-xs text-primary-600;
   }
 
   .commerce-summary-price {

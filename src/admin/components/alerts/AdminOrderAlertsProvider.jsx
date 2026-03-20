@@ -15,6 +15,8 @@ const API_URL = import.meta.env.VITE_API_URL;
 const ALERT_RING_DURATION_MS = 5500;
 const ALERT_GAP_MS = 1000;
 const ALERT_REPEAT_MS = ALERT_RING_DURATION_MS + ALERT_GAP_MS;
+const ALERT_PRE_GAIN = 2.3;
+const ALERT_POST_GAIN = 1.3;
 const ALERTS_ENABLED_STORAGE_KEY = "bakeryAdminAlertsEnabled";
 const PUSH_SUBSCRIBED_STORAGE_KEY = "bakeryAdminPushSubscribed";
 
@@ -168,52 +170,50 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       }
 
       const audioContext = audioContextRef.current;
-      const now = audioContext.currentTime;
-      const startTime = now + 0.02;
-      const ringDurationSec = ALERT_RING_DURATION_MS / 1000;
-      const endTime = startTime + ringDurationSec;
-
+      const preGain = audioContext.createGain();
       const compressor = audioContext.createDynamicsCompressor();
-      const masterGain = audioContext.createGain();
-      const highTone = audioContext.createOscillator();
-      const lowTone = audioContext.createOscillator();
+      const postGain = audioContext.createGain();
 
-      // Phone-call style dual-tone ring (similar to classic call ringtone).
-      highTone.type = "sine";
-      lowTone.type = "sine";
-      highTone.frequency.setValueAtTime(480, startTime);
-      lowTone.frequency.setValueAtTime(440, startTime);
+      preGain.gain.setValueAtTime(ALERT_PRE_GAIN, audioContext.currentTime);
+      compressor.threshold.setValueAtTime(-28, audioContext.currentTime);
+      compressor.knee.setValueAtTime(18, audioContext.currentTime);
+      compressor.ratio.setValueAtTime(14, audioContext.currentTime);
+      compressor.attack.setValueAtTime(0.001, audioContext.currentTime);
+      compressor.release.setValueAtTime(0.22, audioContext.currentTime);
+      postGain.gain.setValueAtTime(ALERT_POST_GAIN, audioContext.currentTime);
 
-      compressor.threshold.setValueAtTime(-18, startTime);
-      compressor.knee.setValueAtTime(24, startTime);
-      compressor.ratio.setValueAtTime(10, startTime);
-      compressor.attack.setValueAtTime(0.002, startTime);
-      compressor.release.setValueAtTime(0.14, startTime);
+      preGain.connect(compressor);
+      compressor.connect(postGain);
+      postGain.connect(audioContext.destination);
 
-      // Softer phone-like ring with higher perceived loudness.
-      const ringGain = 0.82;
-      const pulseOnSec = 0.62;
-      const pulseOffSec = 0.16;
-      let t = startTime;
-
-      masterGain.gain.setValueAtTime(0.0001, startTime);
-      while (t < endTime) {
-        const pulseEnd = Math.min(t + pulseOnSec, endTime);
-        masterGain.gain.exponentialRampToValueAtTime(ringGain, t + 0.03);
-        masterGain.gain.exponentialRampToValueAtTime(0.42, pulseEnd - 0.05);
-        masterGain.gain.exponentialRampToValueAtTime(0.0001, pulseEnd);
-        t += pulseOnSec + pulseOffSec;
+      // Fetch and decode the Airtel ringtone MP3
+      const response = await fetch("/sounds/airtel_ringtone.mp3");
+      if (!response.ok) {
+        throw new Error("Failed to fetch ringtone file");
       }
 
-      highTone.connect(masterGain);
-      lowTone.connect(masterGain);
-      masterGain.connect(compressor);
-      compressor.connect(audioContext.destination);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-      highTone.start(startTime);
-      lowTone.start(startTime);
-      highTone.stop(endTime + 0.02);
-      lowTone.stop(endTime + 0.02);
+      // Play the ringtone multiple times to fill the alert duration
+      const ringtoneStartTime = audioContext.currentTime;
+      const ringDurationSec = ALERT_RING_DURATION_MS / 1000;
+      let playTime = ringtoneStartTime;
+
+      while (playTime - ringtoneStartTime < ringDurationSec) {
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(preGain);
+
+        const remainingTime = ringDurationSec - (playTime - ringtoneStartTime);
+        const sourceEndTime =
+          playTime + Math.min(audioBuffer.duration, remainingTime);
+
+        source.start(playTime);
+        source.stop(sourceEndTime);
+
+        playTime += audioBuffer.duration;
+      }
     } catch {
       setAudioEnabled(false);
     }

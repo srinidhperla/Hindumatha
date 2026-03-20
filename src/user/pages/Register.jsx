@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { register } from "../../features/auth/authSlice";
-import RegisterBrandPanel from "../components/auth/RegisterBrandPanel";
 import RegisterFormCard from "../components/auth/RegisterFormCard";
 
 const Register = () => {
@@ -103,21 +102,35 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-page">
-      <RegisterFormCard
-        formData={formData}
-        showPassword={showPassword}
-        passwordError={passwordError}
-        passwordStrength={passwordStrength}
-        loading={loading}
-        error={formError || error}
-        onChange={handleChange}
-        onTogglePassword={() => setShowPassword((prev) => !prev)}
-        onSubmit={handleSubmit}
-        getStrengthColor={getStrengthColor}
-        getStrengthText={getStrengthText}
-      />
-      <RegisterBrandPanel />
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f8f1de_0%,#fff9ef_52%,#f2e6cc_100%)] py-8 sm:py-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 rounded-[1.75rem] border border-[rgba(201,168,76,0.35)] bg-[linear-gradient(145deg,#120c02_0%,#251a0a_50%,#38240f_100%)] p-6 text-white shadow-[0_16px_34px_rgba(18,12,2,0.28)] sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-caramel-300/90">
+            Create Profile
+          </p>
+          <h1 className="mt-2 font-playfair text-3xl font-bold sm:text-4xl">
+            Join Hindumatha's Cake World
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-cream-200/85 sm:text-base">
+            Register once to order faster, save your delivery details, and
+            receive updates for every celebration order.
+          </p>
+        </div>
+
+        <RegisterFormCard
+          formData={formData}
+          showPassword={showPassword}
+          passwordError={passwordError}
+          passwordStrength={passwordStrength}
+          loading={loading}
+          error={formError || error}
+          onChange={handleChange}
+          onTogglePassword={() => setShowPassword((prev) => !prev)}
+          onSubmit={handleSubmit}
+          getStrengthColor={getStrengthColor}
+          getStrengthText={getStrengthText}
+        />
+      </div>
     </div>
   );
 };

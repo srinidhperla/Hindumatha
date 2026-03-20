@@ -349,11 +349,30 @@ const Payment = () => {
                 </span>
               </div>
               <div className="commerce-sidebar-row">
-                <span>Delivery Fee</span>
+                <span>
+                  {checkoutData.pricing.deliveryFee === 0
+                    ? "Free Delivery"
+                    : "Delivery (as usual)"}
+                </span>
                 <span className="font-semibold text-primary-800">
-                  Rs.{checkoutData.pricing.deliveryFee.toLocaleString("en-IN")}
+                  {checkoutData.pricing.deliveryFee === 0
+                    ? "Free Delivery"
+                    : `Rs.${checkoutData.pricing.deliveryFee.toLocaleString("en-IN")}`}
                 </span>
               </div>
+              {checkoutData.pricing.deliveryFee > 0 &&
+                checkoutData.freeDeliveryProgress?.enabled &&
+                checkoutData.freeDeliveryProgress?.remainingAmount > 0 && (
+                  <div className="commerce-sidebar-row text-xs text-primary-700">
+                    <span>Add this much for free delivery</span>
+                    <span className="font-semibold text-primary-800">
+                      Rs.
+                      {Number(
+                        checkoutData.freeDeliveryProgress.remainingAmount,
+                      ).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                )}
               <div className="commerce-sidebar-row">
                 <span>Discount</span>
                 <span className="font-semibold text-emerald-700">

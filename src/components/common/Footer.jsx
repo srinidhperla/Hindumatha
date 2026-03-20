@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { FiMapPin, FiPhone, FiMail, FiArrowUpRight } from "react-icons/fi";
+import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -37,21 +38,21 @@ const Footer = () => {
                   className="site-footer-social-link"
                   aria-label="Facebook"
                 >
-                  F
+                  <FaFacebookF className="h-4 w-4" />
                 </a>
                 <a
                   href={socialLinks.instagram}
                   className="site-footer-social-link"
                   aria-label="Instagram"
                 >
-                  I
+                  <FaInstagram className="h-4 w-4" />
                 </a>
                 <a
                   href={socialLinks.whatsapp}
                   className="site-footer-social-link"
                   aria-label="WhatsApp"
                 >
-                  W
+                  <FaWhatsapp className="h-4 w-4" />
                 </a>
               </div>
             </div>

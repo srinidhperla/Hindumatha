@@ -27,7 +27,7 @@ const Menu = () => {
   const [quickAddQuantity, setQuickAddQuantity] = useState(1);
   const [imagePreview, setImagePreview] = useState(null);
   const { products, loading } = useSelector((state) => state.products);
-  const { businessInfo, deliverySettings } = useSelector((state) => state.site);
+  const { businessInfo } = useSelector((state) => state.site);
 
   // Silently poll products every 15s so inventory changes auto-reflect
   useEffect(() => {
@@ -88,9 +88,6 @@ const Menu = () => {
   const featuredProducts = visibleProducts.filter(
     (product) => product.isFeatured && product.canOrder,
   );
-  const showcaseItems = (
-    featuredProducts.length ? featuredProducts : visibleProducts
-  ).slice(0, 3);
   const categorySections = categories
     .filter((category) => category !== "All")
     .map((category) => ({
@@ -207,48 +204,6 @@ const Menu = () => {
   return (
     <div className="menu-page">
       <div className="menu-shell menu-shell--compact">
-        <section className="menu-showcase animate-fadeInUp">
-          <div className="menu-showcase-copy">
-            <p className="menu-showcase-kicker">Artisan Collection</p>
-            <h1 className="menu-showcase-title">
-              Freshly baked menu, crafted for every celebration
-            </h1>
-            <p className="menu-showcase-subtitle">
-              Browse {visibleProducts.length} items across{" "}
-              {Math.max(0, categories.length - 1)} categories and customize
-              flavor, portion, and egg preference before checkout.
-            </p>
-            <div className="menu-showcase-chips">
-              <span>Same-day delivery</span>
-              <span>Custom cakes</span>
-              <span>{deliverySettings?.deliveryRadiusKm || 4} km radius</span>
-            </div>
-          </div>
-
-          <div className="menu-showcase-grid">
-            {showcaseItems.map((item) => (
-              <button
-                key={item._id}
-                type="button"
-                onClick={() => openImagePreview(item)}
-                className="menu-showcase-card"
-              >
-                <img
-                  src={item.primaryImage}
-                  alt={item.name}
-                  className="menu-showcase-image"
-                />
-                <div className="menu-showcase-overlay" />
-                <div className="menu-showcase-body">
-                  <span>{item.categoryLabel}</span>
-                  <h3>{item.name}</h3>
-                  <p>Rs.{Number(item.price || 0).toLocaleString("en-IN")}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-
         <div className="menu-controls-sticky">
           <div className="menu-search-wrap">
             <svg
@@ -409,15 +364,19 @@ const Menu = () => {
                         <div className="menu-product-meta">
                           {product.isEgg !== false &&
                             isEggTypeAvailable(product, "egg") && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-600 ring-1 ring-red-200">
-                                <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+                              <span className="menu-tag menu-tag--egg">
+                                <span className="menu-tag-icon">
+                                  <span className="h-0 w-0 border-l-[3px] border-r-[3px] border-b-[5px] border-l-transparent border-r-transparent border-b-current" />
+                                </span>
                                 Egg
                               </span>
                             )}
                           {product.isEggless === true &&
                             isEggTypeAvailable(product, "eggless") && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-600 ring-1 ring-green-200">
-                                <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                              <span className="menu-tag menu-tag--eggless">
+                                <span className="menu-tag-icon">
+                                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+                                </span>
                                 Eggless
                               </span>
                             )}

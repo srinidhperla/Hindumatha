@@ -8,6 +8,7 @@ import {
   FiEye,
   FiEyeOff,
   FiArrowRight,
+  FiStar,
 } from "react-icons/fi";
 
 const RegisterFormCard = ({
@@ -23,20 +24,16 @@ const RegisterFormCard = ({
   getStrengthColor,
   getStrengthText,
 }) => (
-  <div className="flex min-h-full w-full flex-1 flex-col justify-center bg-gradient-to-br from-cream-50 to-cream-100 px-6 py-10 lg:px-12">
-    {/* Mobile logo */}
-    <div className="mb-8 flex justify-center lg:hidden">
-      <Link to="/" className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-md">
-          <span className="text-lg font-bold text-white">H</span>
-        </div>
-        <span className="text-xl font-bold text-primary-800">Hindumatha's</span>
-      </Link>
-    </div>
-
-    <div className="mx-auto w-full max-w-md">
+  <div className="mx-auto w-full max-w-7xl">
+    <div className="mx-auto w-full max-w-xl rounded-[2rem] border border-gold-200/70 bg-white/90 p-6 shadow-[0_24px_60px_rgba(18,12,2,0.14)] backdrop-blur-md sm:p-8">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-primary-800">Create Account</h2>
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-gold-200/80 bg-gold-50/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold-700">
+          <FiStar className="h-3.5 w-3.5" />
+          New Account
+        </div>
+        <h2 className="font-playfair text-4xl font-bold text-primary-800">
+          Create Account
+        </h2>
         <p className="mt-2 text-sm text-primary-500">
           Already have an account?{" "}
           <Link
@@ -218,11 +215,15 @@ const RegisterFormCard = ({
         <button
           type="submit"
           disabled={loading || Boolean(passwordError)}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-700 py-3.5 text-sm font-semibold text-white shadow-warm transition-all hover:shadow-warm-lg hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-700 py-3.5 text-sm font-semibold text-white shadow-warm transition-all hover:-translate-y-0.5 hover:shadow-warm-lg disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Creating Account..." : "Create Account"}
           <FiArrowRight className="h-4 w-4" />
         </button>
+
+        <p className="pt-1 text-center text-xs text-primary-400">
+          Takes less than a minute. Start ordering with your saved details.
+        </p>
       </form>
 
       <div className="mt-6 text-center">

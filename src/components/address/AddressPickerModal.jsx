@@ -168,15 +168,15 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
   const formattedAddr = addressMeta.formattedAddress || "";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white sm:items-center sm:justify-center sm:bg-slate-950/60 sm:p-4">
+    <div className="fixed inset-0 z-50 flex flex-col bg-cream-50 sm:items-center sm:justify-center sm:bg-[rgba(18,12,2,0.68)] sm:p-4">
       {/* Desktop backdrop wrapper */}
-      <div className="flex h-full w-full flex-col sm:h-auto sm:max-h-[92vh] sm:w-full sm:max-w-lg sm:overflow-hidden sm:rounded-3xl sm:bg-white sm:shadow-2xl">
+      <div className="flex h-full w-full flex-col sm:h-auto sm:max-h-[92vh] sm:w-full sm:max-w-lg sm:overflow-hidden sm:rounded-3xl sm:border sm:border-gold-200/70 sm:bg-[linear-gradient(160deg,#fffefb_0%,#f9f1e4_100%)] sm:shadow-[0_30px_70px_rgba(18,12,2,0.32)]">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
+        <div className="flex items-center gap-3 border-b border-gold-200/60 bg-white/80 px-4 py-3 backdrop-blur sm:px-5">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1.5 text-slate-600 hover:bg-slate-100"
+            className="rounded-full p-1.5 text-primary-600 transition hover:bg-caramel-100"
             aria-label="Close"
           >
             <svg
@@ -193,7 +193,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               />
             </svg>
           </button>
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2 className="font-playfair text-lg font-bold text-primary-900">
             Select delivery location
           </h2>
         </div>
@@ -221,14 +221,14 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                 value={addressQuery}
                 onChange={handleAddressQueryChange}
                 placeholder="Search for area, street name..."
-                className="w-full rounded-xl border border-slate-200 py-3 pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                className="w-full rounded-xl border border-primary-200 bg-white py-3 pl-11 pr-4 text-sm text-primary-800 placeholder-primary-400 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 autoFocus
               />
             </div>
 
             {/* Predictions dropdown */}
             {addressPredictions.length > 0 && (
-              <div className="mt-1 max-h-44 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+              <div className="mt-1 max-h-44 overflow-y-auto rounded-xl border border-primary-200 bg-white shadow-lg">
                 {addressPredictions.map((prediction) => {
                   const key = prediction.place_id || prediction.description;
                   return (
@@ -236,10 +236,10 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                       key={key}
                       type="button"
                       onClick={() => handleSelectPrediction(prediction)}
-                      className="flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50 last:border-b-0"
+                      className="flex w-full items-start gap-3 border-b border-cream-100 px-4 py-3 text-left text-sm text-primary-700 transition hover:bg-caramel-50 last:border-b-0"
                     >
                       <svg
-                        className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400"
+                        className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -278,11 +278,11 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             {googleMapsReady ? (
               <div
                 ref={mapRef}
-                className="h-52 w-full bg-slate-100 sm:h-56"
+                className="h-52 w-full bg-cream-100 sm:h-56"
                 aria-label="Delivery location map"
               />
             ) : (
-              <div className="flex h-52 w-full items-center justify-center bg-slate-100 text-center text-sm text-slate-500 sm:h-56">
+              <div className="flex h-52 w-full items-center justify-center bg-cream-100 text-center text-sm text-primary-600 sm:h-56">
                 {autoDetecting
                   ? "Detecting your location..."
                   : mapLoadError ||
@@ -295,7 +295,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             {/* Move pin tooltip */}
             {googleMapsReady && (
               <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2">
-                <div className="rounded-full bg-slate-900/80 px-4 py-2 text-xs font-medium text-white shadow-lg">
+                <div className="rounded-full bg-primary-900/85 px-4 py-2 text-xs font-medium text-white shadow-lg">
                   Move pin to your exact delivery location
                 </div>
               </div>
@@ -327,19 +327,19 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
           </div>
 
           {/* Bottom sheet - Delivery details */}
-          <div className="mt-1 rounded-t-3xl border-t border-slate-100 bg-white px-4 pb-4 pt-5 sm:rounded-t-none sm:px-5">
+          <div className="mt-1 rounded-t-3xl border-t border-gold-200/60 bg-white px-4 pb-4 pt-5 sm:rounded-t-none sm:px-5">
             {/* Drag handle (mobile) */}
             <div className="mb-4 flex justify-center sm:hidden">
-              <div className="h-1 w-10 rounded-full bg-slate-200" />
+              <div className="h-1 w-10 rounded-full bg-cream-300" />
             </div>
 
-            <p className="text-sm font-semibold text-slate-500">
+            <p className="text-sm font-semibold text-primary-600">
               Delivery details
             </p>
 
             {/* Selected address display */}
             {formattedAddr ? (
-              <div className="mt-3 flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
+              <div className="mt-3 flex items-start gap-3 rounded-2xl border border-caramel-200 bg-caramel-50/60 p-3.5">
                 <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
                   <svg
                     className="h-4 w-4 text-primary-600"
@@ -350,10 +350,10 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold leading-snug text-slate-800">
+                  <p className="text-sm font-semibold leading-snug text-primary-900">
                     {formattedAddr.split(",").slice(0, 2).join(",")}
                   </p>
-                  <p className="mt-0.5 text-xs leading-snug text-slate-500">
+                  <p className="mt-0.5 text-xs leading-snug text-primary-600">
                     {formattedAddr.split(",").slice(2).join(",").trim()}
                   </p>
                 </div>
@@ -371,14 +371,14 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                     </span>
                   )}
                   {hasDistance && (
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                    <span className="rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold text-primary-600">
                       {distanceFromStoreKm.toFixed(1)} km
                     </span>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="mt-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-400">
+              <div className="mt-3 rounded-2xl border border-dashed border-primary-200 bg-cream-50 p-4 text-center text-sm text-primary-500">
                 {autoDetecting
                   ? "Detecting your location..."
                   : "Search or use current location to select address"}
@@ -396,7 +396,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             {/* Address details input */}
             <div className="mt-4">
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-primary-700">
                   Address details<span className="text-red-400">*</span>
                 </span>
                 <textarea
@@ -405,7 +405,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                   onChange={handleFormChange}
                   rows={2}
                   placeholder="Floor, Flat no., Tower, Building name"
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                  className="mt-1.5 w-full rounded-xl border border-primary-200 px-3.5 py-2.5 text-sm text-primary-800 placeholder-primary-400 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 />
               </label>
             </div>
@@ -413,17 +413,19 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             {/* City & Pincode */}
             <div className="mt-3 grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">City</span>
+                <span className="text-sm font-medium text-primary-700">
+                  City
+                </span>
                 <input
                   type="text"
                   name="city"
                   value={formData.city}
                   onChange={handleFormChange}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                  className="mt-1.5 w-full rounded-xl border border-primary-200 px-3.5 py-2.5 text-sm text-primary-800 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-primary-700">
                   Pincode
                 </span>
                 <input
@@ -431,7 +433,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                   name="pincode"
                   value={formData.pincode}
                   onChange={handleFormChange}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                  className="mt-1.5 w-full rounded-xl border border-primary-200 px-3.5 py-2.5 text-sm text-primary-800 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 />
               </label>
             </div>
@@ -439,8 +441,8 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             {/* Landmark */}
             <div className="mt-3">
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">
-                  Landmark <span className="text-slate-400">(optional)</span>
+                <span className="text-sm font-medium text-primary-700">
+                  Landmark <span className="text-primary-400">(optional)</span>
                 </span>
                 <input
                   type="text"
@@ -448,19 +450,19 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                   value={formData.landmark}
                   onChange={handleFormChange}
                   placeholder="Nearby landmark"
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                  className="mt-1.5 w-full rounded-xl border border-primary-200 px-3.5 py-2.5 text-sm text-primary-800 placeholder-primary-400 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 />
               </label>
             </div>
 
             {/* Receiver details */}
-            <p className="mt-5 text-sm font-semibold text-slate-500">
+            <p className="mt-5 text-sm font-semibold text-primary-600">
               Receiver details for this address
             </p>
 
             <div className="mt-3 grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-primary-700">
                   Phone<span className="text-red-400">*</span>
                 </span>
                 <input
@@ -469,18 +471,18 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                   value={formData.phone}
                   onChange={handleFormChange}
                   placeholder="10-digit phone"
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                  className="mt-1.5 w-full rounded-xl border border-primary-200 px-3.5 py-2.5 text-sm text-primary-800 placeholder-primary-400 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-primary-700">
                   Label
                 </span>
                 <select
                   name="label"
                   value={formData.label}
                   onChange={handleFormChange}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                  className="mt-1.5 w-full rounded-xl border border-primary-200 px-3.5 py-2.5 text-sm text-primary-800 outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                 >
                   <option value="Home">Home</option>
                   <option value="Work">Work</option>
@@ -492,7 +494,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
         </div>
 
         {/* Save button - sticky bottom */}
-        <div className="border-t border-slate-100 bg-white px-4 py-3 sm:px-5">
+        <div className="border-t border-gold-200/70 bg-white px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={onSaveClick}

@@ -295,6 +295,15 @@ const Order = () => {
     deliveryDistanceKm: estimatedDeliveryDistanceKm,
     deliverySettings: normalizedDeliverySettings,
   });
+  const freeDeliveryProgress = {
+    enabled: normalizedDeliverySettings.freeDeliveryEnabled !== false,
+    minAmount: Number(normalizedDeliverySettings.freeDeliveryMinAmount) || 0,
+    remainingAmount: Math.max(
+      0,
+      (Number(normalizedDeliverySettings.freeDeliveryMinAmount) || 0) -
+        Number(pricing.subtotal || 0),
+    ),
+  };
   const isAddressServiceable =
     hasConfiguredStoreLocation &&
     isWithinDeliveryRadius(
@@ -854,6 +863,7 @@ const Order = () => {
         const pendingCheckout = {
           orderData: checkoutPayload,
           pricing,
+          freeDeliveryProgress,
           customer: {
             name: formData.name,
             email: user?.email || "",
@@ -1065,6 +1075,7 @@ const Order = () => {
               checkoutItems={checkoutItems}
               totalUnits={totalUnits}
               pricing={pricing}
+              freeDeliveryProgress={freeDeliveryProgress}
               step={step}
               invalidItems={invalidItems}
               onNext={() => handleStepChange(2)}

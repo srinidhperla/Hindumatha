@@ -161,7 +161,7 @@ const OrderAddressStep = ({
               </span>
             )}
           </div>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-primary-500">
             Delivery radius: {maxDeliveryRadiusKm} km from store location.
           </p>
         </div>

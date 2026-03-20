@@ -54,9 +54,9 @@ const OrderReviewStep = ({ checkoutItems, invalidItems }) => (
                 </span>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-primary-500">Line total</p>
-              <p className="text-xl font-black text-primary-600">
+            <div className="commerce-price-box commerce-price-box--compact">
+              <p className="commerce-price-kicker">Line total</p>
+              <p className="commerce-price-value">
                 ₹{item.lineTotal.toLocaleString("en-IN")}
               </p>
             </div>

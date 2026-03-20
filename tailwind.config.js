@@ -76,8 +76,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Space Grotesk", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Space Grotesk", "system-ui", "sans-serif"],
+        sans: ["Jost", "system-ui", "-apple-system", "sans-serif"],
+        serif: ["Playfair Display", "Georgia", "serif"],
+        display: ["Playfair Display", "Georgia", "serif"],
       },
       boxShadow: {
         soft: "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)",
