@@ -38,7 +38,7 @@ const OrderReviewStep = ({ checkoutItems, invalidItems }) => (
                 </span>
                 {item.selectedEggType && (
                   <span className="commerce-chip commerce-chip--muted">
-                    {`Type: ${item.selectedEggType === "egg" ? "Egg" : "Eggless"}`}
+                    {`Cake Type: ${item.selectedEggType === "egg" ? "Egg" : "Eggless"}`}
                   </span>
                 )}
                 {item.selectedFlavor && (

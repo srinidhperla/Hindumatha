@@ -213,7 +213,7 @@ const AdminInventoryPage = ({ onToast }) => {
       });
       nextMatrix[getTypedKeyName(raw, typedKey)] = newRow;
 
-      // Ensure other egg type has an entry so it's not lost
+      // Ensure other cake type has an entry so it's not lost
       if (hasOtherType) {
         const otherKey = `${otherType}::${fn}`;
         if (!nextMatrix[otherKey]) {
@@ -230,7 +230,7 @@ const AdminInventoryPage = ({ onToast }) => {
       product,
       { flavorWeightAvailability: nextMatrix },
       `${eggType}-${product._id}`,
-      `${product.name} ${eggType === "egg" ? "Egg" : "Eggless"} is now ${!anyOn ? "ON" : "OFF"}.`,
+      `${product.name} ${eggType === "egg" ? "Egg" : "Eggless"} cake type is now ${!anyOn ? "ON" : "OFF"}.`,
     );
   };
 
@@ -288,7 +288,7 @@ const AdminInventoryPage = ({ onToast }) => {
     });
     nextMatrix[getTypedKeyName(raw, typedKey)] = newRow;
 
-    // Ensure other egg type has entries
+    // Ensure other cake type has entries
     const otherType = eggType === "egg" ? "eggless" : "egg";
     const hasOtherType =
       otherType === "egg"
@@ -314,7 +314,7 @@ const AdminInventoryPage = ({ onToast }) => {
       product,
       { flavorWeightAvailability: nextMatrix },
       `typed-flavor-${product._id}-${eggType}-${flavorName}`,
-      `${flavorName} (${eggType}) updated for ${product.name}.`,
+      `${flavorName} (${eggType === "egg" ? "Egg" : "Eggless"} cake type) updated for ${product.name}.`,
     );
   };
 
@@ -367,7 +367,7 @@ const AdminInventoryPage = ({ onToast }) => {
       [weightLabel]: !currentValue,
     };
 
-    // Ensure other egg type has entries
+    // Ensure other cake type has entries
     const otherType = eggType === "egg" ? "eggless" : "egg";
     const hasOtherType =
       otherType === "egg"
@@ -394,7 +394,7 @@ const AdminInventoryPage = ({ onToast }) => {
       product,
       { flavorWeightAvailability: nextMatrix },
       `fw-${product._id}-${eggType}-${flavorName}-${weightLabel}`,
-      `${flavorName} ${weightLabel} (${eggType}) updated for ${product.name}.`,
+      `${flavorName} ${weightLabel} (${eggType === "egg" ? "Egg" : "Eggless"} cake type) updated for ${product.name}.`,
     );
   };
 
@@ -611,7 +611,7 @@ const AdminInventoryPage = ({ onToast }) => {
                                   )
                                 }
                                 disabled={savingKey === optionKey}
-                                label={`toggle flavor ${option.name} ${eggType}`}
+                                label={`toggle flavor ${option.name} ${eggType} cake type`}
                               />
                             </div>
                             <div className="mt-1.5 space-y-1 pl-2">
@@ -670,7 +670,7 @@ const AdminInventoryPage = ({ onToast }) => {
                           checked={isEggTypeOn(product, eggType)}
                           onClick={() => handleEggTypeToggle(product, eggType)}
                           disabled={savingKey === `${eggType}-${product._id}`}
-                          label={`toggle ${eggType}`}
+                          label={`toggle ${eggType} cake type`}
                         />
                       </div>
                       {hasFlavors

@@ -278,7 +278,7 @@ const Payment = () => {
                           </span>
                           {item.eggType && (
                             <span className="commerce-chip commerce-chip--muted">
-                              {`Type: ${item.eggType === "egg" ? "Egg" : "Eggless"}`}
+                              {`Cake Type: ${item.eggType === "egg" ? "Egg" : "Eggless"}`}
                             </span>
                           )}
                           {item.flavor && (

@@ -7,13 +7,12 @@ import {
   normalizeFlavorOptions,
 } from "../../../utils/productOptions";
 
-const GOOGLE_MAPS_SCRIPT_ID = "bakery-google-maps-places";
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
+const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || "";
 const CHECKOUT_STORAGE_KEY = "bakeryPendingCheckout";
 
-export { GOOGLE_MAPS_API_KEY, CHECKOUT_STORAGE_KEY };
+export { GEOAPIFY_API_KEY, CHECKOUT_STORAGE_KEY };
 
-const NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org";
+const GEOAPIFY_BASE_URL = "https://api.geoapify.com/v1/geocode";
 
 const toCoordinate = (value, min, max) => {
   if (value === null || value === undefined || value === "") {
@@ -79,46 +78,6 @@ export const getResolvedCheckoutItem = (item) => {
       (availableEggTypes.length <= 1 || Boolean(selectedEggType)) &&
       Boolean(selectedWeight),
   };
-};
-
-export const loadGoogleMapsPlaces = () => {
-  if (typeof window === "undefined") {
-    return Promise.reject(new Error("Window not available"));
-  }
-
-  if (!GOOGLE_MAPS_API_KEY) {
-    return Promise.reject(new Error("Google Maps API key is missing"));
-  }
-
-  if (window.google?.maps?.places) {
-    return Promise.resolve(window.google);
-  }
-
-  const existingScript = document.getElementById(GOOGLE_MAPS_SCRIPT_ID);
-
-  if (existingScript) {
-    return new Promise((resolve, reject) => {
-      existingScript.addEventListener("load", () => resolve(window.google), {
-        once: true,
-      });
-      existingScript.addEventListener(
-        "error",
-        () => reject(new Error("Failed to load Google Maps")),
-        { once: true },
-      );
-    });
-  }
-
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.id = GOOGLE_MAPS_SCRIPT_ID;
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => resolve(window.google);
-    script.onerror = () => reject(new Error("Failed to load Google Maps"));
-    document.head.appendChild(script);
-  });
 };
 
 const parsePlaceComponents = (components = []) => {
@@ -207,7 +166,35 @@ const toNominatimAddress = (entry = {}) => {
   };
 };
 
+const toGeoapifyAddress = (entry = {}) => {
+  const props = entry?.properties || entry || {};
+  const streetParts = [
+    props.housenumber,
+    props.street,
+    props.suburb,
+    props.neighbourhood,
+  ].filter(Boolean);
+
+  return {
+    label: "",
+    street:
+      streetParts.join(", ") || props.formatted || props.address_line1 || "",
+    city: props.city || props.county || props.state_district || "Vizianagaram",
+    state: props.state || "Andhra Pradesh",
+    zipCode: props.postcode || "",
+    landmark: props.address_line1 || props.suburb || "",
+    placeId: String(props.place_id || props.datasource?.raw?.place_id || ""),
+    latitude: toCoordinate(props.lat, -90, 90),
+    longitude: toCoordinate(props.lon, -180, 180),
+    formattedAddress: props.formatted || props.address_line2 || "",
+  };
+};
+
 export const searchAddressSuggestions = async (query, options = {}) => {
+  if (!GEOAPIFY_API_KEY) {
+    throw new Error("Geoapify API key missing");
+  }
+
   const trimmed = String(query || "").trim();
   if (trimmed.length < 3) {
     return [];
@@ -216,53 +203,42 @@ export const searchAddressSuggestions = async (query, options = {}) => {
   const nearLat = toCoordinate(options?.near?.lat, -90, 90);
   const nearLng = toCoordinate(options?.near?.lng, -180, 180);
   const cityHint = String(options?.cityHint || "Vizianagaram").trim();
-  const queryCandidates = [
-    trimmed,
-    `${trimmed}, ${cityHint}`,
-    `${trimmed}, ${cityHint}, Andhra Pradesh`,
-  ];
+  const queryCandidates = [trimmed, `${trimmed}, ${cityHint}`];
 
-  for (const queryCandidate of queryCandidates) {
+  const runSearch = async (queryCandidate) => {
     const params = new URLSearchParams({
-      format: "jsonv2",
-      addressdetails: "1",
-      countrycodes: "in",
+      text: queryCandidate,
+      filter: "countrycode:in",
+      format: "json",
       limit: "8",
-      q: queryCandidate,
+      apiKey: GEOAPIFY_API_KEY,
     });
 
     if (nearLat !== null && nearLng !== null) {
-      const deltaLat = 0.12;
-      const deltaLng = 0.12;
-      params.set(
-        "viewbox",
-        `${nearLng - deltaLng},${nearLat + deltaLat},${nearLng + deltaLng},${nearLat - deltaLat}`,
-      );
-      params.set("bounded", "1");
+      params.set("bias", `proximity:${nearLng},${nearLat}`);
     }
 
     const response = await fetch(
-      `${NOMINATIM_BASE_URL}/search?${params.toString()}`,
-      {
-        headers: {
-          "Accept-Language": "en-IN",
-        },
-      },
+      `${GEOAPIFY_BASE_URL}/autocomplete?${params.toString()}`,
     );
 
     if (!response.ok) {
-      continue;
+      return [];
     }
 
     const results = await response.json();
-    if (!Array.isArray(results) || results.length === 0) {
-      continue;
-    }
+    return Array.isArray(results?.results) ? results.results : [];
+  };
+
+  for (const queryCandidate of queryCandidates) {
+    const results = await runSearch(queryCandidate);
+
+    if (results.length === 0) continue;
 
     const seen = new Set();
     return results
       .filter((entry) => {
-        const key = String(entry.place_id || "");
+        const key = String(entry.place_id || entry.formatted || "");
         if (!key || seen.has(key)) {
           return false;
         }
@@ -270,8 +246,8 @@ export const searchAddressSuggestions = async (query, options = {}) => {
         return true;
       })
       .map((entry) => ({
-        place_id: String(entry.place_id),
-        description: entry.display_name,
+        place_id: String(entry.place_id || entry.formatted),
+        description: entry.formatted,
         _raw: entry,
       }));
   }
@@ -281,21 +257,33 @@ export const searchAddressSuggestions = async (query, options = {}) => {
 
 export const toAddressFromSuggestion = (prediction) => {
   if (prediction?._raw) {
-    return toNominatimAddress(prediction._raw);
+    return toGeoapifyAddress(prediction._raw);
   }
   return null;
 };
 
 export const reverseGeocodeCoordinates = async (lat, lng) => {
-  const url = `${NOMINATIM_BASE_URL}/reverse?format=jsonv2&addressdetails=1&lat=${encodeURIComponent(
-    lat,
-  )}&lon=${encodeURIComponent(lng)}`;
+  if (!GEOAPIFY_API_KEY) {
+    throw new Error("Geoapify API key missing");
+  }
+
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lng),
+    format: "json",
+    apiKey: GEOAPIFY_API_KEY,
+  });
+  const url = `${GEOAPIFY_BASE_URL}/reverse?${params.toString()}`;
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error("Reverse geocoding unavailable");
   }
   const result = await response.json();
-  return toNominatimAddress(result || {});
+  const entry = Array.isArray(result?.results) ? result.results[0] : null;
+  if (!entry) {
+    throw new Error("Reverse geocoding unavailable");
+  }
+  return toGeoapifyAddress(entry);
 };
 
 export const normalizeUserSavedAddresses = (user) => {

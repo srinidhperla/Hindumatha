@@ -19,6 +19,7 @@ const ALERT_PRE_GAIN = 2.3;
 const ALERT_POST_GAIN = 1.3;
 const ALERTS_ENABLED_STORAGE_KEY = "bakeryAdminAlertsEnabled";
 const PUSH_SUBSCRIBED_STORAGE_KEY = "bakeryAdminPushSubscribed";
+const FCM_TOKEN_STORAGE_KEY = "bakeryAdminFcmToken";
 
 const AdminOrderAlertsContext = createContext(null);
 
@@ -35,6 +36,25 @@ const canUseServiceWorker = () =>
 const canUsePushManager = () =>
   typeof window !== "undefined" && "PushManager" in window;
 
+const getFirebaseConfig = () => ({
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+});
+
+const isFirebaseConfigured = () => {
+  const firebaseConfig = getFirebaseConfig();
+  return Boolean(
+    firebaseConfig.apiKey &&
+    firebaseConfig.projectId &&
+    firebaseConfig.messagingSenderId &&
+    firebaseConfig.appId,
+  );
+};
+
 const getStoredToken = () => {
   if (typeof window === "undefined") {
     return "";
@@ -50,6 +70,52 @@ const urlBase64ToUint8Array = (base64String) => {
   return Uint8Array.from(
     [...rawData].map((character) => character.charCodeAt(0)),
   );
+};
+
+const registerFcmToken = async ({ registration, authToken }) => {
+  if (!isFirebaseConfigured()) {
+    return { skipped: true, reason: "firebase-config-missing" };
+  }
+
+  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || "";
+  if (!vapidKey) {
+    return { skipped: true, reason: "firebase-vapid-key-missing" };
+  }
+
+  const [{ getApp, getApps, initializeApp }, { getMessaging, getToken }] =
+    await Promise.all([import("firebase/app"), import("firebase/messaging")]);
+
+  const firebaseApp = getApps().some((app) => app.name === "admin-alerts-app")
+    ? getApp("admin-alerts-app")
+    : initializeApp(getFirebaseConfig(), "admin-alerts-app");
+  const messaging = getMessaging(firebaseApp);
+  const fcmToken = await getToken(messaging, {
+    vapidKey,
+    serviceWorkerRegistration: registration,
+  });
+
+  if (!fcmToken) {
+    return { skipped: true, reason: "fcm-token-unavailable" };
+  }
+
+  const response = await fetch(`${API_URL}/site/alerts/fcm-tokens`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({
+      token: fcmToken,
+      userAgent: navigator.userAgent || "",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to register FCM token");
+  }
+
+  localStorage.setItem(FCM_TOKEN_STORAGE_KEY, fcmToken);
+  return { subscribed: true, channel: "fcm" };
 };
 
 const FloatingAlertUnlock = ({ onUnlock }) => (
@@ -263,7 +329,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   }, []);
 
   const subscribeForPushAlerts = useCallback(async () => {
-    if (!canUseServiceWorker() || !canUsePushManager()) {
+    if (!canUseServiceWorker()) {
       return { skipped: true, reason: "push-not-supported" };
     }
 
@@ -273,13 +339,36 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     }
 
     const pushStatus = await fetchPushStatus();
-    if (!pushStatus.configured || !pushStatus.publicKey) {
+    if (!pushStatus.configured) {
       return { skipped: true, reason: "push-not-configured" };
     }
 
     const registration =
       await navigator.serviceWorker.register("/admin-alert-sw.js");
     await navigator.serviceWorker.ready;
+
+    const tokenValue = getStoredToken();
+
+    if (pushStatus.fcmConfigured) {
+      try {
+        const result = await registerFcmToken({
+          registration,
+          authToken: tokenValue,
+        });
+
+        if (result?.subscribed) {
+          localStorage.setItem(PUSH_SUBSCRIBED_STORAGE_KEY, "true");
+          setPushSubscribed(true);
+          return result;
+        }
+      } catch {
+        // Continue with web-push fallback when FCM setup is unavailable.
+      }
+    }
+
+    if (!canUsePushManager() || !pushStatus.publicKey) {
+      return { skipped: true, reason: "web-push-not-configured" };
+    }
 
     let subscription = await registration.pushManager.getSubscription();
     if (!subscription) {
@@ -289,7 +378,6 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       });
     }
 
-    const tokenValue = getStoredToken();
     const response = await fetch(`${API_URL}/site/alerts/push-subscriptions`, {
       method: "POST",
       headers: {
@@ -308,7 +396,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     localStorage.setItem(PUSH_SUBSCRIBED_STORAGE_KEY, "true");
     setPushSubscribed(true);
 
-    return { subscribed: true };
+    return { subscribed: true, channel: "web-push" };
   }, [ensureNotificationsReady, fetchPushStatus]);
 
   const enableAlerts = useCallback(async () => {

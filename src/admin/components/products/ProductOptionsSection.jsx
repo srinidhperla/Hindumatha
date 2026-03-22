@@ -25,7 +25,7 @@ const ProductOptionsSection = ({
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Egg type info banner */}
+      {/* Cake type info banner */}
       {(formData.isEgg || formData.isEggless) && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gold-200/60 bg-gold-50/50 px-3 py-2.5">
           <span className="text-xs font-semibold text-primary-600">
@@ -42,7 +42,7 @@ const ProductOptionsSection = ({
             </span>
           )}
           <span className="ml-auto text-[10px] text-primary-500">
-            Fine-tune per-type in Inventory
+            Fine-tune per cake type in Inventory
           </span>
         </div>
       )}

@@ -205,7 +205,7 @@ const Menu = () => {
       scrollToQuickAddField("quick-add-type");
       dispatch(
         showToast({
-          message: "Please choose Egg or Eggless.",
+          message: "Please choose a cake type (Egg or Eggless).",
           type: "error",
         }),
       );
@@ -558,7 +558,7 @@ const Menu = () => {
               </div>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                {/* Egg type selector — always show so user knows the type */}
+                {/* Cake type selector — always show so user knows the type */}
                 {(() => {
                   const eggOn =
                     quickAddProduct.isEgg !== false &&
@@ -570,7 +570,7 @@ const Menu = () => {
                   return (
                     <label id="quick-add-type" className="block sm:col-span-2">
                       <span className="mb-2 block text-sm font-medium text-primary-700">
-                        Type
+                        Cake Type
                       </span>
                       <div className="flex gap-3">
                         {eggOn && (

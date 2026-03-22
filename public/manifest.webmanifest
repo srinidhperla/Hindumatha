@@ -1,0 +1,24 @@
+{
+  "name": "Hindumatha's Cake World Admin Alerts",
+  "short_name": "CakeWorld",
+  "description": "Order management and real-time admin alerts for Hindumatha's Cake World.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fff8ef",
+  "theme_color": "#8a4b12",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/vite.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

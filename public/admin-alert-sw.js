@@ -1,3 +1,11 @@
+self.addEventListener("install", (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener("push", (event) => {
   let payload = {
     title: "Bakery admin alert",
@@ -5,6 +13,9 @@ self.addEventListener("push", (event) => {
     url: "/admin/orders",
     tag: "bakery-order-alert",
     requireInteraction: true,
+    icon: "/favicon.ico",
+    badge: "/favicon.ico",
+    vibrate: [200, 120, 220, 120, 260],
   };
 
   if (event.data) {
@@ -21,10 +32,13 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: "/favicon.ico",
-      badge: "/favicon.ico",
+      icon: payload.icon || "/favicon.ico",
+      badge: payload.badge || "/favicon.ico",
       tag: payload.tag,
       requireInteraction: payload.requireInteraction,
+      vibrate: Array.isArray(payload.vibrate)
+        ? payload.vibrate
+        : [200, 120, 220, 120, 260],
       data: {
         url: payload.url || "/admin/orders",
       },
@@ -40,6 +54,17 @@ self.addEventListener("notificationclick", (event) => {
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
+        for (const client of clientList) {
+          const clientUrl = client.url || "";
+          const samePath =
+            clientUrl.includes(targetUrl) ||
+            clientUrl.includes("/admin/orders");
+
+          if (samePath && "focus" in client) {
+            return client.focus();
+          }
+        }
+
         for (const client of clientList) {
           if ("focus" in client) {
             client.navigate(targetUrl);

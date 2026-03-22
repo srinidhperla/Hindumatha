@@ -175,9 +175,9 @@ const ProductBasicsSection = ({
         </label>
       )}
 
-      {/* Egg / Eggless toggles */}
+      {/* Cake type toggles */}
       <div className="mt-4 rounded-xl border border-gold-200/60 bg-gold-50/50 p-4 admin-motion hover:border-gold-300/70 hover:bg-gold-50/70">
-        <p className="mb-3 text-sm font-semibold text-primary-700">Egg Type</p>
+        <p className="mb-3 text-sm font-semibold text-primary-700">Cake Type</p>
         <div className="flex flex-wrap gap-6">
           <label className="flex items-center gap-3 cursor-pointer">
             <Toggle
@@ -216,7 +216,7 @@ const ProductBasicsSection = ({
         </div>
         <p className="mt-2 text-xs text-primary-500">
           Toggle to indicate whether this product is available in Egg and/or
-          Eggless variants.
+          Eggless cake types.
         </p>
       </div>
     </SurfaceCard>

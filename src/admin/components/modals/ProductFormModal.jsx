@@ -8,7 +8,10 @@ import {
 import ProductBasicsSection from "../products/ProductBasicsSection";
 import ProductOptionsSection from "../products/ProductOptionsSection";
 import ProductImagesSection from "../products/ProductImagesSection";
-import { getPortionTypeMeta } from "../../../utils/productOptions";
+import {
+  formatCategoryLabel,
+  getPortionTypeMeta,
+} from "../../../utils/productOptions";
 
 const inputClassName =
   "mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70";
@@ -53,6 +56,9 @@ const ProductFormModal = ({
     formData.flavorOptions.length > 0
       ? formData.flavorOptions.map((option) => option.name)
       : ["Cake"];
+  const fallbackFlavorLabel = formatCategoryLabel(
+    formData.category || formData.name || "cake",
+  );
   const portionTypeMeta = getPortionTypeMeta(formData.portionType);
 
   const getTypedKey = (eggType, flavorName) => `${eggType}::${flavorName}`;
@@ -270,7 +276,9 @@ const ProductFormModal = ({
                           >
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-primary-700">
-                                {flavorName}
+                                {formData.flavorOptions.length
+                                  ? flavorName
+                                  : fallbackFlavorLabel}
                               </span>
                             </div>
 

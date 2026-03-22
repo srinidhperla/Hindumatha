@@ -1,14 +1,49 @@
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { showToast } from "../../features/uiSlice";
-import { hasValidCoordinates } from "../../user/components/order/orderHelpers";
+import {
+  GEOAPIFY_API_KEY,
+  hasValidCoordinates,
+} from "../../user/components/order/orderHelpers";
 import useAddressPicker from "./useAddressPicker";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+const deliveryMarkerIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const MapRecenter = ({ center, zoom }) => {
+  const map = useMap();
+  map.setView(center, zoom, { animate: true });
+  return null;
+};
+
+const MapClickHandler = ({ onSelect }) => {
+  useMapEvents({
+    click(event) {
+      onSelect({ lat: event.latlng.lat, lng: event.latlng.lng });
+    },
+  });
+  return null;
+};
 
 const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
   const dispatch = useDispatch();
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
-  const mapInstanceRef = useRef(null);
 
   const handleSaveAddress = (addressData) => {
     onSave(addressData);
@@ -26,8 +61,8 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
     addressQuery,
     addressPredictions,
     addressLookupError,
-    googleMapsReady,
-    googleMapsConfigured,
+    mapSdkReady,
+    mapSdkConfigured,
     mapLoadError,
     locationLoading,
     autoDetecting,
@@ -36,7 +71,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
     isAddressServiceable,
     maxDeliveryRadiusKm,
     storeLocation,
-    hasConfiguredStoreLocation,
     handleAddressQueryChange,
     handleSelectPrediction,
     handleUseCurrentLocation,
@@ -74,86 +108,13 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
     storeLocation,
   ]);
 
-  // Initialize / update Google Maps
-  useEffect(() => {
-    if (!isOpen || !googleMapsReady || !window.google || !mapRef.current)
-      return;
+  const markerPosition = hasAddressCoordinates
+    ? [Number(addressMeta.latitude), Number(addressMeta.longitude)]
+    : [initialMapCenter.lat, initialMapCenter.lng];
 
-    const map =
-      mapInstanceRef.current ||
-      new window.google.maps.Map(mapRef.current, {
-        center: initialMapCenter,
-        zoom: hasAddressCoordinates ? 16 : 14,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        zoomControl: true,
-        gestureHandling: "greedy",
-      });
-
-    mapInstanceRef.current = map;
-
-    const marker =
-      markerRef.current ||
-      new window.google.maps.Marker({
-        map,
-        position: initialMapCenter,
-        draggable: true,
-        title: "Delivery location",
-      });
-
-    markerRef.current = marker;
-    marker.setPosition(initialMapCenter);
-    map.setCenter(initialMapCenter);
-
-    const dragEndListener = marker.addListener("dragend", (event) => {
-      handleMapPinChange({
-        lat: event.latLng?.lat(),
-        lng: event.latLng?.lng(),
-      });
-    });
-
-    const clickListener = map.addListener("click", (event) => {
-      const pos = {
-        lat: event.latLng?.lat(),
-        lng: event.latLng?.lng(),
-      };
-      marker.setPosition(pos);
-      handleMapPinChange(pos);
-    });
-
-    return () => {
-      window.google.maps.event.removeListener(dragEndListener);
-      window.google.maps.event.removeListener(clickListener);
-    };
-  }, [
-    googleMapsReady,
-    hasAddressCoordinates,
-    initialMapCenter,
-    isOpen,
-    handleMapPinChange,
-  ]);
-
-  // Update marker position when coordinates change
-  useEffect(() => {
-    if (!markerRef.current || !mapInstanceRef.current || !hasAddressCoordinates)
-      return;
-    const pos = {
-      lat: Number(addressMeta.latitude),
-      lng: Number(addressMeta.longitude),
-    };
-    markerRef.current.setPosition(pos);
-    mapInstanceRef.current.panTo(pos);
-    mapInstanceRef.current.setZoom(16);
-  }, [addressMeta.latitude, addressMeta.longitude, hasAddressCoordinates]);
-
-  // Cleanup map on close
-  useEffect(() => {
-    if (!isOpen) {
-      mapInstanceRef.current = null;
-      markerRef.current = null;
-    }
-  }, [isOpen]);
+  const tileUrl = `https://maps.geoapify.com/v1/tile/carto/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(
+    GEOAPIFY_API_KEY,
+  )}`;
 
   const onSaveClick = () => {
     const result = handleSave();
@@ -169,9 +130,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-cream-50 sm:items-center sm:justify-center sm:bg-[rgba(18,12,2,0.68)] sm:p-4">
-      {/* Desktop backdrop wrapper */}
       <div className="flex h-full w-full flex-col sm:h-auto sm:max-h-[92vh] sm:w-full sm:max-w-lg sm:overflow-hidden sm:rounded-3xl sm:border sm:border-gold-200/70 sm:bg-[linear-gradient(160deg,#fffefb_0%,#f9f1e4_100%)] sm:shadow-[0_30px_70px_rgba(18,12,2,0.32)]">
-        {/* Header */}
         <div className="flex items-center gap-3 border-b border-gold-200/60 bg-white/80 px-4 py-3 backdrop-blur sm:px-5">
           <button
             type="button"
@@ -198,9 +157,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
           </h2>
         </div>
 
-        {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
-          {/* Search bar */}
           <div className="px-4 pt-3 sm:px-5">
             <div className="relative">
               <svg
@@ -226,7 +183,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               />
             </div>
 
-            {/* Predictions dropdown */}
             {addressPredictions.length > 0 && (
               <div className="mt-1 max-h-44 overflow-y-auto rounded-xl border border-primary-200 bg-white shadow-lg">
                 {addressPredictions.map((prediction) => {
@@ -273,27 +229,49 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             )}
           </div>
 
-          {/* Map */}
           <div className="relative mt-3">
-            {googleMapsReady ? (
-              <div
-                ref={mapRef}
-                className="h-52 w-full bg-cream-100 sm:h-56"
-                aria-label="Delivery location map"
-              />
+            {mapSdkReady ? (
+              <div className="h-52 w-full overflow-hidden bg-cream-100 sm:h-56">
+                <MapContainer
+                  center={markerPosition}
+                  zoom={hasAddressCoordinates ? 16 : 14}
+                  scrollWheelZoom
+                  style={{ height: "100%", width: "100%" }}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.geoapify.com/">Geoapify</a>'
+                    url={tileUrl}
+                  />
+                  <MapRecenter
+                    center={markerPosition}
+                    zoom={hasAddressCoordinates ? 16 : 14}
+                  />
+                  <MapClickHandler onSelect={handleMapPinChange} />
+                  <Marker
+                    position={markerPosition}
+                    icon={deliveryMarkerIcon}
+                    draggable
+                    eventHandlers={{
+                      dragend: (event) => {
+                        const point = event.target.getLatLng();
+                        handleMapPinChange({ lat: point.lat, lng: point.lng });
+                      },
+                    }}
+                  />
+                </MapContainer>
+              </div>
             ) : (
               <div className="flex h-52 w-full items-center justify-center bg-cream-100 text-center text-sm text-primary-600 sm:h-56">
                 {autoDetecting
                   ? "Detecting your location..."
                   : mapLoadError ||
-                    (googleMapsConfigured
+                    (mapSdkConfigured
                       ? "Loading map..."
                       : "Map unavailable. Use current location instead.")}
               </div>
             )}
 
-            {/* Move pin tooltip */}
-            {googleMapsReady && (
+            {mapSdkReady && (
               <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2">
                 <div className="rounded-full bg-primary-900/85 px-4 py-2 text-xs font-medium text-white shadow-lg">
                   Move pin to your exact delivery location
@@ -301,7 +279,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               </div>
             )}
 
-            {/* Use current location button */}
             <button
               type="button"
               onClick={handleUseCurrentLocation}
@@ -326,9 +303,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             </button>
           </div>
 
-          {/* Bottom sheet - Delivery details */}
           <div className="mt-1 rounded-t-3xl border-t border-gold-200/60 bg-white px-4 pb-4 pt-5 sm:rounded-t-none sm:px-5">
-            {/* Drag handle (mobile) */}
             <div className="mb-4 flex justify-center sm:hidden">
               <div className="h-1 w-10 rounded-full bg-cream-300" />
             </div>
@@ -337,7 +312,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               Delivery details
             </p>
 
-            {/* Selected address display */}
             {formattedAddr ? (
               <div className="mt-3 flex items-start gap-3 rounded-2xl border border-caramel-200 bg-caramel-50/60 p-3.5">
                 <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
@@ -357,7 +331,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
                     {formattedAddr.split(",").slice(2).join(",").trim()}
                   </p>
                 </div>
-                {/* Status badges */}
                 <div className="flex flex-shrink-0 flex-col gap-1">
                   {isAddressVerified && (
                     <span
@@ -385,7 +358,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               </div>
             )}
 
-            {/* Not serviceable warning */}
             {isAddressVerified && !isAddressServiceable && (
               <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
                 This address is outside our {maxDeliveryRadiusKm}km delivery
@@ -393,7 +365,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               </div>
             )}
 
-            {/* Address details input */}
             <div className="mt-4">
               <label className="block">
                 <span className="text-sm font-medium text-primary-700">
@@ -410,7 +381,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               </label>
             </div>
 
-            {/* City & Pincode */}
             <div className="mt-3 grid grid-cols-2 gap-3">
               <label className="block">
                 <span className="text-sm font-medium text-primary-700">
@@ -438,7 +408,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               </label>
             </div>
 
-            {/* Landmark */}
             <div className="mt-3">
               <label className="block">
                 <span className="text-sm font-medium text-primary-700">
@@ -455,7 +424,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
               </label>
             </div>
 
-            {/* Receiver details */}
             <p className="mt-5 text-sm font-semibold text-primary-600">
               Receiver details for this address
             </p>
@@ -493,7 +461,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
           </div>
         </div>
 
-        {/* Save button - sticky bottom */}
         <div className="border-t border-gold-200/70 bg-white px-4 py-3 sm:px-5">
           <button
             type="button"

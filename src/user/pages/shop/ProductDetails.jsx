@@ -365,7 +365,7 @@ const ProductDetails = () => {
               </label>
             </div>
 
-            {/* Egg type selector — always show available types */}
+            {/* Cake type selector — always show available types */}
             {(() => {
               const eggOn =
                 normalizedProduct.isEgg !== false &&
@@ -376,7 +376,7 @@ const ProductDetails = () => {
               if (!eggOn && !egglessOn) return null;
               return (
                 <div className="mt-4">
-                  <span className="product-field-label">Type</span>
+                  <span className="product-field-label">Cake Type</span>
                   <div className="mt-2 flex gap-3">
                     {eggOn && (
                       <button

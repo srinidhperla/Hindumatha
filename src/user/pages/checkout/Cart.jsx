@@ -95,6 +95,7 @@ const Cart = () => {
   const coupons = useSelector((state) => state.site.coupons);
   const deliverySettings = useSelector((state) => state.site.deliverySettings);
   const [couponInput, setCouponInput] = React.useState(DEFAULT_COUPON_INPUT);
+  const [showMoreAddons, setShowMoreAddons] = useState(false);
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -133,6 +134,14 @@ const Cart = () => {
         .filter((product) => product.isAvailable !== false)
         .slice(0, 6),
     [products],
+  );
+  const inlineAddons = useMemo(
+    () => availableAddons.slice(0, 1),
+    [availableAddons],
+  );
+  const remainingAddons = useMemo(
+    () => availableAddons.slice(1),
+    [availableAddons],
   );
 
   const handleAddAddon = (product) => {
@@ -276,7 +285,9 @@ const Cart = () => {
                     <div className="commerce-variant-grid">
                       {item.availableEggTypes.length > 1 && (
                         <label className="block">
-                          <span className="commerce-field-label">Type</span>
+                          <span className="commerce-field-label">
+                            Cake Type
+                          </span>
                           <select
                             value={item.selectedEggType}
                             onChange={(event) =>
@@ -289,7 +300,7 @@ const Cart = () => {
                             }
                             className="commerce-input"
                           >
-                            <option value="">Select type</option>
+                            <option value="">Select cake type</option>
                             {item.availableEggTypes.map((eggType) => (
                               <option key={eggType} value={eggType}>
                                 {eggType === "egg" ? "Egg" : "Eggless"}
@@ -442,7 +453,7 @@ const Cart = () => {
                   Optional extras you can add quickly.
                 </p>
                 <div className="mt-3 space-y-2">
-                  {availableAddons.map((addon) => (
+                  {inlineAddons.map((addon) => (
                     <div
                       key={addon._id}
                       className="flex items-center gap-2 rounded-xl border border-primary-100 bg-cream-100 p-2"
@@ -469,6 +480,64 @@ const Cart = () => {
                       </button>
                     </div>
                   ))}
+                  {remainingAddons.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreAddons(true)}
+                      className="w-full rounded-xl border border-primary-300 bg-white px-3 py-2 text-sm font-semibold text-primary-700 hover:bg-cream-100"
+                    >
+                      {`View more products (${remainingAddons.length})`}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {showMoreAddons && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4">
+                <div className="w-full max-w-xl rounded-2xl border border-primary-200 bg-white p-4 shadow-2xl sm:p-6">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-base font-bold uppercase tracking-wide text-primary-900 sm:text-lg">
+                      More add-on products
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreAddons(false)}
+                      className="rounded-lg border border-primary-300 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-cream-100"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+                    {remainingAddons.map((addon) => (
+                      <div
+                        key={addon._id}
+                        className="flex items-center gap-2 rounded-xl border border-primary-100 bg-cream-100 p-2"
+                      >
+                        <img
+                          src={addon.images?.[0] || addon.image}
+                          alt={addon.name}
+                          className="h-12 w-12 rounded-lg object-cover"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-primary-900">
+                            {addon.name}
+                          </p>
+                          <p className="text-xs text-primary-600">
+                            Rs.
+                            {Number(addon.price || 0).toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddAddon(addon)}
+                          className="rounded-lg border border-primary-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-primary-700 hover:bg-cream-100"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

@@ -7,12 +7,10 @@ import {
 } from "../../utils/deliverySettings";
 import {
   hasValidCoordinates,
-  loadGoogleMapsPlaces,
   reverseGeocodeCoordinates,
   searchAddressSuggestions,
   toAddressFromSuggestion,
-  toAddressFromPlaceResult,
-  GOOGLE_MAPS_API_KEY,
+  GEOAPIFY_API_KEY,
 } from "../../user/components/order/orderHelpers";
 
 const useAddressPicker = (options = {}) => {
@@ -57,14 +55,11 @@ const useAddressPicker = (options = {}) => {
   );
   const [addressPredictions, setAddressPredictions] = useState([]);
   const [addressLookupError, setAddressLookupError] = useState("");
-  const [googleMapsReady, setGoogleMapsReady] = useState(false);
+  const [mapSdkReady, setMapSdkReady] = useState(false);
   const [mapLoadError, setMapLoadError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [autoDetecting, setAutoDetecting] = useState(false);
 
-  const placesServiceRef = useRef(null);
-  const autocompleteRef = useRef(null);
-  const geocoderRef = useRef(null);
   const debounceRef = useRef(null);
   const requestIdRef = useRef(0);
   const cacheRef = useRef(new Map());
@@ -93,37 +88,15 @@ const useAddressPicker = (options = {}) => {
       maxDeliveryRadiusKm,
     );
 
-  // Load Google Maps
+  // Validate Geoapify key
   useEffect(() => {
-    if (!GOOGLE_MAPS_API_KEY) {
-      setGoogleMapsReady(false);
-      setMapLoadError("Google Maps API key missing.");
+    if (!GEOAPIFY_API_KEY) {
+      setMapSdkReady(false);
+      setMapLoadError("Geoapify API key missing.");
       return;
     }
-
-    let active = true;
-    loadGoogleMapsPlaces()
-      .then(() => {
-        if (!active || !window.google?.maps) return;
-        autocompleteRef.current =
-          new window.google.maps.places.AutocompleteService();
-        placesServiceRef.current = new window.google.maps.places.PlacesService(
-          document.createElement("div"),
-        );
-        geocoderRef.current = new window.google.maps.Geocoder();
-        setGoogleMapsReady(true);
-        setMapLoadError("");
-      })
-      .catch(() => {
-        if (active) {
-          setGoogleMapsReady(false);
-          setMapLoadError("Failed to load Google Maps.");
-        }
-      });
-
-    return () => {
-      active = false;
-    };
+    setMapSdkReady(true);
+    setMapLoadError("");
   }, []);
 
   // Cleanup debounce on unmount
@@ -228,24 +201,10 @@ const useAddressPicker = (options = {}) => {
     setAddressLookupError("");
   }, []);
 
-  const resolveAddressFromCoordinates = useCallback(async (lat, lng) => {
-    if (geocoderRef.current) {
-      const result = await new Promise((resolve) => {
-        geocoderRef.current.geocode(
-          { location: { lat, lng } },
-          (results, status) => {
-            if (status === "OK" && results?.length) {
-              resolve(toAddressFromPlaceResult(results[0]));
-            } else {
-              resolve(null);
-            }
-          },
-        );
-      });
-      if (result) return result;
-    }
-    return reverseGeocodeCoordinates(lat, lng);
-  }, []);
+  const resolveAddressFromCoordinates = useCallback(
+    async (lat, lng) => reverseGeocodeCoordinates(lat, lng),
+    [],
+  );
 
   const handleAddressQueryChange = useCallback(
     (event) => {
@@ -294,7 +253,7 @@ const useAddressPicker = (options = {}) => {
 
       const reqId = ++requestIdRef.current;
 
-      const loadFallback = async () => {
+      const loadSuggestions = async () => {
         try {
           const suggestions = await searchAddressSuggestions(trimmed, {
             near: hasConfiguredStoreLocation
@@ -324,49 +283,10 @@ const useAddressPicker = (options = {}) => {
       };
 
       debounceRef.current = window.setTimeout(() => {
-        if (!googleMapsReady || !autocompleteRef.current) {
-          loadFallback();
-          return;
-        }
-
-        const predictionReq = {
-          input: trimmed,
-          componentRestrictions: { country: "in" },
-        };
-        if (hasConfiguredStoreLocation && window.google?.maps?.LatLng) {
-          predictionReq.location = new window.google.maps.LatLng(
-            storeLat,
-            storeLng,
-          );
-          predictionReq.radius = 12000;
-        }
-
-        autocompleteRef.current.getPlacePredictions(
-          predictionReq,
-          (predictions, status) => {
-            if (reqId !== requestIdRef.current) return;
-            if (
-              status === "OK" &&
-              Array.isArray(predictions) &&
-              predictions.length
-            ) {
-              cacheRef.current.set(trimmed.toLowerCase(), predictions);
-              setAddressPredictions(predictions);
-              setAddressLookupError("");
-            } else {
-              loadFallback();
-            }
-          },
-        );
+        loadSuggestions();
       }, 350);
     },
-    [
-      formData.city,
-      googleMapsReady,
-      hasConfiguredStoreLocation,
-      storeLat,
-      storeLng,
-    ],
+    [formData.city, hasConfiguredStoreLocation, storeLat, storeLng],
   );
 
   const handleSelectPrediction = useCallback(
@@ -379,25 +299,7 @@ const useAddressPicker = (options = {}) => {
         return;
       }
 
-      if (!placesServiceRef.current) return;
-      placesServiceRef.current.getDetails(
-        {
-          placeId: prediction.place_id,
-          fields: [
-            "address_components",
-            "formatted_address",
-            "geometry",
-            "place_id",
-          ],
-        },
-        (place, status) => {
-          if (status !== "OK" || !place) return;
-          const normalized = toAddressFromPlaceResult(place);
-          applyResolvedAddress(normalized);
-          setAddressQuery(prediction.description);
-          setAddressPredictions([]);
-        },
-      );
+      setAddressLookupError("Unable to resolve selected location.");
     },
     [applyResolvedAddress],
   );
@@ -516,8 +418,8 @@ const useAddressPicker = (options = {}) => {
     addressQuery,
     addressPredictions,
     addressLookupError,
-    googleMapsReady,
-    googleMapsConfigured: Boolean(GOOGLE_MAPS_API_KEY),
+    mapSdkReady,
+    mapSdkConfigured: Boolean(GEOAPIFY_API_KEY),
     mapLoadError,
     locationLoading,
     autoDetecting,
