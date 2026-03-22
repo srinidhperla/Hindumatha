@@ -15,8 +15,6 @@ import {
   GOOGLE_MAPS_API_KEY,
 } from "../../user/components/order/orderHelpers";
 
-const ENFORCED_DELIVERY_RADIUS_KM = 4;
-
 const useAddressPicker = (options = {}) => {
   const { initialAddress = null, onSave, onClose } = options;
   const { user } = useSelector((state) => state.auth);
@@ -30,6 +28,10 @@ const useAddressPicker = (options = {}) => {
     lat: 0,
     lng: 0,
   };
+  const maxDeliveryRadiusKm = Math.max(
+    0,
+    Number(normalizedDeliverySettings?.maxDeliveryRadiusKm) || 0,
+  );
   const storeLat = Number(storeLocation?.lat);
   const storeLng = Number(storeLocation?.lng);
   const hasConfiguredStoreLocation = hasValidCoordinates(storeLat, storeLng);
@@ -88,7 +90,7 @@ const useAddressPicker = (options = {}) => {
       storeLocation,
       Number(addressMeta.latitude),
       Number(addressMeta.longitude),
-      ENFORCED_DELIVERY_RADIUS_KM,
+      maxDeliveryRadiusKm,
     );
 
   // Load Google Maps
@@ -479,7 +481,7 @@ const useAddressPicker = (options = {}) => {
     if (!isAddressServiceable) {
       return {
         success: false,
-        error: `This address is outside our ${ENFORCED_DELIVERY_RADIUS_KM}km delivery area.`,
+        error: `This address is outside our ${maxDeliveryRadiusKm}km delivery area.`,
       };
     }
 
@@ -522,7 +524,7 @@ const useAddressPicker = (options = {}) => {
     isAddressVerified,
     distanceFromStoreKm,
     isAddressServiceable,
-    maxDeliveryRadiusKm: ENFORCED_DELIVERY_RADIUS_KM,
+    maxDeliveryRadiusKm,
     storeLocation,
     hasConfiguredStoreLocation,
     handleAddressQueryChange,

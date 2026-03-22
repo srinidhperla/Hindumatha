@@ -32,7 +32,6 @@ import OrderAddressStep from "../../components/order/OrderAddressStep";
 import OrderSummary from "../../components/order/OrderSummary";
 
 const stepLabels = ["Review", "Checkout"];
-const ENFORCED_DELIVERY_RADIUS_KM = 4;
 const scrollToPageTop = () => {
   window.scrollTo({ top: 0, behavior: "auto" });
 };
@@ -319,13 +318,17 @@ const Order = () => {
         Number(pricing.subtotal || 0),
     ),
   };
+  const maxDeliveryRadiusKm = Math.max(
+    0,
+    Number(normalizedDeliverySettings.maxDeliveryRadiusKm) || 0,
+  );
   const isAddressServiceable =
     hasConfiguredStoreLocation &&
     isWithinDeliveryRadius(
       storeLocation,
       Number(addressMeta.latitude),
       Number(addressMeta.longitude),
-      ENFORCED_DELIVERY_RADIUS_KM,
+      maxDeliveryRadiusKm,
     );
 
   useEffect(() => {
@@ -731,7 +734,7 @@ const Order = () => {
       scrollToValidationTarget("checkout-address-section");
       dispatch(
         showToast({
-          message: `Sorry, this address is outside our ${ENFORCED_DELIVERY_RADIUS_KM}km delivery area.`,
+          message: `Sorry, this address is outside our ${maxDeliveryRadiusKm}km delivery area.`,
           type: "error",
         }),
       );
@@ -1085,7 +1088,7 @@ const Order = () => {
                     isAddressVerified={isAddressVerified}
                     distanceFromStoreKm={distanceFromStoreKm}
                     isAddressServiceable={isAddressServiceable}
-                    maxDeliveryRadiusKm={ENFORCED_DELIVERY_RADIUS_KM}
+                    maxDeliveryRadiusKm={maxDeliveryRadiusKm}
                     storeLocation={normalizedDeliverySettings.storeLocation}
                     addressLatitude={addressMeta.latitude}
                     addressLongitude={addressMeta.longitude}
