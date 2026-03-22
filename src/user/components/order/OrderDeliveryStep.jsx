@@ -197,7 +197,10 @@ const OrderDeliveryStep = ({
       </p>
 
       <div className="commerce-form-stack">
-        <div className="rounded-2xl border border-primary-200 bg-primary-50/70 p-3">
+        <div
+          id="checkout-delivery-mode"
+          className="rounded-2xl border border-primary-200 bg-primary-50/70 p-3"
+        >
           <p className="commerce-field-label mb-3">Delivery preference</p>
           <div className="grid gap-3 md:grid-cols-2">
             <button
@@ -267,7 +270,10 @@ const OrderDeliveryStep = ({
         </div>
 
         {isScheduled && (
-          <div className="rounded-2xl border border-caramel-200 bg-caramel-50/50 p-3">
+          <div
+            id="checkout-schedule-section"
+            className="rounded-2xl border border-caramel-200 bg-caramel-50/50 p-3"
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-primary-800">
@@ -434,19 +440,51 @@ const OrderDeliveryStep = ({
           </div>
         )}
 
-        <label className="block">
-          <span className="commerce-field-label">Payment Method</span>
-          <select
-            name="paymentMethod"
-            value={formData.paymentMethod}
-            onChange={onChange}
-            className="commerce-input"
-          >
-            <option value="cash">Cash on Delivery</option>
-            <option value="upi">UPI</option>
-            <option value="card">Card</option>
-          </select>
-        </label>
+        <div id="checkout-payment-method" className="block">
+          <p className="commerce-field-label mb-3">Payment Method</p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() =>
+                onChange({ target: { name: "paymentMethod", value: "upi" } })
+              }
+              className={`rounded-2xl border px-4 py-3 text-left transition ${
+                formData.paymentMethod === "upi"
+                  ? "border-sage-300 bg-sage-50"
+                  : "border-primary-200 bg-white"
+              }`}
+            >
+              <p className="text-sm font-semibold text-primary-800">UPI</p>
+              <p className="mt-1 text-xs text-primary-600">
+                Pay securely online via UPI apps.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                onChange({ target: { name: "paymentMethod", value: "cash" } })
+              }
+              className={`rounded-2xl border px-4 py-3 text-left transition ${
+                formData.paymentMethod === "cash"
+                  ? "border-sage-300 bg-sage-50"
+                  : "border-primary-200 bg-white"
+              }`}
+            >
+              <p className="text-sm font-semibold text-primary-800">
+                Cash on Delivery
+              </p>
+              <p className="mt-1 text-xs text-primary-600">
+                Pay when your order is delivered.
+              </p>
+            </button>
+          </div>
+          {!formData.paymentMethod && (
+            <p className="mt-2 text-xs font-medium text-amber-700">
+              Please choose UPI or Cash on Delivery.
+            </p>
+          )}
+        </div>
 
         <label className="block">
           <span className="commerce-field-label">Special Instructions</span>

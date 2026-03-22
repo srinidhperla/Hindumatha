@@ -66,27 +66,6 @@ const Navbar = () => {
   return (
     <header className="fixed inset-x-0 top-0 z-50">
       <div
-        className={`transition-all duration-300 ${
-          isScrolled ? "bg-[#120c02]/96" : "bg-[#120c02]/80 backdrop-blur"
-        }`}
-      >
-        <div className="mx-auto hidden max-w-7xl items-center justify-between px-4 py-1.5 text-[10px] tracking-[0.12em] text-[#e8d08a] sm:flex sm:px-6 lg:px-8">
-          <div className="hidden items-center gap-4 sm:flex">
-            <span className="text-white/70">Open Daily</span>
-            <span>Delivery Available</span>
-          </div>
-          <div className="truncate text-center text-white/80">
-            {businessInfo?.storeName || "Hindumatha's Cake World"}
-          </div>
-          <div className="hidden items-center gap-4 sm:flex">
-            <span className="text-white/70">
-              {businessInfo?.phone || "Phone"}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div
         className={`relative border-b transition-all duration-300 ${
           isScrolled
             ? "border-[rgba(201,168,76,0.28)] bg-[rgba(16,11,3,0.76)]"

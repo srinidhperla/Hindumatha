@@ -2,6 +2,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  addToCart,
   clearCart,
   dismissPriceSyncNotice,
   removeFromCart,
@@ -89,6 +90,7 @@ const Cart = () => {
   const navigate = useNavigate();
   const { items, priceSyncNoticeVisible, priceSyncUpdatedItemsCount } =
     useSelector((state) => state.cart);
+  const { products } = useSelector((state) => state.products);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const coupons = useSelector((state) => state.site.coupons);
   const deliverySettings = useSelector((state) => state.site.deliverySettings);
@@ -124,6 +126,46 @@ const Cart = () => {
     couponCode: couponInput,
     coupons: availableCoupons,
   });
+  const availableAddons = useMemo(
+    () =>
+      products
+        .filter((product) => product.isAddon === true)
+        .filter((product) => product.isAvailable !== false)
+        .slice(0, 6),
+    [products],
+  );
+
+  const handleAddAddon = (product) => {
+    const availableWeights = getAvailableWeightOptions(product, "", "");
+    const availableFlavors = getAvailableFlavorOptions(product);
+    const hasExplicitFlavorOptions = normalizeFlavorOptions(product).length > 0;
+    const selectedWeight = availableWeights[0]?.label || "";
+    const selectedFlavor = hasExplicitFlavorOptions
+      ? availableFlavors[0]?.name || ""
+      : "";
+    const selectedEggType =
+      product?.isEgg !== false && product?.isEggless !== true
+        ? "egg"
+        : product?.isEggless === true && product?.isEgg === false
+          ? "eggless"
+          : "";
+
+    dispatch(
+      addToCart({
+        product,
+        quantity: 1,
+        selectedFlavor,
+        selectedWeight,
+        selectedEggType,
+      }),
+    );
+    dispatch(
+      showToast({
+        message: `${product.name} added to cart.`,
+        type: "success",
+      }),
+    );
+  };
 
   const handleProceed = () => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -391,6 +433,46 @@ const Cart = () => {
             <p className="commerce-sidebar-kicker">Summary</p>
             <h2 className="commerce-sidebar-title">Checkout preview</h2>
 
+            {availableAddons.length > 0 && (
+              <div className="mb-5 rounded-2xl border border-primary-200 bg-white p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-500">
+                  Add-ons
+                </p>
+                <p className="mt-1 text-xs text-primary-600">
+                  Optional extras you can add quickly.
+                </p>
+                <div className="mt-3 space-y-2">
+                  {availableAddons.map((addon) => (
+                    <div
+                      key={addon._id}
+                      className="flex items-center gap-2 rounded-xl border border-primary-100 bg-cream-100 p-2"
+                    >
+                      <img
+                        src={addon.images?.[0] || addon.image}
+                        alt={addon.name}
+                        className="h-12 w-12 rounded-lg object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-primary-900">
+                          {addon.name}
+                        </p>
+                        <p className="text-xs text-primary-600">
+                          Rs.{Number(addon.price || 0).toLocaleString("en-IN")}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddAddon(addon)}
+                        className="rounded-lg border border-primary-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-primary-700 hover:bg-cream-100"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="commerce-sidebar-list">
               <div className="commerce-sidebar-row">
                 <span>Total items</span>
@@ -419,7 +501,7 @@ const Cart = () => {
                 <span className="font-semibold text-primary-800">
                   {remainingForFreeDelivery === 0
                     ? "Unlocked"
-                    : `Add Rs.${remainingForFreeDelivery.toLocaleString("en-IN")}`}
+                    : `Add ₹${remainingForFreeDelivery.toLocaleString("en-IN")} more for free delivery`}
                 </span>
               </div>
               <div className="commerce-sidebar-total">

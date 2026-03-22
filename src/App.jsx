@@ -11,7 +11,7 @@ import AdminRoute from "./admin/components/routes/AdminRoute";
 import { getProfile } from "./features/auth/authSlice";
 import { fetchSiteContent } from "./features/site/siteSlice";
 import { fetchProducts } from "./features/products/productSlice";
-import { syncCartProducts } from "./features/cart/cartSlice";
+import { syncCartProducts, setCurrentUser } from "./features/cart/cartSlice";
 
 const Home = lazy(() => import("./user/pages/Home"));
 const Menu = lazy(() => import("./user/pages/shop/Menu"));
@@ -75,6 +75,11 @@ function App() {
       dispatch(getProfile());
     }
   }, [dispatch, loading, token, user]);
+
+  useEffect(() => {
+    // Sync cart to current user whenever user changes
+    dispatch(setCurrentUser(user?.id));
+  }, [dispatch, user?.id]);
 
   useEffect(() => {
     if (!siteLoaded && !siteLoading) {

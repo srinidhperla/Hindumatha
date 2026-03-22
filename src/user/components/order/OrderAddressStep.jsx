@@ -49,7 +49,7 @@ const OrderAddressStep = ({
         delivery radius before saving.
       </p>
 
-      <div className="commerce-form-stack">
+      <div id="checkout-address-section" className="commerce-form-stack">
         <div>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <p className="commerce-field-label">Delivery addresses</p>

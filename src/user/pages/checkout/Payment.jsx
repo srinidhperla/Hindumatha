@@ -364,12 +364,12 @@ const Payment = () => {
                 checkoutData.freeDeliveryProgress?.enabled &&
                 checkoutData.freeDeliveryProgress?.remainingAmount > 0 && (
                   <div className="commerce-sidebar-row text-xs text-primary-700">
-                    <span>Add this much for free delivery</span>
                     <span className="font-semibold text-primary-800">
-                      Rs.
+                      Add ₹
                       {Number(
                         checkoutData.freeDeliveryProgress.remainingAmount,
-                      ).toLocaleString("en-IN")}
+                      ).toLocaleString("en-IN")}{" "}
+                      more for free delivery
                     </span>
                   </div>
                 )}

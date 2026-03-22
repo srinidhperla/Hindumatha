@@ -97,6 +97,14 @@ export const normalizeDeliverySettings = (settings = {}) => {
     enabled: settings?.enabled !== false,
     distanceFeeEnabled: settings?.distanceFeeEnabled !== false,
     pricePerKm: toNonNegativeNumber(settings?.pricePerKm, 20),
+    firstKmFee: toNonNegativeNumber(
+      settings?.firstKmFee,
+      toNonNegativeNumber(settings?.pricePerKm, 20),
+    ),
+    pricePerKmBeyondFirstKm: toNonNegativeNumber(
+      settings?.pricePerKmBeyondFirstKm,
+      toNonNegativeNumber(settings?.pricePerKm, 20),
+    ),
     freeDeliveryEnabled: settings?.freeDeliveryEnabled !== false,
     freeDeliveryMinAmount: toNonNegativeNumber(
       settings?.freeDeliveryMinAmount,

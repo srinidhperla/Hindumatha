@@ -37,6 +37,21 @@ const scrollToPageTop = () => {
   window.scrollTo({ top: 0, behavior: "auto" });
 };
 
+const scrollToValidationTarget = (targetId) => {
+  if (!targetId) {
+    scrollToPageTop();
+    return;
+  }
+
+  const target = document.getElementById(targetId);
+  if (!target) {
+    scrollToPageTop();
+    return;
+  }
+
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+};
+
 const toMinutes = (timeValue = "") => {
   const [hours, minutes] = String(timeValue)
     .split(":")
@@ -133,7 +148,7 @@ const Order = () => {
   const [formData, setFormData] = useState({
     deliveryMode: "",
     deliveryDateTime: "",
-    paymentMethod: "cash",
+    paymentMethod: "",
     specialInstructions: "",
     name: user?.name || "",
     phone: user?.phone || "",
@@ -636,6 +651,7 @@ const Order = () => {
       return;
 
     if (!formData.deliveryMode) {
+      scrollToValidationTarget("checkout-delivery-mode");
       dispatch(
         showToast({
           message: "Please choose Deliver Now or Schedule Delivery.",
@@ -646,6 +662,7 @@ const Order = () => {
     }
 
     if (formData.deliveryMode === "scheduled" && !formData.deliveryDateTime) {
+      scrollToValidationTarget("checkout-schedule-section");
       dispatch(
         showToast({
           message: "Please choose delivery date and an available time slot.",
@@ -661,6 +678,7 @@ const Order = () => {
         !scheduledSlotStart ||
         !isTimeInsideAnySlotWindow(scheduledSlotStart, availableScheduledSlots))
     ) {
+      scrollToValidationTarget("checkout-schedule-section");
       dispatch(
         showToast({
           message:
@@ -673,6 +691,7 @@ const Order = () => {
     }
 
     if (formData.deliveryMode === "now" && nowAvailabilityReason) {
+      scrollToValidationTarget("checkout-delivery-mode");
       dispatch(
         showToast({
           message:
@@ -685,6 +704,7 @@ const Order = () => {
     }
 
     if (!hasConfiguredStoreLocation) {
+      scrollToValidationTarget("checkout-address-section");
       dispatch(
         showToast({
           message:
@@ -696,6 +716,7 @@ const Order = () => {
     }
 
     if (!isAddressVerified) {
+      scrollToValidationTarget("checkout-address-section");
       dispatch(
         showToast({
           message:
@@ -707,9 +728,21 @@ const Order = () => {
     }
 
     if (!isAddressServiceable) {
+      scrollToValidationTarget("checkout-address-section");
       dispatch(
         showToast({
           message: `Sorry, this address is outside our ${ENFORCED_DELIVERY_RADIUS_KM}km delivery area.`,
+          type: "error",
+        }),
+      );
+      return;
+    }
+
+    if (!formData.paymentMethod) {
+      scrollToValidationTarget("checkout-payment-method");
+      dispatch(
+        showToast({
+          message: "Please choose a payment method.",
           type: "error",
         }),
       );

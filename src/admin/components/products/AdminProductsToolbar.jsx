@@ -10,6 +10,7 @@ const AdminProductsToolbar = ({
   onSelectCategory,
   onSearch,
   onAddProduct,
+  onAddAddon,
 }) => (
   <SurfaceCard className="mb-4 sm:mb-6 p-3 sm:p-5">
     <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -52,6 +53,13 @@ const AdminProductsToolbar = ({
             className="flex-1 sm:flex-initial text-xs sm:text-sm"
           >
             Add Product
+          </ActionButton>
+          <ActionButton
+            onClick={onAddAddon}
+            variant="secondary"
+            className="flex-1 sm:flex-initial text-xs sm:text-sm"
+          >
+            Add Addon
           </ActionButton>
         </div>
       </div>

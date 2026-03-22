@@ -30,6 +30,8 @@ const defaultSiteContent = {
     enabled: true,
     distanceFeeEnabled: true,
     pricePerKm: 20,
+    firstKmFee: 20,
+    pricePerKmBeyondFirstKm: 20,
     freeDeliveryEnabled: true,
     freeDeliveryMinAmount: 1500,
     maxDeliveryRadiusKm: 3,

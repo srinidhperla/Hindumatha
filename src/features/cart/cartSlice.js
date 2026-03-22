@@ -5,11 +5,18 @@ import {
   getVariantPrice,
 } from "../../utils/productOptions";
 
-const CART_STORAGE_KEY = "cartItems";
+const CART_STORAGE_KEY_PREFIX = "cartItems";
 
-const loadCartItems = () => {
+const getCartStorageKey = (userId) => {
+  return userId
+    ? `${CART_STORAGE_KEY_PREFIX}_${userId}`
+    : CART_STORAGE_KEY_PREFIX;
+};
+
+const loadCartItems = (userId) => {
   try {
-    const storedItems = localStorage.getItem(CART_STORAGE_KEY);
+    const storageKey = getCartStorageKey(userId);
+    const storedItems = localStorage.getItem(storageKey);
     const parsedItems = storedItems ? JSON.parse(storedItems) : [];
     return Array.isArray(parsedItems) ? parsedItems : [];
   } catch (error) {
@@ -17,8 +24,9 @@ const loadCartItems = () => {
   }
 };
 
-const persistCartItems = (items) => {
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+const persistCartItems = (items, userId) => {
+  const storageKey = getCartStorageKey(userId);
+  localStorage.setItem(storageKey, JSON.stringify(items));
 };
 
 const hasExplicitFlavors = (product) =>
@@ -109,11 +117,22 @@ const resolveComparableUnitPrice = (item, productSnapshot) => {
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
-    items: loadCartItems(),
+    items: loadCartItems(null), // Load unauthenticated cart initially
     priceSyncNoticeVisible: false,
     priceSyncUpdatedItemsCount: 0,
+    currentUserId: null,
   },
   reducers: {
+    setCurrentUser: (state, action) => {
+      const userId = action.payload;
+      // If user changed, load their cart
+      if (state.currentUserId !== userId) {
+        state.currentUserId = userId;
+        state.items = loadCartItems(userId);
+        state.priceSyncNoticeVisible = false;
+        state.priceSyncUpdatedItemsCount = 0;
+      }
+    },
     addToCart: (state, action) => {
       const {
         product,
@@ -154,7 +173,7 @@ const cartSlice = createSlice({
         });
       }
 
-      persistCartItems(state.items);
+      persistCartItems(state.items, state.currentUserId);
     },
     updateCartQuantity: (state, action) => {
       const { id, quantity } = action.payload;
@@ -164,7 +183,7 @@ const cartSlice = createSlice({
         targetItem.quantity = Math.max(1, quantity);
       }
 
-      persistCartItems(state.items);
+      persistCartItems(state.items, state.currentUserId);
     },
     updateCartItemOptions: (state, action) => {
       const { id, selectedFlavor, selectedWeight, selectedEggType } =
@@ -195,17 +214,17 @@ const cartSlice = createSlice({
         );
       }
 
-      persistCartItems(state.items);
+      persistCartItems(state.items, state.currentUserId);
     },
     removeFromCart: (state, action) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
-      persistCartItems(state.items);
+      persistCartItems(state.items, state.currentUserId);
     },
     clearCart: (state) => {
       state.items = [];
       state.priceSyncNoticeVisible = false;
       state.priceSyncUpdatedItemsCount = 0;
-      persistCartItems(state.items);
+      persistCartItems(state.items, state.currentUserId);
     },
     dismissPriceSyncNotice: (state) => {
       state.priceSyncNoticeVisible = false;
@@ -254,12 +273,13 @@ const cartSlice = createSlice({
         state.priceSyncUpdatedItemsCount = priceSyncUpdatedItemsCount;
       }
 
-      persistCartItems(state.items);
+      persistCartItems(state.items, state.currentUserId);
     },
   },
 });
 
 export const {
+  setCurrentUser,
   addToCart,
   updateCartQuantity,
   updateCartItemOptions,

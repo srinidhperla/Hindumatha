@@ -12,7 +12,7 @@ import {
 
 const getAverageRating = (products = []) => {
   const ratedProducts = products.filter(
-    (product) => Number(product.rating) > 0,
+    (product) => product.isAddon !== true && Number(product.rating) > 0,
   );
 
   if (!ratedProducts.length) {
@@ -31,13 +31,16 @@ const Home = () => {
   const { businessInfo, deliverySettings } = useSelector((state) => state.site);
   const { products } = useSelector((state) => state.products);
   const [showTopButton, setShowTopButton] = useState(false);
-  const featuredProducts = products.slice(0, 8);
+  const storefrontProducts = products.filter(
+    (product) => product.isAddon !== true,
+  );
+  const featuredProducts = storefrontProducts.slice(0, 8);
   const currentYear = new Date().getFullYear();
   const establishedYear = Number(businessInfo.establishedYear) || 1976;
   const yearsExperience = Math.max(1, currentYear - establishedYear);
-  const averageRating = getAverageRating(products);
+  const averageRating = getAverageRating(storefrontProducts);
   const categoryCount = new Set(
-    products.map((product) => product.category).filter(Boolean),
+    storefrontProducts.map((product) => product.category).filter(Boolean),
   ).size;
 
   useEffect(() => {
@@ -62,7 +65,7 @@ const Home = () => {
       <WhyChooseUs />
       <AboutSection
         businessInfo={businessInfo}
-        products={products}
+        products={storefrontProducts}
         categoryCount={categoryCount}
         yearsExperience={yearsExperience}
         averageRating={averageRating}

@@ -94,12 +94,12 @@ const OrderSummary = ({
         freeDeliveryProgress?.enabled &&
         freeDeliveryProgress?.remainingAmount > 0 && (
           <div className="commerce-sidebar-row text-xs text-primary-700">
-            <span>Add this much for free delivery</span>
             <span className="font-semibold text-primary-800">
-              ₹
+              Add ₹
               {Number(freeDeliveryProgress.remainingAmount).toLocaleString(
                 "en-IN",
-              )}
+              )}{" "}
+              more for free delivery
             </span>
           </div>
         )}

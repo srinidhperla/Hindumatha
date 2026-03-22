@@ -400,4 +400,6 @@ export const createDefaultProductForm = () => ({
   isEgg: true,
   isEggless: false,
   isFeatured: false,
+  isAddon: false,
+  addOns: [],
 });

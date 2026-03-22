@@ -5,12 +5,14 @@ import {
   cancelOrder,
   fetchMyOrders,
 } from "../../../features/orders/orderSlice";
+import { getOrderDisplayCode } from "../../../utils/orderDisplay";
 import { showToast } from "../../../features/uiSlice";
 import {
   ActionButton,
   StatusChip,
   SurfaceCard,
 } from "../../../components/ui/Primitives";
+import { downloadInvoicePDF } from "../../../services/invoiceService";
 
 const ORDER_TIMELINE = [
   { key: "pending", label: "Placed" },
@@ -140,6 +142,25 @@ const Orders = () => {
     }
   };
 
+  const handleDownloadInvoice = (order) => {
+    try {
+      downloadInvoicePDF(order);
+      dispatch(
+        showToast({
+          message: "Opening invoice for download...",
+          type: "success",
+        }),
+      );
+    } catch (error) {
+      dispatch(
+        showToast({
+          message: "Failed to generate invoice.",
+          type: "error",
+        }),
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-cream-50 py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -184,7 +205,7 @@ const Orders = () => {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary-600">
-                      Order #{order._id.slice(-6).toUpperCase()}
+                      Order {getOrderDisplayCode(order)}
                     </p>
                     <h2 className="mt-2 text-2xl font-black text-primary-900">
                       {order.items?.length || 0} item
@@ -387,6 +408,13 @@ const Orders = () => {
                           {loading ? "Cancelling..." : "Cancel Order"}
                         </ActionButton>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadInvoice(order)}
+                        className="mt-3 w-full rounded-lg border-2 border-caramel-400 bg-white px-4 py-2 font-semibold text-caramel-700 transition hover:bg-caramel-50"
+                      >
+                        Download Invoice
+                      </button>
                     </div>
                   </aside>
                 </div>

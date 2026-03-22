@@ -55,7 +55,10 @@ const Menu = () => {
 
   // Products visible on menu: all that aren't master-toggled OFF
   const visibleProducts = useMemo(
-    () => normalizedProducts.filter((product) => product.isAvailable !== false),
+    () =>
+      normalizedProducts
+        .filter((product) => product.isAvailable !== false)
+        .filter((product) => product.isAddon !== true),
     [normalizedProducts],
   );
 
@@ -138,6 +141,15 @@ const Menu = () => {
     setImagePreview(null);
   };
 
+  const scrollToQuickAddField = (targetId) => {
+    const target = document.getElementById(targetId);
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   // Dynamically compute available weights based on selected flavor + egg type
   const quickAddWeights = useMemo(() => {
     if (!quickAddProduct) return [];
@@ -168,15 +180,43 @@ const Menu = () => {
     const needsEggType = hasEgg && hasEggless;
     const needsFlavorSelection = quickAddProduct?.hasExplicitFlavors;
 
-    if (
-      !quickAddProduct ||
-      (needsFlavorSelection && !quickAddFlavor) ||
-      !quickAddWeight ||
-      (needsEggType && !quickAddEggType)
-    ) {
+    if (!quickAddProduct) {
       dispatch(
         showToast({
-          message: "Please choose all required options.",
+          message: "Please select a product first.",
+          type: "error",
+        }),
+      );
+      return;
+    }
+
+    if (needsFlavorSelection && !quickAddFlavor) {
+      scrollToQuickAddField("quick-add-flavor");
+      dispatch(
+        showToast({
+          message: "Please choose a flavor.",
+          type: "error",
+        }),
+      );
+      return;
+    }
+
+    if (needsEggType && !quickAddEggType) {
+      scrollToQuickAddField("quick-add-type");
+      dispatch(
+        showToast({
+          message: "Please choose Egg or Eggless.",
+          type: "error",
+        }),
+      );
+      return;
+    }
+
+    if (!quickAddWeight) {
+      scrollToQuickAddField("quick-add-weight");
+      dispatch(
+        showToast({
+          message: `Please select ${quickAddPortionMeta.singular.toLowerCase()}.`,
           type: "error",
         }),
       );
@@ -343,7 +383,25 @@ const Menu = () => {
                         animationDelay: `${Math.min(productIndex, 8) * 60}ms`,
                       }}
                     >
-                      {/* Text side (left on mobile) */}
+                      <div className="menu-product-image-wrap">
+                        <button
+                          type="button"
+                          onClick={() => openImagePreview(product)}
+                          className="block h-full w-full"
+                        >
+                          <img
+                            src={product.primaryImage}
+                            alt={product.name}
+                            className="menu-product-image"
+                          />
+                        </button>
+                        {!product.canOrder && (
+                          <span className="menu-product-badge-stock">
+                            Out of stock
+                          </span>
+                        )}
+                      </div>
+
                       <div className="menu-product-body">
                         <div className="menu-product-header">
                           <button
@@ -396,26 +454,8 @@ const Menu = () => {
                           </span>
                         </div>
                       </div>
-                      {/* Image side (right on mobile) + actions */}
+
                       <div className="menu-product-side">
-                        <div className="menu-product-image-wrap">
-                          <button
-                            type="button"
-                            onClick={() => openImagePreview(product)}
-                            className="block h-full w-full"
-                          >
-                            <img
-                              src={product.primaryImage}
-                              alt={product.name}
-                              className="menu-product-image"
-                            />
-                          </button>
-                          {!product.canOrder && (
-                            <span className="menu-product-badge-stock">
-                              Out of stock
-                            </span>
-                          )}
-                        </div>
                         <div className="menu-product-actions-row">
                           <Link
                             to="/cart"
@@ -528,7 +568,7 @@ const Menu = () => {
                     isEggTypeAvailable(quickAddProduct, "eggless");
                   if (!eggOn && !egglessOn) return null;
                   return (
-                    <label className="block sm:col-span-2">
+                    <label id="quick-add-type" className="block sm:col-span-2">
                       <span className="mb-2 block text-sm font-medium text-primary-700">
                         Type
                       </span>
@@ -567,7 +607,7 @@ const Menu = () => {
                 })()}
 
                 {quickAddProduct.hasExplicitFlavors && (
-                  <label className="block">
+                  <label id="quick-add-flavor" className="block">
                     <span className="mb-2 block text-sm font-medium text-primary-700">
                       Flavor
                     </span>
@@ -588,7 +628,7 @@ const Menu = () => {
                   </label>
                 )}
 
-                <label className="block">
+                <label id="quick-add-weight" className="block">
                   <span className="mb-2 block text-sm font-medium text-primary-700">
                     {quickAddPortionMeta.heading}
                   </span>
@@ -651,16 +691,7 @@ const Menu = () => {
                 <button
                   type="button"
                   onClick={handleQuickAdd}
-                  disabled={
-                    (quickAddProduct?.hasExplicitFlavors && !quickAddFlavor) ||
-                    !quickAddWeight ||
-                    (quickAddProduct?.isEgg !== false &&
-                      quickAddProduct?.isEggless === true &&
-                      isEggTypeAvailable(quickAddProduct, "egg") &&
-                      isEggTypeAvailable(quickAddProduct, "eggless") &&
-                      !quickAddEggType)
-                  }
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-700 px-5 py-3 font-medium text-white hover:shadow-warm active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-cream-200 disabled:text-primary-400 disabled:from-cream-200 disabled:to-cream-200 transition-all"
+                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-700 px-5 py-3 font-medium text-white hover:shadow-warm active:scale-[0.97] transition-all"
                 >
                   Add to cart
                 </button>

@@ -22,6 +22,7 @@ import {
   normalizeWeightOptions,
 } from "../../utils/productOptions";
 import ProductFormModal from "../components/modals/ProductFormModal";
+import AddOnFormModal from "../components/modals/AddOnFormModal";
 import AdminProductsToolbar from "../components/products/AdminProductsToolbar";
 import AdminProductsGrid from "../components/products/AdminProductsGrid";
 
@@ -29,6 +30,7 @@ const AdminProductsPage = ({ onToast }) => {
   const dispatch = useDispatch();
   const { products, loading } = useSelector((state) => state.products);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddOnModalOpen, setIsAddOnModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState(createDefaultProductForm());
   const [useCustomCategory, setUseCustomCategory] = useState(false);
@@ -38,6 +40,13 @@ const AdminProductsPage = ({ onToast }) => {
   const [imageItems, setImageItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [addOnForm, setAddOnForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    imageFile: null,
+    imagePreview: "",
+  });
 
   const availableCategories = useMemo(
     () =>
@@ -155,7 +164,10 @@ const AdminProductsPage = ({ onToast }) => {
 
       const entries = Object.entries(row || {});
       const matched = entries.find(
-        ([key]) => String(key || "").trim().toLowerCase() === lower,
+        ([key]) =>
+          String(key || "")
+            .trim()
+            .toLowerCase() === lower,
       );
       return matched ? matched[1] : undefined;
     };
@@ -213,6 +225,17 @@ const AdminProductsPage = ({ onToast }) => {
     setCustomFlavor("");
     setCustomWeightLabel("");
     setImageItems([]);
+  };
+
+  const resetAddOnForm = () => {
+    setAddOnForm({
+      name: "",
+      description: "",
+      price: "",
+      imageFile: null,
+      imagePreview: "",
+    });
+    setIsAddOnModalOpen(false);
   };
 
   const handleChange = (event) => {
@@ -456,15 +479,14 @@ const AdminProductsPage = ({ onToast }) => {
         axes,
       );
       const finalBasePrice =
-        minimumVariantPrice !== null
-          ? minimumVariantPrice
-          : 0;
+        minimumVariantPrice !== null ? minimumVariantPrice : 0;
       productData.append("name", formData.name.trim());
       productData.append("description", formData.description.trim());
       productData.append("price", finalBasePrice);
       productData.append("category", finalCategory);
       productData.append("isEgg", formData.isEgg);
       productData.append("isEggless", formData.isEggless);
+      productData.append("isAddon", formData.isAddon === true);
       productData.append(
         "portionType",
         normalizePortionType(formData.portionType),
@@ -485,6 +507,7 @@ const AdminProductsPage = ({ onToast }) => {
         "variantPrices",
         JSON.stringify(formData.variantPrices || {}),
       );
+      productData.append("addOns", JSON.stringify(formData.addOns || []));
 
       const existingImages = imageItems
         .filter((item) => item.existingPath)
@@ -576,6 +599,8 @@ const AdminProductsPage = ({ onToast }) => {
       variantPrices,
       isEgg,
       isEggless,
+      isAddon: product.isAddon === true,
+      addOns: Array.isArray(product.addOns) ? product.addOns : [],
     });
     setUseCustomCategory(!categoryExists);
     setCustomCategory(categoryExists ? "" : product.category);
@@ -632,6 +657,75 @@ const AdminProductsPage = ({ onToast }) => {
     }
   };
 
+  const handleAddOnInputChange = (event) => {
+    const { name, value } = event.target;
+    setAddOnForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const handleAddOnImageChange = (event) => {
+    const file = event.target.files?.[0] || null;
+    setAddOnForm((current) => ({
+      ...current,
+      imageFile: file,
+      imagePreview: file ? URL.createObjectURL(file) : "",
+    }));
+  };
+
+  const handleAddOnSubmit = async (event) => {
+    event.preventDefault();
+
+    const name = addOnForm.name.trim();
+    const description = addOnForm.description.trim();
+    const price = Number(addOnForm.price);
+
+    if (!name || !description || !Number.isFinite(price) || price < 0) {
+      onToast("Please fill addon name, price and description.", "error");
+      return;
+    }
+
+    if (!addOnForm.imageFile) {
+      onToast("Please upload addon image.", "error");
+      return;
+    }
+
+    try {
+      const productData = new FormData();
+      const imageToken = `new-addon-${Date.now()}`;
+      productData.append("name", name);
+      productData.append("description", description);
+      productData.append("price", price);
+      productData.append("category", "addons");
+      productData.append("portionType", "pieces");
+      productData.append("isAddon", true);
+      productData.append("isAvailable", true);
+      productData.append("isEgg", true);
+      productData.append("isEggless", false);
+      productData.append("flavorOptions", JSON.stringify([]));
+      productData.append(
+        "weightOptions",
+        JSON.stringify([{ label: "1 pc", multiplier: 1, isAvailable: true }]),
+      );
+      productData.append("flavorWeightAvailability", JSON.stringify({}));
+      productData.append("variantPrices", JSON.stringify({}));
+      productData.append("existingImages", JSON.stringify([]));
+      productData.append(
+        "imageOrder",
+        JSON.stringify([{ type: "new", value: imageToken }]),
+      );
+      productData.append("newImageIds", imageToken);
+      productData.append("images", addOnForm.imageFile);
+
+      await dispatch(createProduct(productData)).unwrap();
+      onToast("Addon created successfully.");
+      resetAddOnForm();
+    } catch (error) {
+      onToast(getErrorMessage(error, "Failed to create addon."), "error");
+    }
+  };
+
   if (loading && !products.length) {
     return <LoadingState />;
   }
@@ -647,6 +741,10 @@ const AdminProductsPage = ({ onToast }) => {
         onAddProduct={() => {
           resetForm();
           setIsModalOpen(true);
+        }}
+        onAddAddon={() => {
+          resetAddOnForm();
+          setIsAddOnModalOpen(true);
         }}
       />
 
@@ -690,6 +788,16 @@ const AdminProductsPage = ({ onToast }) => {
           onSubmit={handleSubmit}
           onRenameCategory={handleRenameCategory}
           onDeleteCategory={handleDeleteCategory}
+        />
+      )}
+
+      {isAddOnModalOpen && (
+        <AddOnFormModal
+          formData={addOnForm}
+          onChange={handleAddOnInputChange}
+          onImageChange={handleAddOnImageChange}
+          onSubmit={handleAddOnSubmit}
+          onClose={resetAddOnForm}
         />
       )}
     </div>

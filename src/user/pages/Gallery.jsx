@@ -18,6 +18,7 @@ const Gallery = () => {
     () =>
       products
         .filter((product) => product.isFeatured)
+        .filter((product) => product.isAddon !== true)
         .map((product) => ({
           _id: `product-${product._id}`,
           imageUrl: product.images?.[0] || product.image,

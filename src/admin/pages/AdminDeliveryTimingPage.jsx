@@ -130,6 +130,8 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
         name === "advanceNoticeValue" ||
         name === "pauseDurationValue" ||
         name === "pricePerKm" ||
+        name === "firstKmFee" ||
+        name === "pricePerKmBeyondFirstKm" ||
         name === "freeDeliveryMinAmount"
           ? Number(value) || 0
           : value,
@@ -868,8 +870,8 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
                     Delivery Fee by Distance
                   </p>
                   <p className="mt-2 text-sm text-slate-600">
-                    When enabled, delivery fee is calculated as distance from
-                    store x price per km.
+                    Set fixed fee for first 1 km and extra fee per km beyond 1
+                    km.
                   </p>
                 </div>
                 <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
@@ -892,13 +894,28 @@ const AdminDeliveryTimingPage = ({ onToast }) => {
               </div>
 
               <label className="mt-4 block text-sm font-medium text-slate-700">
-                Price per 1 km
+                Fee for first 1 km
                 <input
                   type="number"
                   min="0"
                   step="1"
-                  name="pricePerKm"
-                  value={normalizedEditorDeliverySettings.pricePerKm}
+                  name="firstKmFee"
+                  value={normalizedEditorDeliverySettings.firstKmFee}
+                  onChange={handleDeliverySettingChange}
+                  className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                />
+              </label>
+
+              <label className="mt-4 block text-sm font-medium text-slate-700">
+                Fee per km beyond 1 km
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  name="pricePerKmBeyondFirstKm"
+                  value={
+                    normalizedEditorDeliverySettings.pricePerKmBeyondFirstKm
+                  }
                   onChange={handleDeliverySettingChange}
                   className="mt-2 block w-full rounded-xl border border-slate-200 px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
                 />

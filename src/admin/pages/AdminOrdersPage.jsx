@@ -18,6 +18,7 @@ import {
   getOrderItemCount,
   getOrderSummary,
 } from "./adminShared";
+import { getOrderDisplayCode } from "../../utils/orderDisplay";
 
 const getPaymentMethodLabel = (paymentMethod) => {
   if (!paymentMethod) {
@@ -105,9 +106,17 @@ const AdminOrdersPage = ({ onToast }) => {
 
       if (selectedOrder?._id === updatedOrder._id) {
         setSelectedOrder(updatedOrder);
+
+        // Auto-close modal when order is accepted
+        if (status === "confirmed") {
+          setTimeout(() => setSelectedOrder(null), 800);
+        }
       }
 
       onToast(`Order status updated to ${status}.`);
+
+      // Refresh orders list to ensure all data is fresh
+      dispatch(fetchOrders());
     } catch (error) {
       onToast(
         getErrorMessage(error, "Failed to update order status."),
@@ -232,7 +241,7 @@ const AdminOrdersPage = ({ onToast }) => {
                   Order
                 </p>
                 <p className="mt-1 break-all text-sm font-semibold text-primary-900">
-                  {order._id}
+                  {getOrderDisplayCode(order)}
                 </p>
                 <p className="mt-2 text-sm text-primary-700">
                   {order.user?.name || "Guest Customer"}
