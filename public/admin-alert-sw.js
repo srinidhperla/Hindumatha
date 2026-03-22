@@ -35,6 +35,7 @@ self.addEventListener("push", (event) => {
       icon: payload.icon || "/favicon.ico",
       badge: payload.badge || "/favicon.ico",
       tag: payload.tag,
+      renotify: true,
       requireInteraction: payload.requireInteraction,
       vibrate: Array.isArray(payload.vibrate)
         ? payload.vibrate

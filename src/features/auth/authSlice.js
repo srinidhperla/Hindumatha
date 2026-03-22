@@ -40,7 +40,7 @@ const persistToken = (token) => {
   }
 
   localStorage.setItem("token", token);
-  sessionStorage.setItem("token", token);
+  sessionStorage.removeItem("token");
 };
 
 const persistUser = (user) => {
@@ -50,7 +50,7 @@ const persistUser = (user) => {
 
   const serializedUser = JSON.stringify(user || null);
   localStorage.setItem("authUser", serializedUser);
-  sessionStorage.setItem("authUser", serializedUser);
+  sessionStorage.removeItem("authUser");
 };
 
 const clearStoredToken = () => {
@@ -62,6 +62,30 @@ const clearStoredToken = () => {
   sessionStorage.removeItem("token");
   localStorage.removeItem("authUser");
   sessionStorage.removeItem("authUser");
+};
+
+const normalizeStoredAuth = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const localToken = localStorage.getItem("token");
+  const sessionToken = sessionStorage.getItem("token");
+  const localUser = localStorage.getItem("authUser");
+  const sessionUser = sessionStorage.getItem("authUser");
+
+  if (!localToken && sessionToken) {
+    localStorage.setItem("token", sessionToken);
+  }
+
+  if (!localUser && sessionUser) {
+    localStorage.setItem("authUser", sessionUser);
+  }
+
+  if (sessionToken || sessionUser) {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("authUser");
+  }
 };
 
 // Async thunks
@@ -141,6 +165,7 @@ export const updateProfile = createAsyncThunk(
   },
 );
 
+normalizeStoredAuth();
 const storedToken = readStoredToken();
 const storedUser = readStoredUser();
 

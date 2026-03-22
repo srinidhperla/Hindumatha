@@ -9,6 +9,7 @@
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
+import { useLocation } from "react-router-dom";
 import { fetchOrders } from "../../../features/orders/orderSlice";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -20,6 +21,7 @@ const ALERT_POST_GAIN = 1.3;
 const ALERTS_ENABLED_STORAGE_KEY = "bakeryAdminAlertsEnabled";
 const PUSH_SUBSCRIBED_STORAGE_KEY = "bakeryAdminPushSubscribed";
 const FCM_TOKEN_STORAGE_KEY = "bakeryAdminFcmToken";
+const SOUND_ARMED_STORAGE_KEY = "bakeryAdminSoundArmed";
 
 const AdminOrderAlertsContext = createContext(null);
 
@@ -53,14 +55,6 @@ const isFirebaseConfigured = () => {
     firebaseConfig.messagingSenderId &&
     firebaseConfig.appId,
   );
-};
-
-const getStoredToken = () => {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
 };
 
 const urlBase64ToUint8Array = (base64String) => {
@@ -145,9 +139,12 @@ const FloatingAlertUnlock = ({ onUnlock }) => (
 
 export const AdminOrderAlertsProvider = ({ children }) => {
   const dispatch = useDispatch();
+  const location = useLocation();
   const { token, user } = useSelector((state) => state.auth);
   const { orders } = useSelector((state) => state.orders);
   const isAdmin = Boolean(token && user?.role === "admin");
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const canReceiveAdminAlerts = isAdmin && isAdminRoute;
   const [alertsEnabled, setAlertsEnabled] = useState(() => {
     if (typeof window === "undefined") {
       return false;
@@ -159,6 +156,13 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     canUseNotifications() ? Notification.permission : "unsupported",
   );
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [soundArmed, setSoundArmed] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return sessionStorage.getItem(SOUND_ARMED_STORAGE_KEY) === "true";
+  });
   const [pushSubscribed, setPushSubscribed] = useState(() => {
     if (typeof window === "undefined") {
       return false;
@@ -221,6 +225,12 @@ export const AdminOrderAlertsProvider = ({ children }) => {
 
     const isReady = audioContextRef.current.state === "running";
     setAudioEnabled(isReady);
+
+    if (isReady) {
+      setSoundArmed(true);
+      sessionStorage.setItem(SOUND_ARMED_STORAGE_KEY, "true");
+    }
+
     return isReady;
   }, []);
 
@@ -314,10 +324,13 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   );
 
   const fetchPushStatus = useCallback(async () => {
-    const tokenValue = getStoredToken();
+    if (!token) {
+      throw new Error("Missing auth token");
+    }
+
     const response = await fetch(`${API_URL}/site/alerts/push-status`, {
       headers: {
-        Authorization: `Bearer ${tokenValue}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -326,9 +339,13 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     }
 
     return response.json();
-  }, []);
+  }, [token]);
 
   const subscribeForPushAlerts = useCallback(async () => {
+    if (!canReceiveAdminAlerts) {
+      return { skipped: true, reason: "admin-route-required" };
+    }
+
     if (!canUseServiceWorker()) {
       return { skipped: true, reason: "push-not-supported" };
     }
@@ -347,13 +364,15 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       await navigator.serviceWorker.register("/admin-alert-sw.js");
     await navigator.serviceWorker.ready;
 
-    const tokenValue = getStoredToken();
+    if (!token) {
+      return { skipped: true, reason: "missing-token" };
+    }
 
     if (pushStatus.fcmConfigured) {
       try {
         const result = await registerFcmToken({
           registration,
-          authToken: tokenValue,
+          authToken: token,
         });
 
         if (result?.subscribed) {
@@ -382,7 +401,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${tokenValue}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         subscription: subscription.toJSON(),
@@ -397,7 +416,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     setPushSubscribed(true);
 
     return { subscribed: true, channel: "web-push" };
-  }, [ensureNotificationsReady, fetchPushStatus]);
+  }, [canReceiveAdminAlerts, ensureNotificationsReady, fetchPushStatus, token]);
 
   const enableAlerts = useCallback(async () => {
     setAlertsEnabled(true);
@@ -425,7 +444,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   }, [enableAlerts, ensureNotificationsReady, playAlertTone]);
 
   useEffect(() => {
-    if (!isAdmin || !alertsEnabled || audioEnabled) {
+    if (!canReceiveAdminAlerts || !alertsEnabled || audioEnabled) {
       return undefined;
     }
 
@@ -450,7 +469,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     audioEnabled,
     ensureAudioReady,
     ensureNotificationsReady,
-    isAdmin,
+    canReceiveAdminAlerts,
   ]);
 
   useEffect(() => {
@@ -486,7 +505,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   ]);
 
   useEffect(() => {
-    if (!isAdmin || !token) {
+    if (!canReceiveAdminAlerts || !token) {
       setActiveAlertOrderIds([]);
       setLastCreatedOrder(null);
       setPushSubscribed(false);
@@ -536,6 +555,11 @@ export const AdminOrderAlertsProvider = ({ children }) => {
         return;
       }
 
+      // Immediate first ring on order placement; repeats are handled separately
+      // while any pending order remains unhandled.
+      playAlertTone();
+      startTitleBlink();
+
       const permission = await ensureNotificationsReady();
 
       if (permission === "granted" && !pushSubscribed) {
@@ -545,12 +569,22 @@ export const AdminOrderAlertsProvider = ({ children }) => {
           silent: false,
         });
       }
-
-      playAlertTone();
-      startTitleBlink();
     };
 
-    const handleUpdated = () => {
+    const handleUpdated = (streamEvent) => {
+      const updatedOrder = streamEvent?.payload || null;
+      const orderId = updatedOrder?._id;
+
+      if (
+        orderId &&
+        updatedOrder?.status &&
+        updatedOrder.status !== "pending"
+      ) {
+        setActiveAlertOrderIds((currentIds) =>
+          currentIds.filter((currentId) => currentId !== orderId),
+        );
+      }
+
       dispatch(fetchOrders());
     };
 
@@ -599,7 +633,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     alertsEnabled,
     dispatch,
     ensureNotificationsReady,
-    isAdmin,
+    canReceiveAdminAlerts,
     playAlertTone,
     pushSubscribed,
     startTitleBlink,
@@ -607,30 +641,41 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   ]);
 
   useEffect(() => {
-    if (!isAdmin || !alertsEnabled || notificationPermission !== "granted") {
+    if (!canReceiveAdminAlerts) {
+      return;
+    }
+
+    const pendingIds = (orders || [])
+      .filter((order) => order?.status === "pending" && order?._id)
+      .map((order) => order._id);
+
+    setActiveAlertOrderIds(pendingIds);
+  }, [canReceiveAdminAlerts, orders]);
+
+  useEffect(() => {
+    if (
+      !canReceiveAdminAlerts ||
+      !alertsEnabled ||
+      notificationPermission !== "granted"
+    ) {
       return undefined;
     }
 
     subscribeForPushAlerts().catch(() => null);
     return undefined;
-  }, [alertsEnabled, isAdmin, notificationPermission, subscribeForPushAlerts]);
+  }, [
+    alertsEnabled,
+    canReceiveAdminAlerts,
+    notificationPermission,
+    subscribeForPushAlerts,
+  ]);
 
   useEffect(() => {
-    if (!isAdmin) {
-      return;
-    }
-
-    const pendingIds = new Set(
-      (orders || [])
-        .filter((order) => order.status === "pending")
-        .map((order) => order._id),
-    );
-
-    setActiveAlertOrderIds(Array.from(pendingIds));
-  }, [isAdmin, orders]);
-
-  useEffect(() => {
-    if (!alertsEnabled || activeAlertOrderIds.length === 0) {
+    if (
+      !canReceiveAdminAlerts ||
+      !alertsEnabled ||
+      activeAlertOrderIds.length === 0
+    ) {
       if (alertRepeatIntervalRef.current) {
         window.clearInterval(alertRepeatIntervalRef.current);
         alertRepeatIntervalRef.current = null;
@@ -656,6 +701,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       }
     };
   }, [
+    canReceiveAdminAlerts,
     activeAlertOrderIds.length,
     alertsEnabled,
     playAlertTone,
@@ -674,7 +720,8 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       notificationsSupported: canUseNotifications(),
       audioSupported: canUseAudio(),
       pushSupported: canUseServiceWorker() && canUsePushManager(),
-      soundUnlockRequired: alertsEnabled && canUseAudio() && !audioEnabled,
+      soundUnlockRequired:
+        alertsEnabled && canUseAudio() && !audioEnabled && !soundArmed,
       enableAlerts,
       unlockSound,
       runManualAlertTest,
@@ -688,6 +735,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       notificationPermission,
       pushSubscribed,
       runManualAlertTest,
+      soundArmed,
       unlockSound,
     ],
   );
@@ -695,9 +743,11 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   return (
     <AdminOrderAlertsContext.Provider value={value}>
       {children}
-      {isAdmin && alertsEnabled && canUseAudio() && !audioEnabled && (
-        <FloatingAlertUnlock onUnlock={unlockSound} />
-      )}
+      {canReceiveAdminAlerts &&
+        alertsEnabled &&
+        canUseAudio() &&
+        !audioEnabled &&
+        !soundArmed && <FloatingAlertUnlock onUnlock={unlockSound} />}
     </AdminOrderAlertsContext.Provider>
   );
 };
