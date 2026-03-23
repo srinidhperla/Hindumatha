@@ -1,9 +1,8 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart } from "../../../features/cart/cartSlice";
-import { fetchProducts } from "../../../features/products/productSlice";
-import { showToast } from "../../../features/uiSlice";
+import { addToCart } from "@/features/cart/cartSlice";
+import { fetchProducts } from "@/features/products/productSlice";
+import { showToast } from "@/features/uiSlice";
 import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
@@ -14,7 +13,15 @@ import {
   isEggTypeAvailable,
   isProductPurchasable,
   normalizeFlavorOptions,
-} from "../../../utils/productOptions";
+} from "@/utils/productOptions";
+import SeoMeta from "@/shared/seo/SeoMeta";
+import MenuCategorySections from "./MenuCategorySections";
+import MenuControls from "./MenuControls";
+import MenuCustomOrderCta from "./MenuCustomOrderCta";
+import MenuEmptyState from "./MenuEmptyState";
+import MenuFeaturedStrip from "./MenuFeaturedStrip";
+import MenuImagePreviewModal from "./MenuImagePreviewModal";
+import MenuQuickAddModal from "./MenuQuickAddModal";
 
 const Menu = () => {
   const dispatch = useDispatch();
@@ -110,7 +117,7 @@ const Menu = () => {
     } else {
       setQuickAddFlavor("");
     }
-    // Determine egg type — auto-select only when just one type exists
+    // Determine egg type � auto-select only when just one type exists
     const hasEgg =
       product.isEgg !== false && isEggTypeAvailable(product, "egg");
     const hasEggless =
@@ -139,6 +146,11 @@ const Menu = () => {
 
   const closeImagePreview = () => {
     setImagePreview(null);
+  };
+
+  const clearFilters = () => {
+    setSelectedCategory("All");
+    setSearchTerm("");
   };
 
   const scrollToQuickAddField = (targetId) => {
@@ -243,47 +255,19 @@ const Menu = () => {
 
   return (
     <div className="menu-page">
+      <SeoMeta
+        title="Menu | Hindumatha's Cake World"
+        description="Explore our cake menu with flavors, weights, egg and eggless options, pastries, and custom celebration cakes."
+        path="/menu"
+      />
       <div className="menu-shell menu-shell--compact">
-        <div className="menu-controls-sticky">
-          <div className="menu-search-wrap">
-            <svg
-              className="menu-search-icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search cakes, pastries, breads..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="menu-search-input"
-            />
-          </div>
-          <div className="menu-categories-rail custom-scrollbar">
-            {categories.map((category) => (
-              <button
-                key={category}
-                type="button"
-                onClick={() => setSelectedCategory(category)}
-                className={`menu-category-pill ${
-                  selectedCategory === category
-                    ? "menu-category-pill--active"
-                    : "menu-category-pill--inactive"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
+        <MenuControls
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          categories={categories}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
 
         <div className="menu-results-bar">
           <p>
@@ -291,41 +275,11 @@ const Menu = () => {
           </p>
         </div>
 
-        {!loading && featuredProducts.length > 0 && (
-          <section className="menu-featured-strip">
-            <div className="menu-section-head">
-              <div>
-                <p className="menu-section-kicker">Featured</p>
-                <h2 className="menu-section-title">Popular picks today</h2>
-              </div>
-            </div>
-            <div className="menu-featured-grid custom-scrollbar">
-              {featuredProducts.map((product) => (
-                <button
-                  key={product._id}
-                  type="button"
-                  onClick={() => openImagePreview(product)}
-                  className="menu-featured-card"
-                >
-                  <img
-                    src={product.primaryImage}
-                    alt={product.name}
-                    className="menu-featured-image"
-                  />
-                  <div className="menu-featured-body">
-                    <span className="menu-featured-category">
-                      {product.categoryLabel}
-                    </span>
-                    <h3>{product.name}</h3>
-                    <p>
-                      Starts at Rs.
-                      {Number(product.price || 0).toLocaleString("en-IN")}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
+        {!loading && (
+          <MenuFeaturedStrip
+            featuredProducts={featuredProducts}
+            openImagePreview={openImagePreview}
+          />
         )}
 
         {loading ? (
@@ -333,372 +287,37 @@ const Menu = () => {
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="menu-empty-state">
-            <div className="menu-empty-icon">
-              <svg
-                className="h-12 w-12 text-primary-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <h3>No matching items</h3>
-            <p>Reset filters and search to see the full bakery menu again.</p>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCategory("All");
-                setSearchTerm("");
-              }}
-              className="menu-clear-button"
-            >
-              Clear filters
-            </button>
-          </div>
+          <MenuEmptyState clearFilters={clearFilters} />
         ) : (
-          <div className="menu-sections">
-            {categorySections.map((section) => (
-              <section key={section.category} className="menu-section-block">
-                <div className="menu-section-head">
-                  <div>
-                    <p className="menu-section-kicker">
-                      {section.items.length} items
-                    </p>
-                    <h2 className="menu-section-title">{section.category}</h2>
-                  </div>
-                </div>
-                <div className="menu-items-grid">
-                  {section.items.map((product, productIndex) => (
-                    <article
-                      key={product._id}
-                      className="menu-product-card animate-fadeInUp"
-                      style={{
-                        animationDelay: `${Math.min(productIndex, 8) * 60}ms`,
-                      }}
-                    >
-                      <div className="menu-product-image-wrap">
-                        <button
-                          type="button"
-                          onClick={() => openImagePreview(product)}
-                          className="block h-full w-full"
-                        >
-                          <img
-                            src={product.primaryImage}
-                            alt={product.name}
-                            className="menu-product-image"
-                          />
-                        </button>
-                        {!product.canOrder && (
-                          <span className="menu-product-badge-stock">
-                            Out of stock
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="menu-product-body">
-                        <div className="menu-product-header">
-                          <button
-                            type="button"
-                            onClick={() => openImagePreview(product)}
-                            className="menu-product-title"
-                          >
-                            {product.name}
-                          </button>
-                          <p className="menu-product-price">
-                            ₹
-                            {Number(product.price || 0).toLocaleString("en-IN")}
-                          </p>
-                        </div>
-                        <p className="menu-product-desc">
-                          {product.description}
-                        </p>
-                        <div className="menu-product-meta">
-                          {product.isEgg !== false &&
-                            isEggTypeAvailable(product, "egg") && (
-                              <span className="menu-tag menu-tag--egg">
-                                <span className="menu-tag-icon">
-                                  <span className="h-0 w-0 border-l-[3px] border-r-[3px] border-b-[5px] border-l-transparent border-r-transparent border-b-current" />
-                                </span>
-                                Egg
-                              </span>
-                            )}
-                          {product.isEggless === true &&
-                            isEggTypeAvailable(product, "eggless") && (
-                              <span className="menu-tag menu-tag--eggless">
-                                <span className="menu-tag-icon">
-                                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                                </span>
-                                Eggless
-                              </span>
-                            )}
-                          <span className="menu-product-meta-text">
-                            {product.orderableFlavors.length > 1 ||
-                            product.hasExplicitFlavors
-                              ? `${product.orderableFlavors.length} flavors`
-                              : ""}
-                          </span>
-                          {(product.hasExplicitFlavors ||
-                            product.orderableFlavors.length > 1) && (
-                            <span className="menu-meta-separator">•</span>
-                          )}
-                          <span className="menu-product-meta-text">
-                            {product.orderableWeights.length}{" "}
-                            {product.portionTypeMeta.heading.toLowerCase()}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="menu-product-side">
-                        <div className="menu-product-actions-row">
-                          <Link
-                            to="/cart"
-                            className="menu-product-view-cart-btn"
-                          >
-                            View Cart
-                          </Link>
-                          <button
-                            type="button"
-                            disabled={!product.canOrder}
-                            onClick={() => openQuickAdd(product)}
-                            className="menu-product-add-btn"
-                          >
-                            Add +
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+          <MenuCategorySections
+            categorySections={categorySections}
+            openImagePreview={openImagePreview}
+            openQuickAdd={openQuickAdd}
+          />
         )}
 
-        <div className="menu-cta animate-fadeInUp">
-          <div>
-            <p className="menu-section-kicker text-cream-300">Custom orders</p>
-            <h2 className="text-xl sm:text-2xl font-bold text-white md:text-3xl">
-              Need a custom cake instead of a listed item?
-            </h2>
-            <p className="mt-2 sm:mt-3 max-w-2xl text-sm leading-7 text-cream-300 sm:text-base">
-              Share theme, weight, flavor, and delivery timing. We will turn it
-              into a personalized order instead of forcing you into a fixed menu
-              item.
-            </p>
-          </div>
-          <Link to="/contact" className="menu-cta-button">
-            Request custom cake
-          </Link>
-        </div>
+        <MenuCustomOrderCta />
 
-        {imagePreview && (
-          <div
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4"
-            onClick={(event) => {
-              if (event.target === event.currentTarget) {
-                closeImagePreview();
-              }
-            }}
-          >
-            <button
-              type="button"
-              onClick={closeImagePreview}
-              className="absolute right-4 top-4 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20"
-            >
-              Close
-            </button>
-            <img
-              src={imagePreview.src}
-              alt={imagePreview.name}
-              className="max-h-[88vh] w-auto max-w-[96vw] rounded-xl object-contain shadow-2xl"
-            />
-          </div>
-        )}
+        <MenuImagePreviewModal
+          imagePreview={imagePreview}
+          closeImagePreview={closeImagePreview}
+        />
 
-        {quickAddProduct && (
-          <div
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-primary-950/60 backdrop-blur-sm animate-fadeIn"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) closeQuickAdd();
-            }}
-          >
-            <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl bg-white p-5 shadow-warm sm:p-6 animate-fadeInUp max-h-[90vh] overflow-y-auto">
-              {/* Drag handle on mobile */}
-              <div className="flex justify-center mb-3 sm:hidden">
-                <div className="w-10 h-1 rounded-full bg-primary-200" />
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-widest text-primary-500">
-                    Required details
-                  </p>
-                  <h3 className="mt-2 text-xl sm:text-2xl font-bold text-primary-800">
-                    Add {quickAddProduct.name}
-                  </h3>
-                  <p className="mt-1.5 sm:mt-2 text-sm leading-6 text-primary-500">
-                    Choose the required flavor,
-                    {` ${quickAddPortionMeta.singular},`} and quantity before
-                    adding this product to cart.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeQuickAdd}
-                  className="rounded-full bg-cream-100 px-3 py-2 text-sm font-medium text-primary-600 hover:bg-cream-200 active:scale-95 transition flex-shrink-0"
-                >
-                  Close
-                </button>
-              </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                {/* Cake type selector — always show so user knows the type */}
-                {(() => {
-                  const eggOn =
-                    quickAddProduct.isEgg !== false &&
-                    isEggTypeAvailable(quickAddProduct, "egg");
-                  const egglessOn =
-                    quickAddProduct.isEggless === true &&
-                    isEggTypeAvailable(quickAddProduct, "eggless");
-                  if (!eggOn && !egglessOn) return null;
-                  return (
-                    <label id="quick-add-type" className="block sm:col-span-2">
-                      <span className="mb-2 block text-sm font-medium text-primary-700">
-                        Cake Type
-                      </span>
-                      <div className="flex gap-3">
-                        {eggOn && (
-                          <button
-                            type="button"
-                            onClick={() => setQuickAddEggType("egg")}
-                            className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                              quickAddEggType === "egg"
-                                ? "border-red-400 bg-red-50 text-red-700 ring-1 ring-red-300"
-                                : "border-primary-200 bg-cream-50 text-primary-600 hover:bg-cream-100"
-                            }`}
-                          >
-                            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-red-500" />
-                            Egg
-                          </button>
-                        )}
-                        {egglessOn && (
-                          <button
-                            type="button"
-                            onClick={() => setQuickAddEggType("eggless")}
-                            className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                              quickAddEggType === "eggless"
-                                ? "border-green-400 bg-green-50 text-green-700 ring-1 ring-green-300"
-                                : "border-primary-200 bg-cream-50 text-primary-600 hover:bg-cream-100"
-                            }`}
-                          >
-                            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-green-500" />
-                            Eggless
-                          </button>
-                        )}
-                      </div>
-                    </label>
-                  );
-                })()}
-
-                {quickAddProduct.hasExplicitFlavors && (
-                  <label id="quick-add-flavor" className="block">
-                    <span className="mb-2 block text-sm font-medium text-primary-700">
-                      Flavor
-                    </span>
-                    <select
-                      value={quickAddFlavor}
-                      onChange={(event) =>
-                        setQuickAddFlavor(event.target.value)
-                      }
-                      className="w-full rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-sm text-primary-800 outline-none transition focus:border-primary-600 focus:bg-white focus:ring-1 focus:ring-primary-600"
-                    >
-                      <option value="">Select flavor</option>
-                      {quickAddProduct.availableFlavors.map((flavor) => (
-                        <option key={flavor.name} value={flavor.name}>
-                          {flavor.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-
-                <label id="quick-add-weight" className="block">
-                  <span className="mb-2 block text-sm font-medium text-primary-700">
-                    {quickAddPortionMeta.heading}
-                  </span>
-                  <select
-                    value={quickAddWeight}
-                    onChange={(event) => setQuickAddWeight(event.target.value)}
-                    className="w-full rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-sm text-primary-800 outline-none transition focus:border-primary-600 focus:bg-white focus:ring-1 focus:ring-primary-600"
-                  >
-                    <option value="">
-                      {`Select ${quickAddPortionMeta.singular}`}
-                    </option>
-                    {quickAddWeights.map((weight) => (
-                      <option key={weight.label} value={weight.label}>
-                        {weight.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block sm:col-span-2">
-                  <span className="mb-2 block text-sm font-medium text-primary-700">
-                    Quantity
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setQuickAddQuantity((current) =>
-                          Math.max(1, current - 1),
-                        )
-                      }
-                      className="rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-lg font-bold text-primary-700 hover:bg-cream-100"
-                    >
-                      -
-                    </button>
-                    <div className="min-w-[72px] rounded-xl border border-primary-200 bg-white px-4 py-3 text-center text-base font-bold text-primary-800">
-                      {quickAddQuantity}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setQuickAddQuantity((current) => current + 1)
-                      }
-                      className="rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-lg font-bold text-primary-700 hover:bg-cream-100"
-                    >
-                      +
-                    </button>
-                  </div>
-                </label>
-              </div>
-
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={closeQuickAdd}
-                  className="inline-flex items-center justify-center rounded-full border border-primary-200 px-5 py-3 font-medium text-primary-700 hover:bg-cream-100 active:scale-95 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleQuickAdd}
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-700 px-5 py-3 font-medium text-white hover:shadow-warm active:scale-[0.97] transition-all"
-                >
-                  Add to cart
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <MenuQuickAddModal
+          quickAddProduct={quickAddProduct}
+          quickAddPortionMeta={quickAddPortionMeta}
+          quickAddEggType={quickAddEggType}
+          setQuickAddEggType={setQuickAddEggType}
+          quickAddFlavor={quickAddFlavor}
+          setQuickAddFlavor={setQuickAddFlavor}
+          quickAddWeight={quickAddWeight}
+          setQuickAddWeight={setQuickAddWeight}
+          quickAddQuantity={quickAddQuantity}
+          setQuickAddQuantity={setQuickAddQuantity}
+          quickAddWeights={quickAddWeights}
+          closeQuickAdd={closeQuickAdd}
+          handleQuickAdd={handleQuickAdd}
+        />
       </div>
     </div>
   );

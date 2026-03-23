@@ -1,48 +1,21 @@
-export const DEFAULT_WEIGHT_OPTIONS = [
-  { label: "500g", multiplier: 0.5, isAvailable: true },
-  { label: "1kg", multiplier: 1, isAvailable: true },
-  { label: "1.5kg", multiplier: 1.5, isAvailable: true },
-  { label: "2kg", multiplier: 2, isAvailable: true },
-  { label: "3kg", multiplier: 3, isAvailable: true },
-];
+import {
+  buildFlavorWeightAvailabilityMatrix,
+  readRowValue,
+  readVariantPriceValue,
+  resolveTypedRow,
+} from "./productOptionInternals";
+import {
+  DEFAULT_PORTION_OPTIONS,
+  DEFAULT_PRODUCT_FORM_WEIGHT_OPTIONS,
+  DEFAULT_WEIGHT_OPTIONS,
+  PORTION_TYPE_META,
+  PRODUCT_PORTION_TYPES,
+} from "./productOptionConstants";
 
-export const DEFAULT_PRODUCT_FORM_WEIGHT_OPTIONS = [
-  { label: "500g", multiplier: 0.5, isAvailable: true },
-  { label: "1kg", multiplier: 1, isAvailable: true },
-];
-
-const DEFAULT_PORTION_OPTIONS = {
-  weight: DEFAULT_PRODUCT_FORM_WEIGHT_OPTIONS,
-  size: [
-    { label: "Small", multiplier: 1, isAvailable: true },
-    { label: "Medium", multiplier: 1, isAvailable: true },
-    { label: "Large", multiplier: 1, isAvailable: true },
-  ],
-  pieces: [
-    { label: "1 pc", multiplier: 1, isAvailable: true },
-    { label: "6 pcs", multiplier: 1, isAvailable: true },
-    { label: "12 pcs", multiplier: 1, isAvailable: true },
-  ],
-};
-
-export const PRODUCT_PORTION_TYPES = ["weight", "size", "pieces"];
-
-const PORTION_TYPE_META = {
-  weight: {
-    heading: "Weights",
-    singular: "weight",
-    example: "Example: 1kg",
-  },
-  size: {
-    heading: "Sizes",
-    singular: "size",
-    example: "Example: Small",
-  },
-  pieces: {
-    heading: "Pieces",
-    singular: "piece",
-    example: "Example: 6 pcs",
-  },
+export {
+  DEFAULT_PRODUCT_FORM_WEIGHT_OPTIONS,
+  DEFAULT_WEIGHT_OPTIONS,
+  PRODUCT_PORTION_TYPES,
 };
 
 export const normalizePortionType = (value) =>
@@ -109,56 +82,6 @@ export const normalizeWeightOptions = (product) => {
   return DEFAULT_WEIGHT_OPTIONS;
 };
 
-const readVariantPriceValue = (value) => {
-  if (Number.isFinite(Number(value)) && Number(value) > 0) {
-    return Number(value);
-  }
-
-  if (
-    value &&
-    typeof value === "object" &&
-    Number.isFinite(Number(value.price)) &&
-    Number(value.price) > 0
-  ) {
-    return Number(value.price);
-  }
-
-  return null;
-};
-
-const getObjectEntries = (source) => {
-  if (!source || typeof source !== "object") return [];
-  return source instanceof Map
-    ? Array.from(source.entries())
-    : Object.entries(source);
-};
-
-const resolveTypedRow = (source, typedKey) => {
-  if (!source || typeof source !== "object") return null;
-
-  const direct = source?.[typedKey] || source?.get?.(typedKey);
-  if (direct && typeof direct === "object") return direct;
-
-  const typedKeyLower = String(typedKey).toLowerCase();
-  const match = getObjectEntries(source).find(
-    ([key]) => String(key).toLowerCase() === typedKeyLower,
-  );
-  return match && typeof match[1] === "object" ? match[1] : null;
-};
-
-const readRowValue = (row, label) => {
-  if (!row || typeof row !== "object") return undefined;
-  if (label in row) return row[label];
-
-  const lowerLabel = String(label).toLowerCase();
-  if (lowerLabel in row) return row[lowerLabel];
-
-  const match = Object.entries(row).find(
-    ([key]) => String(key).toLowerCase() === lowerLabel,
-  );
-  return match ? match[1] : undefined;
-};
-
 const resolveVariantFlavorName = (product, flavorName = "") => {
   if (flavorName) return flavorName;
   return getAvailableFlavorOptions(product)[0]?.name || "Cake";
@@ -207,77 +130,11 @@ export const getVariantPrice = (
 export const normalizeFlavorWeightAvailability = (product) => {
   const flavors = normalizeFlavorOptions(product);
   const weights = normalizeWeightOptions(product);
-  const source =
-    product?.flavorWeightAvailability &&
-    typeof product.flavorWeightAvailability === "object"
-      ? product.flavorWeightAvailability
-      : {};
-
-  // First collect typed key rows (egg::Cake, eggless::Cake)
-  const typedRows = {};
-  const sourceKeys =
-    source instanceof Map ? Array.from(source.keys()) : Object.keys(source);
-  sourceKeys.forEach((key) => {
-    if (!key.includes("::")) return;
-    const rowSource = source instanceof Map ? source.get(key) : source[key];
-    if (!rowSource || typeof rowSource !== "object") return;
-    const row = {};
-    weights.forEach((weight) => {
-      const label = weight.label;
-      const lower = String(label || "").toLowerCase();
-      const rawValue =
-        label in rowSource
-          ? rowSource[label]
-          : lower in rowSource
-            ? rowSource[lower]
-            : undefined;
-      if (rawValue === null) row[label] = null;
-      else if (rawValue === false) row[label] = false;
-      else row[label] = true;
-    });
-    typedRows[String(key).toLowerCase()] = row;
+  return buildFlavorWeightAvailabilityMatrix({
+    source: product?.flavorWeightAvailability,
+    flavors,
+    weights,
   });
-
-  // Build plain flavor keys by aggregating typed keys.
-  // A weight is available for a flavor if available in ANY egg type.
-  const matrix = {};
-  const effectiveFlavors =
-    flavors.length > 0 ? flavors : [{ name: "Cake", isAvailable: true }];
-  effectiveFlavors.forEach((flavor) => {
-    const flavorName = flavor.name;
-    const matchedTypedKeys = ["egg", "eggless"]
-      .map((t) => `${t}::${flavorName}`.toLowerCase())
-      .filter((k) => typedRows[k]);
-
-    const row = {};
-    weights.forEach((weight) => {
-      const label = weight.label;
-      if (matchedTypedKeys.length > 0) {
-        const statuses = matchedTypedKeys.map((k) => typedRows[k][label]);
-        if (statuses.some((s) => s === true)) row[label] = true;
-        else if (statuses.some((s) => s === false)) row[label] = false;
-        else row[label] = null;
-      } else {
-        // Fallback to plain key
-        const flavorKey = String(flavorName || "").toLowerCase();
-        const rowSource = source[flavorName] || source[flavorKey] || {};
-        const lower = String(label || "").toLowerCase();
-        const rawValue =
-          label in rowSource
-            ? rowSource[label]
-            : lower in rowSource
-              ? rowSource[lower]
-              : undefined;
-        if (rawValue === null) row[label] = null;
-        else if (rawValue === false) row[label] = false;
-        else row[label] = true;
-      }
-    });
-
-    matrix[flavorName] = row;
-  });
-
-  return matrix;
 };
 
 export const isFlavorWeightAvailable = (product, flavorName, weightLabel) => {

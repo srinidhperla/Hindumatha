@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { formatCategoryLabel } from "../../../utils/productOptions";
-import { SurfaceCard, Toggle } from "../../../components/ui/Primitives";
+import { formatCategoryLabel } from "@/utils/productOptions";
+import { SurfaceCard, Toggle } from "@/shared/ui/Primitives";
 
 const ProductBasicsSection = ({
   formData,

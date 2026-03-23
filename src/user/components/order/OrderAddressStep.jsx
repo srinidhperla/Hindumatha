@@ -1,22 +1,15 @@
 import React, { useMemo } from "react";
-import { hasValidCoordinates } from "./orderHelpers";
-import AddressPickerModal from "../../../components/address/AddressPickerModal";
+import AddressPickerModal from "@/user/components/address/AddressPickerModal";
 
 const OrderAddressStep = ({
   savedAddresses,
   addressMode,
   editingAddressId,
   selectedAddressId,
-  addressLabel,
   isAddressVerified,
   distanceFromStoreKm,
   isAddressServiceable,
   maxDeliveryRadiusKm,
-  storeLocation,
-  addressLatitude,
-  addressLongitude,
-  hasConfiguredStoreLocation,
-  loading,
   error,
   onSavedAddressSelect,
   onStartNewAddress,
@@ -28,10 +21,6 @@ const OrderAddressStep = ({
 }) => {
   const isAddressModalOpen = addressMode === "new" || addressMode === "edit";
 
-  const hasAddressCoordinates = hasValidCoordinates(
-    addressLatitude,
-    addressLongitude,
-  );
   const hasDistanceFromStore = Number.isFinite(distanceFromStoreKm);
 
   const editingAddress = useMemo(() => {

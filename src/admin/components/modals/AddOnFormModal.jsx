@@ -1,6 +1,6 @@
 import React from "react";
-import Modal from "../../../components/ui/Modal";
-import { ActionButton, StatusChip } from "../../../components/ui/Primitives";
+import Modal from "@/shared/ui/Modal";
+import { ActionButton, StatusChip } from "@/shared/ui/Primitives";
 
 const inputClassName =
   "mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70";

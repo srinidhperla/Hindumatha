@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { getOrderItems } from "../../pages/adminShared";
-import { getOrderDisplayCode } from "../../../utils/orderDisplay";
-import { downloadInvoicePDF } from "../../../services/invoiceService";
+import { getOrderDisplayCode } from "@/utils/orderDisplay";
+import { downloadInvoicePDF } from "@/services/invoiceService";
 
 const getPaymentMethodLabel = (paymentMethod) => {
   if (!paymentMethod) return "Not specified";

@@ -9,7 +9,7 @@ import {
   postProductReview,
   renameCategoryAPI,
   deleteCategoryAPI,
-} from "../../services/productAPI";
+} from "@/services/productAPI";
 
 const getErrorPayload = (error, fallbackMessage) =>
   error.response?.data || { message: fallbackMessage };

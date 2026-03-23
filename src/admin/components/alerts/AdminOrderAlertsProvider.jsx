@@ -1,4 +1,4 @@
-﻿import React, {
+import React, {
   createContext,
   useCallback,
   useContext,
@@ -10,7 +10,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
 import { useLocation } from "react-router-dom";
-import { fetchOrders } from "../../../features/orders/orderSlice";
+import { fetchOrders } from "@/features/orders/orderSlice";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const ALERT_RING_DURATION_MS = 5500;
@@ -22,6 +22,7 @@ const ALERTS_ENABLED_STORAGE_KEY = "bakeryAdminAlertsEnabled";
 const PUSH_SUBSCRIBED_STORAGE_KEY = "bakeryAdminPushSubscribed";
 const FCM_TOKEN_STORAGE_KEY = "bakeryAdminFcmToken";
 const SOUND_ARMED_STORAGE_KEY = "bakeryAdminSoundArmed";
+const ALERT_AUDIO_FILE_PATH = "/sounds/airtel_ringtone.mp3";
 
 const AdminOrderAlertsContext = createContext(null);
 
@@ -37,6 +38,14 @@ const canUseServiceWorker = () =>
 
 const canUsePushManager = () =>
   typeof window !== "undefined" && "PushManager" in window;
+
+const canUseLocalStorage = () => {
+  try {
+    return typeof window !== "undefined" && !!window.localStorage;
+  } catch {
+    return false;
+  }
+};
 
 const getFirebaseConfig = () => ({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
@@ -118,7 +127,7 @@ const FloatingAlertUnlock = ({ onUnlock }) => (
       <div className="flex flex-col gap-2 bg-gradient-to-r from-amber-50 via-white to-rose-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
-            🔔 Sound needs one tap to re-arm
+            ?? Sound needs one tap to re-arm
           </p>
           <p className="mt-0.5 text-xs text-slate-600">
             Browser blocks audio until first interaction after a refresh. Tap
@@ -157,11 +166,11 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   );
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [soundArmed, setSoundArmed] = useState(() => {
-    if (typeof window === "undefined") {
+    if (!canUseLocalStorage()) {
       return false;
     }
 
-    return sessionStorage.getItem(SOUND_ARMED_STORAGE_KEY) === "true";
+    return localStorage.getItem(SOUND_ARMED_STORAGE_KEY) === "true";
   });
   const [pushSubscribed, setPushSubscribed] = useState(() => {
     if (typeof window === "undefined") {
@@ -228,11 +237,39 @@ export const AdminOrderAlertsProvider = ({ children }) => {
 
     if (isReady) {
       setSoundArmed(true);
-      sessionStorage.setItem(SOUND_ARMED_STORAGE_KEY, "true");
+      if (canUseLocalStorage()) {
+        localStorage.setItem(SOUND_ARMED_STORAGE_KEY, "true");
+      }
     }
 
     return isReady;
   }, []);
+
+  const attemptSilentAudioUnlock = useCallback(async () => {
+    if (!canUseAudio() || !canUseLocalStorage()) {
+      return false;
+    }
+
+    if (localStorage.getItem(SOUND_ARMED_STORAGE_KEY) !== "true") {
+      return false;
+    }
+
+    const probeAudio = new Audio(ALERT_AUDIO_FILE_PATH);
+    probeAudio.preload = "auto";
+    probeAudio.muted = true;
+
+    try {
+      const playResult = probeAudio.play();
+      if (playResult && typeof playResult.then === "function") {
+        await playResult;
+      }
+      probeAudio.pause();
+      probeAudio.currentTime = 0;
+      return ensureAudioReady();
+    } catch {
+      return false;
+    }
+  }, [ensureAudioReady]);
 
   const playAlertTone = useCallback(async () => {
     if (!alertsEnabled) {
@@ -263,7 +300,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       postGain.connect(audioContext.destination);
 
       // Fetch and decode the Airtel ringtone MP3
-      const response = await fetch("/sounds/airtel_ringtone.mp3");
+      const response = await fetch(ALERT_AUDIO_FILE_PATH);
       if (!response.ok) {
         throw new Error("Failed to fetch ringtone file");
       }
@@ -471,6 +508,51 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     ensureNotificationsReady,
     canReceiveAdminAlerts,
   ]);
+
+  useEffect(() => {
+    if (
+      !canReceiveAdminAlerts ||
+      !alertsEnabled ||
+      audioEnabled ||
+      !soundArmed
+    ) {
+      return undefined;
+    }
+
+    attemptSilentAudioUnlock();
+    return undefined;
+  }, [
+    alertsEnabled,
+    audioEnabled,
+    attemptSilentAudioUnlock,
+    canReceiveAdminAlerts,
+    soundArmed,
+  ]);
+
+  useEffect(() => {
+    if (!canReceiveAdminAlerts || !canUseServiceWorker()) {
+      return undefined;
+    }
+
+    const onServiceWorkerMessage = (event) => {
+      const messageType = event?.data?.type;
+      if (messageType !== "PLAY_ORDER_SOUND") {
+        return;
+      }
+
+      playAlertTone();
+      startTitleBlink();
+    };
+
+    navigator.serviceWorker.addEventListener("message", onServiceWorkerMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener(
+        "message",
+        onServiceWorkerMessage,
+      );
+    };
+  }, [canReceiveAdminAlerts, playAlertTone, startTitleBlink]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {

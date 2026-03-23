@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ActionButton, SurfaceCard } from "../../../components/ui/Primitives";
-import { formatCategoryLabel } from "../../../utils/productOptions";
+import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
+import { formatCategoryLabel } from "@/utils/productOptions";
 
 const AdminProductsToolbar = ({
   availableCategories,

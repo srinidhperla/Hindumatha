@@ -4,12 +4,12 @@ import {
   ActionButton,
   StatusChip,
   SurfaceCard,
-} from "../../../components/ui/Primitives";
+} from "@/shared/ui/Primitives";
 import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
-} from "../../../utils/productOptions";
+} from "@/utils/productOptions";
 
 const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
   if (!products.length) {

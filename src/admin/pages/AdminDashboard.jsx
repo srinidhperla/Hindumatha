@@ -1,9 +1,9 @@
-﻿import React, { Suspense, lazy, useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import AdminToast from "../components/ui/AdminToast";
-import { fetchOrders } from "../../features/orders/orderSlice";
-import { fetchProducts } from "../../features/products/productSlice";
+import AdminToast from "@/admin/components/ui/AdminToast";
+import { fetchOrders } from "@/features/orders/orderSlice";
+import { fetchProducts } from "@/features/products/productSlice";
 
 const AdminAnalyticsPage = lazy(() => import("./AdminAnalyticsPage"));
 const AdminDeliveryTimingPage = lazy(() => import("./AdminDeliveryTimingPage"));

@@ -3,7 +3,7 @@ import {
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
   getVariantPrice,
-} from "../../utils/productOptions";
+} from "@/utils/productOptions";
 
 const CART_STORAGE_KEY_PREFIX = "cartItems";
 

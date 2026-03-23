@@ -1,54 +1,23 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { clearCart } from "../../../features/cart/cartSlice";
+import { clearCart } from "@/features/cart/cartSlice";
 import {
   clearPaymentOrder,
   createPaymentOrder,
   verifyPaymentAndCreateOrder,
-} from "../../../features/orders/orderSlice";
-import { showToast } from "../../../features/uiSlice";
-
-const CHECKOUT_STORAGE_KEY = "bakeryPendingCheckout";
-const scrollToPageTop = () => {
-  window.scrollTo({ top: 0, behavior: "auto" });
-};
-
-const loadRazorpayScript = () => {
-  if (window.Razorpay) {
-    return Promise.resolve(true);
-  }
-
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
-const getPendingCheckout = (locationState) => {
-  if (locationState?.orderData) {
-    return locationState;
-  }
-
-  try {
-    const rawValue = sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
-    return rawValue ? JSON.parse(rawValue) : null;
-  } catch {
-    return null;
-  }
-};
-
-const getSafePaymentUnitPrice = (item) =>
-  Number(
-    item.price ??
-      item.unitPrice ??
-      (Number(item.quantity || 0) > 0
-        ? Number(item.lineTotal || 0) / Number(item.quantity || 1)
-        : 0),
-  );
+} from "@/features/orders/orderSlice";
+import { showToast } from "@/features/uiSlice";
+import PaymentSuccessCard from "./PaymentSuccessCard";
+import PaymentSummaryPanel from "./PaymentSummaryPanel";
+import {
+  CHECKOUT_STORAGE_KEY,
+  getDeliverySummaryLabel,
+  getPendingCheckout,
+  getSafePaymentUnitPrice,
+  loadRazorpayScript,
+  scrollToPageTop,
+} from "./paymentHelpers";
 
 const Payment = () => {
   const dispatch = useDispatch();
@@ -62,24 +31,7 @@ const Payment = () => {
   const [isLaunching, setIsLaunching] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
-  const deliveryDateTimeValue = checkoutData?.orderData?.deliveryDateTime
-    ? new Date(checkoutData.orderData.deliveryDateTime)
-    : null;
-  const hasValidDeliveryDateTime =
-    deliveryDateTimeValue instanceof Date &&
-    !Number.isNaN(deliveryDateTimeValue.getTime());
-  const deliverySummaryLabel =
-    checkoutData?.orderData?.deliveryMode === "scheduled" &&
-    hasValidDeliveryDateTime
-      ? `${deliveryDateTimeValue.toLocaleDateString("en-IN")} | ${deliveryDateTimeValue.toLocaleTimeString(
-          "en-IN",
-          {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          },
-        )}`
-      : "ASAP";
+  const deliverySummaryLabel = getDeliverySummaryLabel(checkoutData?.orderData);
 
   useEffect(() => {
     scrollToPageTop();
@@ -185,53 +137,11 @@ const Payment = () => {
 
   if (isPaid) {
     return (
-      <div className="commerce-page--success flex items-center justify-center">
-        <div className="commerce-success-card">
-          <div className="commerce-success-icon">
-            <svg
-              className="h-10 w-10 text-emerald-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <h1 className="mt-6 text-3xl font-black text-primary-800">
-            Payment completed
-          </h1>
-          <p className="mt-3 text-primary-600">
-            Your order is confirmed and the bakery has received it.
-          </p>
-          <div className="commerce-success-box">
-            <p className="commerce-price-kicker">Paid total</p>
-            <p className="mt-2 text-3xl font-black text-primary-300">
-              Rs.{checkoutData.pricing.totalAmount.toLocaleString("en-IN")}
-            </p>
-          </div>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => navigate("/orders")}
-              className="btn-primary w-full"
-            >
-              View My Orders
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="btn-secondary w-full"
-            >
-              Back to Home
-            </button>
-          </div>
-        </div>
-      </div>
+      <PaymentSuccessCard
+        totalAmount={checkoutData.pricing.totalAmount}
+        onViewOrders={() => navigate("/orders")}
+        onBackHome={() => navigate("/")}
+      />
     );
   }
 
@@ -338,60 +248,10 @@ const Payment = () => {
             </div>
           </section>
 
-          <aside className="commerce-sidebar">
-            <p className="commerce-sidebar-kicker">Summary</p>
-            <h2 className="commerce-sidebar-title">Amount to pay</h2>
-            <div className="commerce-sidebar-list">
-              <div className="commerce-sidebar-row">
-                <span>Subtotal</span>
-                <span className="font-semibold text-primary-800">
-                  Rs.{checkoutData.pricing.subtotal.toLocaleString("en-IN")}
-                </span>
-              </div>
-              <div className="commerce-sidebar-row">
-                <span>
-                  {checkoutData.pricing.deliveryFee === 0
-                    ? "Free Delivery"
-                    : "Delivery (as usual)"}
-                </span>
-                <span className="font-semibold text-primary-800">
-                  {checkoutData.pricing.deliveryFee === 0
-                    ? "Free Delivery"
-                    : `Rs.${checkoutData.pricing.deliveryFee.toLocaleString("en-IN")}`}
-                </span>
-              </div>
-              {checkoutData.pricing.deliveryFee > 0 &&
-                checkoutData.freeDeliveryProgress?.enabled &&
-                checkoutData.freeDeliveryProgress?.remainingAmount > 0 && (
-                  <div className="commerce-sidebar-row text-xs text-primary-700">
-                    <span className="font-semibold text-primary-800">
-                      Add ₹
-                      {Number(
-                        checkoutData.freeDeliveryProgress.remainingAmount,
-                      ).toLocaleString("en-IN")}{" "}
-                      more for free delivery
-                    </span>
-                  </div>
-                )}
-              <div className="commerce-sidebar-row">
-                <span>Discount</span>
-                <span className="font-semibold text-emerald-700">
-                  -Rs.
-                  {checkoutData.pricing.discountAmount.toLocaleString("en-IN")}
-                </span>
-              </div>
-              <div className="commerce-sidebar-total">
-                <span className="commerce-sidebar-total-label">Total</span>
-                <span className="commerce-sidebar-total-value">
-                  Rs.{checkoutData.pricing.totalAmount.toLocaleString("en-IN")}
-                </span>
-              </div>
-            </div>
-            <div className="commerce-note">
-              Use Razorpay test keys first. After that, switch to live keys in
-              the backend environment.
-            </div>
-          </aside>
+          <PaymentSummaryPanel
+            pricing={checkoutData.pricing}
+            freeDeliveryProgress={checkoutData.freeDeliveryProgress}
+          />
         </div>
       </div>
     </div>

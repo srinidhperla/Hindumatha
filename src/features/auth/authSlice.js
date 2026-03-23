@@ -5,7 +5,7 @@ import {
   googleLoginUser,
   getProfileData,
   updateProfileData,
-} from "../../services/authAPI";
+} from "@/services/authAPI";
 
 const readStoredToken = () => {
   if (typeof window === "undefined") {

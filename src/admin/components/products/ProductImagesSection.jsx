@@ -1,5 +1,5 @@
 import React from "react";
-import { ActionButton, SurfaceCard } from "../../../components/ui/Primitives";
+import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 
 const ProductImagesSection = ({
   imageItems,

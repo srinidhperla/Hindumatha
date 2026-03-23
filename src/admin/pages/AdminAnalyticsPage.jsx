@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { EmptyState, MetricCard } from "../components/ui/AdminUi";
-import { fetchOrderAnalytics } from "../../services/orderAPI";
-import { StatusChip, SurfaceCard } from "../../components/ui/Primitives";
+import { EmptyState, MetricCard } from "@/admin/components/ui/AdminUi";
+import { fetchOrderAnalytics } from "@/services/orderAPI";
+import { StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
 
 const AdminAnalyticsPage = () => {
   const [analytics, setAnalytics] = useState({

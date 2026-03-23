@@ -1,17 +1,11 @@
-import React, { useEffect } from "react";
-import Modal from "../../../components/ui/Modal";
-import {
-  ActionButton,
-  StatusChip,
-  SurfaceCard,
-} from "../../../components/ui/Primitives";
+import React from "react";
+import Modal from "@/shared/ui/Modal";
+import { ActionButton, StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
 import ProductBasicsSection from "../products/ProductBasicsSection";
 import ProductOptionsSection from "../products/ProductOptionsSection";
 import ProductImagesSection from "../products/ProductImagesSection";
-import {
-  formatCategoryLabel,
-  getPortionTypeMeta,
-} from "../../../utils/productOptions";
+import { getPortionTypeMeta } from "@/utils/productOptions";
+import { useProductFormPricing } from "./useProductFormPricing";
 
 const inputClassName =
   "mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70";
@@ -48,132 +42,20 @@ const ProductFormModal = ({
   onRenameCategory,
   onDeleteCategory,
 }) => {
-  const selectedEggTypes = [
-    formData.isEgg ? "egg" : null,
-    formData.isEggless ? "eggless" : null,
-  ].filter(Boolean);
-  const flavorRows =
-    formData.flavorOptions.length > 0
-      ? formData.flavorOptions.map((option) => option.name)
-      : ["Cake"];
-  const fallbackFlavorLabel = formatCategoryLabel(
-    formData.category || formData.name || "cake",
-  );
-  const portionTypeMeta = getPortionTypeMeta(formData.portionType);
-
-  const getTypedKey = (eggType, flavorName) => `${eggType}::${flavorName}`;
-
-  const getDefaultPrice = (weightOption) => {
-    const fallback = Math.round(
-      (Number(formData.price) || 0) * Number(weightOption.multiplier || 1),
-    );
-    return fallback > 0 ? fallback : "";
-  };
-
-  const getTypedPrice = (eggType, flavorName, weightOption) => {
-    const key = getTypedKey(eggType, flavorName);
-    const row = formData.variantPrices?.[key] || {};
-    const raw = row?.[weightOption.label];
-    const direct = Number(raw);
-
-    if (Number.isFinite(direct) && direct > 0) {
-      return direct;
-    }
-
-    if (raw === "" || raw === 0 || raw === "0") {
-      return "";
-    }
-
-    return getDefaultPrice(weightOption);
-  };
-
-  const updateTypedPrice = (eggType, flavorName, weightLabel, nextPrice) => {
-    if (!isWeightOn(eggType, flavorName, weightLabel)) {
-      return;
-    }
-
-    const key = getTypedKey(eggType, flavorName);
-    const parsedPrice = Number(nextPrice);
-
-    const current = formData.variantPrices || {};
-    const nextPrices = {
-      ...current,
-      [key]: {
-        ...(current[key] || {}),
-        [weightLabel]:
-          Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : 0,
-      },
-    };
-
-    onVariantPricesChange(nextPrices);
-  };
-
-  useEffect(() => {
-    if (!selectedEggTypes.length || !formData.weightOptions.length) {
-      return;
-    }
-
-    const current = formData.variantPrices || {};
-    const nextVariantPrices = { ...current };
-    let changed = false;
-
-    selectedEggTypes.forEach((eggType) => {
-      flavorRows.forEach((flavorName) => {
-        const key = getTypedKey(eggType, flavorName);
-        const currentRow =
-          nextVariantPrices[key] && typeof nextVariantPrices[key] === "object"
-            ? nextVariantPrices[key]
-            : {};
-
-        const nextRow = { ...currentRow };
-        let rowChanged = !(key in nextVariantPrices);
-
-        formData.weightOptions.forEach((weightOption) => {
-          const weightLabel = weightOption.label;
-          const rawValue = currentRow[weightLabel];
-          if (rawValue === undefined) {
-            nextRow[weightLabel] = getDefaultPrice(weightOption);
-            rowChanged = true;
-          }
-        });
-
-        if (rowChanged) {
-          nextVariantPrices[key] = nextRow;
-          changed = true;
-        }
-      });
-    });
-
-    if (changed) {
-      onVariantPricesChange(nextVariantPrices);
-    }
-  }, [
-    formData.price,
-    formData.variantPrices,
-    formData.weightOptions,
-    flavorRows,
-    onVariantPricesChange,
+  const {
     selectedEggTypes,
-  ]);
-
-  const isWeightOn = (eggType, flavorName, weightLabel) => {
-    const key = getTypedKey(eggType, flavorName);
-    const row = formData.flavorWeightAvailability?.[key] || {};
-    return row[weightLabel] !== false && row[weightLabel] !== null;
-  };
-
-  const updateTypedWeight = (eggType, flavorName, weightLabel, nextValue) => {
-    const key = getTypedKey(eggType, flavorName);
-    const current = formData.flavorWeightAvailability || {};
-    const nextMatrix = {
-      ...current,
-      [key]: {
-        ...(current[key] || {}),
-        [weightLabel]: nextValue ? true : null,
-      },
-    };
-    onFlavorWeightAvailabilityChange(nextMatrix);
-  };
+    flavorRows,
+    fallbackFlavorLabel,
+    getTypedPrice,
+    isWeightOn,
+    updateTypedPrice,
+    updateTypedWeight,
+  } = useProductFormPricing({
+    formData,
+    onVariantPricesChange,
+    onFlavorWeightAvailabilityChange,
+  });
+  const portionTypeMeta = getPortionTypeMeta(formData.portionType);
 
   return (
     <Modal

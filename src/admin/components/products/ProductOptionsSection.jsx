@@ -1,9 +1,9 @@
 import React from "react";
-import { ActionButton, SurfaceCard } from "../../../components/ui/Primitives";
+import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 import {
   getPortionTypeMeta,
   PRODUCT_PORTION_TYPES,
-} from "../../../utils/productOptions";
+} from "@/utils/productOptions";
 
 const ProductOptionsSection = ({
   formData,

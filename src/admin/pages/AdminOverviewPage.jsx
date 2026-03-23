@@ -1,6 +1,10 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { MetricCard, LoadingState, EmptyState } from "../components/ui/AdminUi";
+import {
+  MetricCard,
+  LoadingState,
+  EmptyState,
+} from "@/admin/components/ui/AdminUi";
 import { getOrderSummary } from "./adminShared";
 
 const AdminOverviewPage = () => {

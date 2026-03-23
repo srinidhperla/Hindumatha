@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   createProduct,
@@ -6,8 +6,8 @@ import {
   deleteProduct,
   renameCategory,
   deleteCategory,
-} from "../../features/products/productSlice";
-import { LoadingState } from "../components/ui/AdminUi";
+} from "@/features/products/productSlice";
+import { LoadingState } from "@/admin/components/ui/AdminUi";
 import {
   DEFAULT_PRODUCT_CATEGORIES,
   getErrorMessage,
@@ -20,7 +20,7 @@ import {
   normalizeFlavorWeightAvailability,
   normalizePortionType,
   normalizeWeightOptions,
-} from "../../utils/productOptions";
+} from "@/utils/productOptions";
 import ProductFormModal from "../components/modals/ProductFormModal";
 import AddOnFormModal from "../components/modals/AddOnFormModal";
 import AdminProductsToolbar from "../components/products/AdminProductsToolbar";

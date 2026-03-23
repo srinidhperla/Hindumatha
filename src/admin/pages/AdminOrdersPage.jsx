@@ -1,62 +1,22 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchOrders,
-  updateOrderStatus,
-} from "../../features/orders/orderSlice";
+import { fetchOrders, updateOrderStatus } from "@/features/orders/orderSlice";
 import { useAdminOrderAlerts } from "../components/alerts/AdminOrderAlertsProvider";
-import { LoadingState } from "../components/ui/AdminUi";
+import { LoadingState } from "@/admin/components/ui/AdminUi";
 import OrderDetailsModal from "../components/modals/OrderDetailsModal";
-import {
-  ActionButton,
-  StatusChip,
-  SurfaceCard,
-} from "../../components/ui/Primitives";
+import { ActionButton, StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
+import AdminOrderAlertToolbar from "@/admin/components/orders/AdminOrderAlertToolbar";
 import {
   ORDER_STATUS_OPTIONS,
   getErrorMessage,
   getOrderItemCount,
   getOrderSummary,
 } from "./adminShared";
-import { getOrderDisplayCode } from "../../utils/orderDisplay";
-
-const getPaymentMethodLabel = (paymentMethod) => {
-  if (!paymentMethod) {
-    return "Not specified";
-  }
-
-  if (paymentMethod === "upi") {
-    return "UPI";
-  }
-
-  if (paymentMethod === "cash") {
-    return "Cash on delivery";
-  }
-
-  return paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
-};
-
-const getPaymentStatusClasses = (paymentStatus) => {
-  switch (paymentStatus) {
-    case "completed":
-      return "bg-emerald-50 text-emerald-700";
-    case "failed":
-      return "bg-red-50 text-red-700";
-    default:
-      return "bg-amber-50 text-amber-700";
-  }
-};
-
-const getPaymentStatusTone = (paymentStatus) => {
-  switch (paymentStatus) {
-    case "completed":
-      return "success";
-    case "failed":
-      return "danger";
-    default:
-      return "warning";
-  }
-};
+import { getOrderDisplayCode } from "@/utils/orderDisplay";
+import {
+  getPaymentMethodLabel,
+  getPaymentStatusTone,
+} from "./adminOrdersHelpers";
 
 const AdminOrdersPage = ({ onToast }) => {
   const dispatch = useDispatch();
@@ -131,89 +91,33 @@ const AdminOrdersPage = ({ onToast }) => {
 
   return (
     <div className="flex flex-col">
-      <SurfaceCard className="mb-4 px-4 py-4 text-sm text-primary-700">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
-            <StatusChip tone={audioEnabled ? "success" : "warning"}>
-              Sound:{" "}
-              {audioEnabled
-                ? "ready"
-                : audioSupported
-                  ? alertsEnabled
-                    ? "tap once to arm again"
-                    : "enable once to keep alerts active"
-                  : "not supported"}
-            </StatusChip>
-            <StatusChip
-              tone={
-                notificationPermission === "granted" ? "success" : "warning"
-              }
-            >
-              Notification: {notificationPermission}
-            </StatusChip>
-            <StatusChip
-              tone={activeAlertOrderIds.length > 0 ? "danger" : "neutral"}
-            >
-              Waiting for acceptance: {activeAlertOrderIds.length}
-            </StatusChip>
-            <StatusChip tone={alertsEnabled ? "success" : "neutral"}>
-              Background alerts: {alertsEnabled ? "enabled" : "disabled"}
-            </StatusChip>
-            <StatusChip tone={pushSubscribed ? "success" : "neutral"}>
-              Push alerts:{" "}
-              {pushSubscribed
-                ? "subscribed"
-                : pushSupported
-                  ? "not subscribed yet"
-                  : "not supported"}
-            </StatusChip>
-          </div>
-          <ActionButton
-            type="button"
-            onClick={async () => {
-              await enableAlerts();
-              onToast("Background alerts enabled.");
-            }}
-            className="w-full lg:w-auto"
-          >
-            {alertsEnabled ? "Alerts Enabled" : "Enable background alerts"}
-          </ActionButton>
-          {soundUnlockRequired && (
-            <ActionButton
-              type="button"
-              onClick={async () => {
-                const unlocked = await unlockSound();
-                onToast(
-                  unlocked
-                    ? "Alert sound armed for this tab."
-                    : "Tap once in this tab to allow sound.",
-                  unlocked ? "success" : "info",
-                );
-              }}
-              variant="soft"
-              className="w-full lg:w-auto"
-            >
-              Arm Sound
-            </ActionButton>
-          )}
-          <ActionButton
-            type="button"
-            onClick={async () => {
-              await runManualAlertTest();
-              onToast("Test alert triggered.");
-            }}
-            variant="secondary"
-            className="w-full lg:w-auto"
-          >
-            Test Alert
-          </ActionButton>
-        </div>
-        <p className="mt-3 text-xs text-primary-500">
-          "Not subscribed yet" means this browser has not finished push
-          registration. Click "Enable background alerts" once and allow
-          notifications.
-        </p>
-      </SurfaceCard>
+      <AdminOrderAlertToolbar
+        alertsEnabled={alertsEnabled}
+        audioEnabled={audioEnabled}
+        notificationPermission={notificationPermission}
+        pushSubscribed={pushSubscribed}
+        soundUnlockRequired={soundUnlockRequired}
+        activeAlertOrderIds={activeAlertOrderIds}
+        audioSupported={audioSupported}
+        pushSupported={pushSupported}
+        onEnableAlerts={async () => {
+          await enableAlerts();
+          onToast("Background alerts enabled.");
+        }}
+        onUnlockSound={async () => {
+          const unlocked = await unlockSound();
+          onToast(
+            unlocked
+              ? "Alert sound armed for this tab."
+              : "Tap once in this tab to allow sound.",
+            unlocked ? "success" : "info",
+          );
+        }}
+        onRunManualAlertTest={async () => {
+          await runManualAlertTest();
+          onToast("Test alert triggered.");
+        }}
+      />
 
       {latestOrder && (
         <SurfaceCard className="mb-4 border-gold-200/70 bg-gradient-to-r from-gold-50/70 via-white/70 to-cream-100/70 px-4 py-3 text-sm text-primary-700 shadow-none admin-motion hover:border-gold-300">

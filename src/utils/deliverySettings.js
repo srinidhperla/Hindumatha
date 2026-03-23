@@ -1,3 +1,9 @@
+import { haversineDistance, isWithinDeliveryRadius } from "./deliveryGeo";
+import {
+  getAvailableSlotsForDateCore,
+  getDeliveryDayKey,
+} from "./deliverySlots";
+
 export const DAY_KEYS = [
   "monday",
   "tuesday",
@@ -140,33 +146,6 @@ export const getLeadTimeMinutes = (deliverySettings) => {
   );
 };
 
-const parseSlotDateTime = (dateString, timeString) => {
-  const [hours, minutes] = String(timeString || "00:00")
-    .split(":")
-    .map((value) => Number(value) || 0);
-  const dateValue = new Date(dateString);
-  dateValue.setHours(hours, minutes, 0, 0);
-  return dateValue;
-};
-
-const formatTimeHHMM = (dateValue) => {
-  const roundedDate = new Date(dateValue);
-  if (roundedDate.getSeconds() > 0 || roundedDate.getMilliseconds() > 0) {
-    roundedDate.setMinutes(roundedDate.getMinutes() + 1);
-  }
-  roundedDate.setSeconds(0, 0);
-  const hours = String(roundedDate.getHours()).padStart(2, "0");
-  const minutes = String(roundedDate.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-};
-
-const toLocalDateKey = (dateValue) => {
-  const year = dateValue.getFullYear();
-  const month = String(dateValue.getMonth() + 1).padStart(2, "0");
-  const day = String(dateValue.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
 export const formatSlotLabel = (slot) => {
   const formatTime = (timeString) => {
     const [hours, minutes] = timeString
@@ -183,169 +162,19 @@ export const formatSlotLabel = (slot) => {
   return `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`;
 };
 
-export const getDeliveryDayKey = (dateString) => {
-  const dateValue = new Date(dateString);
-  const dayIndex = dateValue.getDay();
-  return (
-    [
-      "sunday",
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-    ][dayIndex] || "monday"
-  );
-};
-
 export const getAvailableSlotsForDate = (
   deliverySettings,
   dateString,
   now = new Date(),
 ) => {
   const normalizedSettings = normalizeDeliverySettings(deliverySettings);
-
-  if (!normalizedSettings.enabled) {
-    return {
-      isAvailable: false,
-      reason: "Delivery is currently turned off.",
-      slots: [],
-    };
-  }
-
-  if (!dateString) {
-    return { isAvailable: true, reason: "", slots: [] };
-  }
-
-  let pauseMinimumDateTime = null;
-  if (normalizedSettings.isPaused) {
-    const pauseUntilDate = new Date(normalizedSettings.pauseUntil);
-    const selectedDateKey = String(dateString).slice(0, 10);
-    const pauseDateKey = toLocalDateKey(pauseUntilDate);
-
-    if (selectedDateKey < pauseDateKey) {
-      return {
-        isAvailable: false,
-        reason: `Delivery is paused until ${pauseUntilDate.toLocaleString("en-IN")}.`,
-        slots: [],
-      };
-    }
-
-    if (selectedDateKey === pauseDateKey) {
-      pauseMinimumDateTime = pauseUntilDate;
-    }
-  }
-
-  const dayKey = getDeliveryDayKey(dateString);
-  const daySchedule = normalizedSettings.weeklySchedule[dayKey];
-
-  if (!daySchedule?.isOpen) {
-    return {
-      isAvailable: false,
-      reason: `Delivery is off on ${DAY_LABELS[dayKey]}.`,
-      slots: [],
-    };
-  }
-
-  const leadTimeMinimumDateTime = new Date(
-    now.getTime() + getLeadTimeMinutes(normalizedSettings) * 60 * 1000,
-  );
-  const minimumDeliveryDateTime = pauseMinimumDateTime
-    ? new Date(
-        Math.max(
-          leadTimeMinimumDateTime.getTime(),
-          pauseMinimumDateTime.getTime(),
-        ),
-      )
-    : leadTimeMinimumDateTime;
-  const slots = (daySchedule.slots || [])
-    .map((slot) => {
-      const slotStart = parseSlotDateTime(dateString, slot.startTime);
-      const slotEnd = parseSlotDateTime(dateString, slot.endTime);
-      const effectiveStart =
-        slotStart < minimumDeliveryDateTime
-          ? minimumDeliveryDateTime
-          : slotStart;
-
-      if (!(slotStart < slotEnd) || !(slotEnd > minimumDeliveryDateTime)) {
-        return null;
-      }
-
-      return {
-        ...slot,
-        startTime: formatTimeHHMM(effectiveStart),
-      };
-    })
-    .filter(Boolean);
-
-  if (!slots.length) {
-    if (pauseMinimumDateTime) {
-      return {
-        isAvailable: false,
-        reason: `Delivery is paused until ${pauseMinimumDateTime.toLocaleString("en-IN")}. Choose a time after resume.`,
-        slots: [],
-      };
-    }
-
-    return {
-      isAvailable: false,
-      reason:
-        normalizedSettings.advanceNoticeUnit === "days"
-          ? `No delivery slots are open for that day. Choose a date at least ${normalizedSettings.advanceNoticeValue} day(s) ahead.`
-          : `No delivery slots remain after the current notice window. Choose a later date or slot.`,
-      slots: [],
-    };
-  }
-
-  return {
-    isAvailable: true,
-    reason: "",
-    slots,
-  };
-};
-
-const EARTH_RADIUS_KM = 6371;
-const toRadians = (degrees) => (degrees * Math.PI) / 180;
-const toCoordinate = (value, min, max) => {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric) || numeric < min || numeric > max) {
-    return null;
-  }
-  return numeric;
-};
-
-export const haversineDistance = (lat1, lng1, lat2, lng2) => {
-  const dLat = toRadians(lat2 - lat1);
-  const dLng = toRadians(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLng / 2) ** 2;
-  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
-
-export const isWithinDeliveryRadius = (
-  storeLocation,
-  deliveryLat,
-  deliveryLng,
-  maxRadiusKm,
-) => {
-  const storeLat = toCoordinate(storeLocation?.lat, -90, 90);
-  const storeLng = toCoordinate(storeLocation?.lng, -180, 180);
-  const dropLat = toCoordinate(deliveryLat, -90, 90);
-  const dropLng = toCoordinate(deliveryLng, -180, 180);
-  const radius = Number(maxRadiusKm);
-
-  if (storeLat === null || storeLng === null) return false;
-  if (dropLat === null || dropLng === null) return false;
-  if (!Number.isFinite(radius) || radius <= 0) return false;
-
-  return haversineDistance(storeLat, storeLng, dropLat, dropLng) <= radius;
+  return getAvailableSlotsForDateCore({
+    normalizedSettings,
+    dateString,
+    now,
+    dayLabels: DAY_LABELS,
+    leadTimeMinutes: getLeadTimeMinutes(normalizedSettings),
+  });
 };
 
 export const getMinimumDeliveryDate = (deliverySettings, now = new Date()) => {
@@ -374,3 +203,6 @@ export const getPauseUntilFromDuration = (
 
   return pauseUntil.toISOString();
 };
+
+export { haversineDistance, isWithinDeliveryRadius };
+export { getDeliveryDayKey };

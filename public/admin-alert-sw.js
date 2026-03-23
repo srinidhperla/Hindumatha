@@ -29,21 +29,42 @@ self.addEventListener("push", (event) => {
     }
   }
 
+  const broadcastToClients = self.clients
+    .matchAll({ type: "window", includeUncontrolled: true })
+    .then((clientList) =>
+      Promise.all(
+        clientList.map((client) =>
+          client.postMessage({
+            type: "PLAY_ORDER_SOUND",
+            payload: {
+              title: payload.title,
+              body: payload.body,
+              url: payload.url || "/admin/orders",
+              tag: payload.tag || "bakery-order-alert",
+            },
+          }),
+        ),
+      ),
+    );
+
   event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: payload.body,
-      icon: payload.icon || "/favicon.ico",
-      badge: payload.badge || "/favicon.ico",
-      tag: payload.tag,
-      renotify: true,
-      requireInteraction: payload.requireInteraction,
-      vibrate: Array.isArray(payload.vibrate)
-        ? payload.vibrate
-        : [200, 120, 220, 120, 260],
-      data: {
-        url: payload.url || "/admin/orders",
-      },
-    }),
+    Promise.all([
+      self.registration.showNotification(payload.title, {
+        body: payload.body,
+        icon: payload.icon || "/favicon.ico",
+        badge: payload.badge || "/favicon.ico",
+        tag: payload.tag,
+        renotify: true,
+        requireInteraction: payload.requireInteraction,
+        vibrate: Array.isArray(payload.vibrate)
+          ? payload.vibrate
+          : [200, 120, 220, 120, 260],
+        data: {
+          url: payload.url || "/admin/orders",
+        },
+      }),
+      broadcastToClients,
+    ]),
   );
 });
 
@@ -52,7 +73,7 @@ self.addEventListener("notificationclick", (event) => {
   const targetUrl = event.notification.data?.url || "/admin/orders";
 
   event.waitUntil(
-    clients
+    self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
@@ -73,8 +94,8 @@ self.addEventListener("notificationclick", (event) => {
           }
         }
 
-        if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
         }
 
         return undefined;

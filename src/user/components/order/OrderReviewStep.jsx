@@ -10,7 +10,7 @@ const getSafeUnitPrice = (item) =>
         : 0),
   );
 
-const OrderReviewStep = ({ checkoutItems, invalidItems }) => (
+const OrderReviewStep = ({ checkoutItems }) => (
   <div className="commerce-section-body">
     <div className="commerce-section-header">
       <div>

@@ -8,7 +8,7 @@ import {
   fetchSingleOrder,
   putOrderStatus,
   putCancelOrder,
-} from "../../services/orderAPI";
+} from "@/services/orderAPI";
 
 // Async thunks
 export const createOrder = createAsyncThunk(

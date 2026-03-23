@@ -1,12 +1,12 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { addToCart } from "../../../features/cart/cartSlice";
+import { addToCart } from "@/features/cart/cartSlice";
 import {
   addProductReview,
   fetchProductById,
-} from "../../../features/products/productSlice";
-import { showToast } from "../../../features/uiSlice";
+} from "@/features/products/productSlice";
+import { showToast } from "@/features/uiSlice";
 import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
@@ -16,7 +16,11 @@ import {
   isEggTypeAvailable,
   isProductPurchasable,
   normalizeFlavorOptions,
-} from "../../../utils/productOptions";
+} from "@/utils/productOptions";
+import ProductDetailsHero from "./ProductDetailsHero";
+import ProductImageLightbox from "./ProductImageLightbox";
+import ProductRelatedSection from "./ProductRelatedSection";
+import ProductReviewsSection from "./ProductReviewsSection";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -256,378 +260,47 @@ const ProductDetails = () => {
           <span>{normalizedProduct.name}</span>
         </div>
 
-        <section className="product-hero-card">
-          <div className="product-media-panel">
-            <img
-              src={selectedImage || galleryImages[0]}
-              alt={normalizedProduct.name}
-              className="product-hero-image"
-              onClick={() => setIsImageViewerOpen(true)}
-            />
-            {galleryImages.length > 1 && (
-              <div className="product-thumbnail-grid">
-                {galleryImages.map((image, index) => (
-                  <button
-                    key={`${image}-${index}`}
-                    type="button"
-                    onClick={() => setSelectedImage(image)}
-                    className={`product-thumbnail-button ${
-                      (selectedImage || galleryImages[0]) === image
-                        ? "product-thumbnail-button--active"
-                        : ""
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`${normalizedProduct.name} ${index + 1}`}
-                      className="product-thumbnail-image"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <ProductDetailsHero
+          normalizedProduct={normalizedProduct}
+          galleryImages={galleryImages}
+          selectedImage={selectedImage}
+          setSelectedImage={setSelectedImage}
+          setIsImageViewerOpen={setIsImageViewerOpen}
+          selectedFlavor={selectedFlavor}
+          setSelectedFlavor={setSelectedFlavor}
+          filteredWeights={filteredWeights}
+          selectedWeight={selectedWeight}
+          setSelectedWeight={setSelectedWeight}
+          selectedEggType={selectedEggType}
+          setSelectedEggType={setSelectedEggType}
+          quantity={quantity}
+          setQuantity={setQuantity}
+          unitPrice={unitPrice}
+          handleAddToCart={handleAddToCart}
+        />
 
-          <div className="product-content-panel">
-            <div className="product-header-stack">
-              <div className="product-badges-row">
-                <span className="product-category-pill">
-                  {normalizedProduct.categoryLabel}
-                </span>
-                {normalizedProduct.isEgg !== false &&
-                  isEggTypeAvailable(normalizedProduct, "egg") && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 ring-1 ring-red-200">
-                      <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
-                      Egg
-                    </span>
-                  )}
-                {normalizedProduct.isEggless === true &&
-                  isEggTypeAvailable(normalizedProduct, "eggless") && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-600 ring-1 ring-green-200">
-                      <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-                      Eggless
-                    </span>
-                  )}
-                {!normalizedProduct.canOrder && (
-                  <span className="product-stock-pill">Out of Stock</span>
-                )}
-              </div>
-              <h1 className="product-title">{normalizedProduct.name}</h1>
-              <p className="product-description">
-                {normalizedProduct.description}
-              </p>
-            </div>
+        <ProductRelatedSection
+          relatedProducts={relatedProducts}
+          categoryLabel={normalizedProduct.categoryLabel}
+        />
 
-            <div className="product-price-card">
-              <p className="product-price-label">Selected price</p>
-              <p className="product-price-value">
-                Rs.{unitPrice.toLocaleString("en-IN")}
-              </p>
-              <p className="product-price-note">
-                Base price starts at Rs.
-                {Number(normalizedProduct.price || 0).toLocaleString("en-IN")}
-              </p>
-            </div>
-
-            <div className="product-option-grid">
-              {normalizedProduct.hasExplicitFlavors && (
-                <label className="block">
-                  <span className="product-field-label">Flavor</span>
-                  <select
-                    value={selectedFlavor}
-                    onChange={(event) => setSelectedFlavor(event.target.value)}
-                    className="product-select"
-                  >
-                    {normalizedProduct.availableFlavors.map((flavor) => (
-                      <option key={flavor.name} value={flavor.name}>
-                        {flavor.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-
-              <label className="block">
-                <span className="product-field-label">
-                  {normalizedProduct.portionTypeMeta.heading}
-                </span>
-                <select
-                  value={selectedWeight}
-                  onChange={(event) => setSelectedWeight(event.target.value)}
-                  className="product-select"
-                >
-                  {filteredWeights.map((weight) => (
-                    <option key={weight.label} value={weight.label}>
-                      {weight.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            {/* Cake type selector — always show available types */}
-            {(() => {
-              const eggOn =
-                normalizedProduct.isEgg !== false &&
-                isEggTypeAvailable(normalizedProduct, "egg");
-              const egglessOn =
-                normalizedProduct.isEggless === true &&
-                isEggTypeAvailable(normalizedProduct, "eggless");
-              if (!eggOn && !egglessOn) return null;
-              return (
-                <div className="mt-4">
-                  <span className="product-field-label">Cake Type</span>
-                  <div className="mt-2 flex gap-3">
-                    {eggOn && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedEggType("egg")}
-                        className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                          selectedEggType === "egg"
-                            ? "border-red-400 bg-red-50 text-red-700 ring-1 ring-red-300"
-                            : "border-primary-200 bg-cream-50 text-primary-600 hover:bg-cream-100"
-                        }`}
-                      >
-                        <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-red-500" />
-                        Egg
-                      </button>
-                    )}
-                    {egglessOn && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedEggType("eggless")}
-                        className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                          selectedEggType === "eggless"
-                            ? "border-green-400 bg-green-50 text-green-700 ring-1 ring-green-300"
-                            : "border-primary-200 bg-cream-50 text-primary-600 hover:bg-cream-100"
-                        }`}
-                      >
-                        <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-green-500" />
-                        Eggless
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-
-            <div className="product-quantity-row">
-              <span className="product-field-label">Quantity</span>
-              <div className="product-quantity-box">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setQuantity((current) => Math.max(1, current - 1))
-                  }
-                  className="product-quantity-button"
-                >
-                  -
-                </button>
-                <span className="product-quantity-value">{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity((current) => current + 1)}
-                  className="product-quantity-button"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div className="product-actions-row">
-              <button
-                type="button"
-                onClick={() => handleAddToCart(false)}
-                disabled={!normalizedProduct.canOrder}
-                className="product-button product-button--secondary"
-              >
-                Add to Cart
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAddToCart(true)}
-                disabled={!normalizedProduct.canOrder}
-                className="product-button product-button--primary"
-              >
-                Buy Now
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {relatedProducts.length > 0 && (
-          <section className="product-related-section">
-            <div className="product-related-header">
-              <h2 className="product-related-title">
-                More in {normalizedProduct.categoryLabel}
-              </h2>
-              <Link to="/menu" className="product-related-link">
-                Back to menu
-              </Link>
-            </div>
-            <div className="product-related-grid">
-              {relatedProducts.map((relatedProduct) => (
-                <Link
-                  key={relatedProduct._id}
-                  to={`/products/${relatedProduct._id}`}
-                  className="product-related-card"
-                >
-                  <img
-                    src={relatedProduct.image}
-                    alt={relatedProduct.name}
-                    className="product-related-image"
-                  />
-                  <div className="product-related-body">
-                    <h3 className="product-related-name">
-                      {relatedProduct.name}
-                    </h3>
-                    <p className="product-related-price">
-                      Rs.
-                      {Number(relatedProduct.price || 0).toLocaleString(
-                        "en-IN",
-                      )}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section className="product-related-section">
-          <div className="product-related-header">
-            <h2 className="product-related-title">Ratings and Reviews</h2>
-            <div className="rounded-full bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700">
-              {averageRating} / 5 | {(normalizedProduct.reviews || []).length}{" "}
-              reviews
-            </div>
-          </div>
-
-          {isAuthenticated ? (
-            hasReviewed ? (
-              <div className="mb-6 rounded-2xl border border-sage-200 bg-sage-50 px-4 py-3 text-sm text-sage-700">
-                You have already reviewed this product.
-              </div>
-            ) : (
-              <form
-                onSubmit={handleReviewSubmit}
-                className="mb-8 grid gap-4 rounded-2xl border border-cream-100 bg-cream-50 p-4"
-              >
-                <div className="grid gap-4 sm:grid-cols-[160px_minmax(0,1fr)]">
-                  <label>
-                    <span className="product-field-label">Rating</span>
-                    <select
-                      value={reviewForm.rating}
-                      onChange={(event) =>
-                        setReviewForm((current) => ({
-                          ...current,
-                          rating: event.target.value,
-                        }))
-                      }
-                      className="product-select"
-                    >
-                      {[5, 4, 3, 2, 1].map((ratingValue) => (
-                        <option key={ratingValue} value={ratingValue}>
-                          {ratingValue} Star{ratingValue === 1 ? "" : "s"}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    <span className="product-field-label">Comment</span>
-                    <textarea
-                      rows={3}
-                      value={reviewForm.comment}
-                      onChange={(event) =>
-                        setReviewForm((current) => ({
-                          ...current,
-                          comment: event.target.value,
-                        }))
-                      }
-                      className="product-select"
-                      placeholder="Tell other customers what you liked"
-                    />
-                  </label>
-                </div>
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="product-button product-button--primary"
-                  >
-                    Submit Review
-                  </button>
-                </div>
-              </form>
-            )
-          ) : (
-            <div className="mb-6 rounded-2xl border border-cream-200 bg-cream-50 px-4 py-3 text-sm text-primary-600">
-              <Link to="/login" className="font-semibold text-primary-600">
-                Login
-              </Link>{" "}
-              to add a review.
-            </div>
-          )}
-
-          <div className="space-y-4">
-            {(normalizedProduct.reviews || []).length > 0 ? (
-              normalizedProduct.reviews.map((review, index) => (
-                <div
-                  key={`${review.user?._id || index}-${review.date || index}`}
-                  className="rounded-2xl border border-cream-100 bg-cream-50 p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-primary-800">
-                        {review.user?.name || "Customer"}
-                      </p>
-                      <p className="text-sm text-primary-500">
-                        {new Date(review.date || Date.now()).toLocaleDateString(
-                          "en-IN",
-                        )}
-                      </p>
-                    </div>
-                    <div className="rounded-full bg-primary-100 px-3 py-1 text-sm font-semibold text-primary-700">
-                      {review.rating}/5
-                    </div>
-                  </div>
-                  {review.comment ? (
-                    <p className="mt-3 text-sm leading-6 text-primary-600">
-                      {review.comment}
-                    </p>
-                  ) : null}
-                </div>
-              ))
-            ) : (
-              <div className="rounded-2xl border border-cream-100 bg-cream-50 px-4 py-8 text-center text-sm text-primary-500">
-                No reviews yet. Be the first to rate this product.
-              </div>
-            )}
-          </div>
-        </section>
+        <ProductReviewsSection
+          isAuthenticated={isAuthenticated}
+          hasReviewed={hasReviewed}
+          averageRating={averageRating}
+          reviews={normalizedProduct.reviews || []}
+          reviewForm={reviewForm}
+          setReviewForm={setReviewForm}
+          handleReviewSubmit={handleReviewSubmit}
+        />
       </div>
 
-      {isImageViewerOpen && (
-        <div
-          className="product-lightbox"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setIsImageViewerOpen(false)}
-        >
-          <button
-            type="button"
-            className="product-lightbox-close"
-            onClick={() => setIsImageViewerOpen(false)}
-          >
-            Close
-          </button>
-          <img
-            src={selectedImage || galleryImages[0]}
-            alt={normalizedProduct.name}
-            className="product-lightbox-image"
-            onClick={(event) => event.stopPropagation()}
-          />
-        </div>
-      )}
+      <ProductImageLightbox
+        isOpen={isImageViewerOpen}
+        image={selectedImage || galleryImages[0]}
+        alt={normalizedProduct.name}
+        onClose={() => setIsImageViewerOpen(false)}
+      />
     </div>
   );
 };
