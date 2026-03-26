@@ -68,6 +68,8 @@ const BAKERY_MAP_STYLES = [
   },
 ];
 
+let autocompleteSessionToken = null;
+
 const parseJsonSafely = async (response) => {
   try {
     return await response.json();
@@ -152,6 +154,82 @@ export const toCoordinate = (value, min, max) => {
 
 export const hasValidCoordinates = (lat, lng) =>
   toCoordinate(lat, -90, 90) !== null && toCoordinate(lng, -180, 180) !== null;
+
+const getGoogleMapsScriptSrc = () =>
+  `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
+    GOOGLE_MAPS_API_KEY,
+  )}&libraries=places&v=weekly&loading=async`;
+
+const hasInvalidGoogleMapsScript = (scriptTag) =>
+  String(scriptTag?.src || "").includes("%VITE_GOOGLE_MAPS_API_KEY%");
+
+const getLocationBiasBounds = (near, radiusMeters = 15000) => {
+  const latitude = Number(near?.lat);
+  const longitude = Number(near?.lng);
+
+  if (!hasValidCoordinates(latitude, longitude)) {
+    return undefined;
+  }
+
+  const latDelta = radiusMeters / 111320;
+  const lngDelta =
+    radiusMeters /
+    Math.max(
+      111320 * Math.abs(Math.cos((latitude * Math.PI) / 180)),
+      1e-6,
+    );
+
+  return {
+    south: latitude - latDelta,
+    west: longitude - lngDelta,
+    north: latitude + latDelta,
+    east: longitude + lngDelta,
+  };
+};
+
+const loadGoogleLibrary = async (libraryName) => {
+  await waitForGoogleMapsSdk();
+  const maps = getGoogleMaps();
+
+  if (typeof maps?.importLibrary === "function") {
+    return maps.importLibrary(libraryName);
+  }
+
+  return libraryName === "places" ? maps?.places || {} : {};
+};
+
+const getAutocompleteSessionToken = async () => {
+  const { AutocompleteSessionToken } = await loadGoogleLibrary("places");
+
+  if (!AutocompleteSessionToken) {
+    return null;
+  }
+
+  if (!autocompleteSessionToken) {
+    autocompleteSessionToken = new AutocompleteSessionToken();
+  }
+
+  return autocompleteSessionToken;
+};
+
+const normalizeNewAddressComponents = (components = []) =>
+  components.map((component) => ({
+    long_name:
+      component?.longText ||
+      component?.long_name ||
+      component?.componentName ||
+      "",
+    short_name: component?.shortText || component?.short_name || "",
+    types: Array.isArray(component?.types)
+      ? component.types
+      : component?.componentType
+        ? [component.componentType]
+        : [],
+  }));
+
+export const resetAutocompleteSession = () => {
+  autocompleteSessionToken = null;
+};
 
 const getGoogleMaps = () => window.google?.maps;
 
@@ -274,11 +352,14 @@ export const waitForGoogleMapsSdk = ({
     let intervalId;
     let scriptTag = document.querySelector(GOOGLE_SCRIPT_SELECTOR);
 
+    if (scriptTag && hasInvalidGoogleMapsScript(scriptTag)) {
+      scriptTag.parentNode?.removeChild?.(scriptTag);
+      scriptTag = null;
+    }
+
     if (!scriptTag) {
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
-        GOOGLE_MAPS_API_KEY,
-      )}&libraries=places&v=weekly`;
+      script.src = getGoogleMapsScriptSrc();
       script.async = true;
       script.defer = true;
       scriptTag = script;
@@ -365,42 +446,84 @@ export const searchAddressSuggestions = async (query, options = {}) => {
   let predictions = [];
 
   try {
-    await waitForGoogleMapsSdk();
-    const maps = getGoogleMaps();
+    const { AutocompleteSuggestion } = await loadGoogleLibrary("places");
 
-    predictions = await new Promise((resolve, reject) => {
-      const service = new maps.places.AutocompleteService();
+    if (AutocompleteSuggestion?.fetchAutocompleteSuggestions) {
       const request = {
         input: trimmed,
-        componentRestrictions: { country: "in" },
+        includedRegionCodes: ["in"],
       };
+      const sessionToken = await getAutocompleteSessionToken();
+      const locationBias = getLocationBiasBounds(options?.near);
 
-      if (hasValidCoordinates(options?.near?.lat, options?.near?.lng)) {
-        request.locationBias = {
-          center: {
-            lat: Number(options.near.lat),
-            lng: Number(options.near.lng),
-          },
-          radius: 15000,
-        };
+      if (sessionToken) {
+        request.sessionToken = sessionToken;
       }
 
-      service.getPlacePredictions(request, (results, status) => {
-        if (status === "OK") {
-          resolve(Array.isArray(results) ? results : []);
-          return;
-        }
+      if (locationBias) {
+        request.locationBias = locationBias;
+      }
 
-        if (status === "ZERO_RESULTS") {
-          resolve([]);
-          return;
-        }
+      const response =
+        await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+      const suggestions = Array.isArray(response?.suggestions)
+        ? response.suggestions
+        : [];
 
-        reject(new Error(`Places autocomplete failed: ${status}`));
+      predictions = suggestions.map((suggestion) => {
+        const placePrediction = suggestion?.placePrediction;
+        const description = String(
+          placePrediction?.text?.text || placePrediction?.text || "",
+        ).trim();
+
+        return {
+          place_id: String(
+            placePrediction?.placeId || placePrediction?.id || description,
+          ).trim(),
+          description: description || trimmed,
+          _raw: suggestion,
+          _placePrediction: placePrediction || null,
+        };
       });
-    });
+    }
   } catch {
     predictions = [];
+  }
+
+  if (!predictions.length) {
+    try {
+      await waitForGoogleMapsSdk();
+      const maps = getGoogleMaps();
+
+      predictions = await new Promise((resolve, reject) => {
+        const service = new maps.places.AutocompleteService();
+        const request = {
+          input: trimmed,
+          componentRestrictions: { country: "in" },
+        };
+        const locationBias = getLocationBiasBounds(options?.near);
+
+        if (locationBias) {
+          request.locationBias = locationBias;
+        }
+
+        service.getPlacePredictions(request, (results, status) => {
+          if (status === "OK") {
+            resolve(Array.isArray(results) ? results : []);
+            return;
+          }
+
+          if (status === "ZERO_RESULTS") {
+            resolve([]);
+            return;
+          }
+
+          reject(new Error(`Places autocomplete failed: ${status}`));
+        });
+      });
+    } catch {
+      predictions = [];
+    }
   }
 
   if (!predictions.length) {
@@ -426,6 +549,7 @@ export const searchAddressSuggestions = async (query, options = {}) => {
       place_id: String(prediction.place_id || prediction.description),
       description: prediction.description || trimmed,
       _raw: prediction,
+      _placePrediction: prediction._placePrediction || null,
     }));
   }
 
@@ -446,6 +570,42 @@ export const toAddressFromSuggestion = async (prediction) => {
     prediction?.place_id || prediction?._raw?.place_id || "",
   ).trim();
   const description = String(prediction?.description || "").trim();
+  const placePrediction = prediction?._placePrediction;
+
+  if (typeof placePrediction?.toPlace === "function") {
+    try {
+      const place = placePrediction.toPlace();
+      await place.fetchFields({
+        fields: [
+          "displayName",
+          "formattedAddress",
+          "location",
+          "addressComponents",
+          "id",
+        ],
+      });
+
+      return toGoogleAddress(
+        {
+          address_components: normalizeNewAddressComponents(
+            Array.isArray(place?.addressComponents)
+              ? place.addressComponents
+              : [],
+          ),
+          geometry: {
+            location: place?.location || null,
+          },
+          formatted_address: place?.formattedAddress || description,
+          place_id: String(place?.id || placeId || "").trim(),
+        },
+        description,
+      );
+    } catch {
+      // Fall back to place ID or address geocoding below.
+    } finally {
+      resetAutocompleteSession();
+    }
+  }
 
   if (placeId) {
     const placeResults = await geocodeRequest({ placeId }).catch(async () =>
@@ -459,6 +619,7 @@ export const toAddressFromSuggestion = async (prediction) => {
     );
 
     if (resolvedByPlace) {
+      resetAutocompleteSession();
       return toGoogleAddress(resolvedByPlace, description);
     }
   }
@@ -476,10 +637,12 @@ export const toAddressFromSuggestion = async (prediction) => {
     );
 
     if (resolvedByAddress) {
+      resetAutocompleteSession();
       return toGoogleAddress(resolvedByAddress, description);
     }
   }
 
+  resetAutocompleteSession();
   return {
     label: "",
     street: description,
@@ -532,6 +695,56 @@ export const calculateDistanceMatrix = async ({ origin, destination }) => {
   try {
     await waitForGoogleMapsSdk();
     const maps = getGoogleMaps();
+
+    if (typeof maps?.importLibrary === "function") {
+      try {
+        const { RouteMatrix } = await maps.importLibrary("routes");
+
+        if (RouteMatrix?.computeRouteMatrix) {
+          const { matrix } = await RouteMatrix.computeRouteMatrix({
+            origins: [
+              {
+                location: {
+                  lat: originLat,
+                  lng: originLng,
+                },
+                displayName: "Store",
+              },
+            ],
+            destinations: [
+              {
+                location: {
+                  lat: destinationLat,
+                  lng: destinationLng,
+                },
+                displayName: "Delivery address",
+              },
+            ],
+            travelMode: "DRIVING",
+            units: maps.UnitSystem.METRIC,
+            fields: ["distanceMeters", "durationMillis", "condition"],
+          });
+
+          const item = matrix?.rows?.[0]?.items?.[0];
+          const distanceMeters = Number(item?.distanceMeters);
+          const durationMillis = Number(item?.durationMillis);
+
+          if (
+            item?.condition === "ROUTE_EXISTS" &&
+            Number.isFinite(distanceMeters)
+          ) {
+            return {
+              distanceKm: distanceMeters / 1000,
+              durationSeconds: Number.isFinite(durationMillis)
+                ? durationMillis / 1000
+                : null,
+            };
+          }
+        }
+      } catch {
+        // Fall back to DistanceMatrixService below if Routes isn't enabled yet.
+      }
+    }
 
     const response = await new Promise((resolve, reject) => {
       const service = new maps.DistanceMatrixService();

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
-import { getCachedMatches, loadAddressSuggestions } from "@/user/hooks/useAddressPicker.utils";
+import {
+  getCachedMatches,
+  loadAddressSuggestions,
+} from "@/user/hooks/useAddressPicker.utils";
+import { resetAutocompleteSession } from "@/user/components/order/orderHelpers";
 
 const useAddressPickerActions = ({
   formDataCity,
@@ -35,6 +39,7 @@ const useAddressPickerActions = ({
 
       if (trimmed.length < 2) {
         requestIdRef.current += 1;
+        resetAutocompleteSession();
         setAddressPredictions([]);
         setAddressLookupError("");
         return;
@@ -102,6 +107,7 @@ const useAddressPickerActions = ({
         const lng = position.coords.longitude;
         try {
           const resolved = await resolveAddressFromCoordinates(lat, lng);
+          resetAutocompleteSession();
           applyResolvedAddress(resolved, lat, lng);
         } catch {
           setAddressLookupError("Unable to detect your address.");
@@ -130,6 +136,7 @@ const useAddressPickerActions = ({
 
       try {
         const resolved = await resolveAddressFromCoordinates(nextLat, nextLng);
+        resetAutocompleteSession();
         applyResolvedAddress(resolved, nextLat, nextLng);
       } catch {
         setAddressMeta((prev) => ({

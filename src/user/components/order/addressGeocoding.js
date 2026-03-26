@@ -12,6 +12,7 @@ export {
   hasValidCoordinates,
   isGoogleMapsSdkReady,
   removeGoogleInstance,
+  resetAutocompleteSession,
   reverseGeocodeCoordinates,
   searchAddressSuggestions,
   setGoogleMarkerCoordinates,
