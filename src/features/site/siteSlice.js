@@ -8,6 +8,7 @@ import {
   fetchPaymentStatus,
   fetchSiteContent,
   sendTestAlertEmail,
+  updateSiteCategoryOrder,
   updateSiteSettings,
 } from "./siteThunks";
 
@@ -43,6 +44,7 @@ const siteSlice = createSlice({
         );
         state.socialLinks = action.payload.socialLinks || state.socialLinks;
         state.coupons = action.payload.coupons || state.coupons;
+        state.categoryOrder = action.payload.categoryOrder || state.categoryOrder;
         state.galleryItems = action.payload.galleryItems || state.galleryItems;
       })
       .addCase(fetchAlertStatus.fulfilled, (state, action) => {
@@ -76,6 +78,7 @@ const siteSlice = createSlice({
         );
         state.socialLinks = action.payload.socialLinks || state.socialLinks;
         state.coupons = action.payload.coupons || state.coupons;
+        state.categoryOrder = action.payload.categoryOrder || state.categoryOrder;
       })
       .addCase(updateSiteSettings.rejected, (state, action) => {
         state.saving = false;
@@ -92,6 +95,10 @@ const siteSlice = createSlice({
         state.saving = false;
         state.error =
           action.payload?.message || "Failed to send test alert email";
+      })
+      .addCase(updateSiteCategoryOrder.fulfilled, (state, action) => {
+        state.categoryOrder =
+          action.payload?.categoryOrder || state.categoryOrder;
       })
       .addCase(addGalleryItem.pending, (state) => {
         state.saving = true;
@@ -131,6 +138,7 @@ export {
   fetchPaymentStatus,
   fetchSiteContent,
   sendTestAlertEmail,
+  updateSiteCategoryOrder,
   updateSiteSettings,
 };
 export default siteSlice.reducer;

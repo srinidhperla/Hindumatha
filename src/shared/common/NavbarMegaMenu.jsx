@@ -28,7 +28,7 @@ const NavbarMegaMenu = ({
         <div className="grid grid-cols-5 gap-3">
           {megaCards.map((card) => (
             <Link
-              to={`/products/${card.id}`}
+              to={`/menu?product=${card.id}`}
               key={card.id}
               className="overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white"
             >

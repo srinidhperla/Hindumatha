@@ -1,12 +1,26 @@
 import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   EmptyState,
   LoadingState,
   MetricCard,
 } from "@/admin/components/ui/AdminUi";
-import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
-import { DEFAULT_PRODUCT_CATEGORIES } from "./adminShared";
+import { ActionButton, StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
+import { DEFAULT_PRODUCT_CATEGORIES, getErrorMessage } from "./adminShared";
 import useAdminInventoryToggles from "@/admin/hooks/useAdminInventoryToggles";
 import AdminInventoryProductCard from "./AdminInventoryProductCard";
 import {
@@ -18,12 +32,94 @@ import {
   normalizeFlavorOptions,
   normalizeWeightOptions,
 } from "@/utils/productOptions";
+import { updateProductDisplayOrder } from "@/features/products/productSlice";
+import { updateSiteCategoryOrder } from "@/features/site/siteThunks";
+
+const CategoryCard = ({
+  category,
+  count,
+  children,
+  sortable = false,
+  saving = false,
+}) => {
+  const sortableApi = useSortable({ id: category, disabled: !sortable });
+  const style = sortable
+    ? {
+        transform: CSS.Transform.toString(sortableApi.transform),
+        transition: sortableApi.transition,
+        opacity: sortableApi.isDragging ? 0.65 : 1,
+      }
+    : undefined;
+
+  return (
+    <div ref={sortable ? sortableApi.setNodeRef : undefined} style={style}>
+      <SurfaceCard className="overflow-hidden">
+        <div className="border-b border-gold-200/50 bg-white/70 px-4 py-3 sm:px-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              {sortable ? (
+                <button
+                  type="button"
+                  {...sortableApi.attributes}
+                  {...sortableApi.listeners}
+                  className="cursor-grab text-xl font-bold leading-none text-primary-500 active:cursor-grabbing"
+                  title="Drag category"
+                >
+                  {"\u2261"}
+                </button>
+              ) : (
+                <span className="text-xl font-bold leading-none text-primary-300">
+                  {"\u2261"}
+                </span>
+              )}
+              <div>
+                <p className="text-base font-semibold text-primary-900">
+                  {formatCategoryLabel(category)}
+                </p>
+                <p className="text-xs text-primary-500">
+                  {count} product{count === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {sortable && (
+                <StatusChip tone="info">Category order enabled</StatusChip>
+              )}
+              {saving && <StatusChip tone="accent">Saving...</StatusChip>}
+            </div>
+          </div>
+        </div>
+        <div className="p-3 sm:p-4">{children}</div>
+      </SurfaceCard>
+    </div>
+  );
+};
+
+const sortProducts = (products = []) =>
+  [...products].sort((left, right) => {
+    const leftDisplayOrder = Number(left.displayOrder);
+    const rightDisplayOrder = Number(right.displayOrder);
+
+    if (
+      Number.isFinite(leftDisplayOrder) &&
+      Number.isFinite(rightDisplayOrder) &&
+      leftDisplayOrder !== rightDisplayOrder
+    ) {
+      return leftDisplayOrder - rightDisplayOrder;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
 
 const AdminInventoryPage = ({ onToast }) => {
   const dispatch = useDispatch();
   const { products, loading } = useSelector((state) => state.products);
+  const { categoryOrder = [] } = useSelector((state) => state.site);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [savingCategoryOrder, setSavingCategoryOrder] = useState(false);
+  const [savingProductCategory, setSavingProductCategory] = useState("");
   const {
     savingKey,
     handleProductToggle,
@@ -35,41 +131,87 @@ const AdminInventoryPage = ({ onToast }) => {
     isEggTypeOn,
   } = useAdminInventoryToggles({ dispatch, onToast });
 
-  const availableCategories = useMemo(
-    () =>
-      Array.from(
-        new Set([
-          ...DEFAULT_PRODUCT_CATEGORIES,
-          ...products.map((product) => product.category).filter(Boolean),
-        ]),
-      ),
-    [products],
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
   );
+
+  const availableCategories = useMemo(() => {
+    const ordered = [];
+    const seen = new Set();
+
+    [...categoryOrder, ...DEFAULT_PRODUCT_CATEGORIES].forEach((category) => {
+      const normalized = String(category || "").trim();
+      if (!normalized || seen.has(normalized)) {
+        return;
+      }
+      seen.add(normalized);
+      ordered.push(normalized);
+    });
+
+    products.forEach((product) => {
+      const normalized = String(product.category || "").trim();
+      if (!normalized || seen.has(normalized)) {
+        return;
+      }
+      seen.add(normalized);
+      ordered.push(normalized);
+    });
+
+    return ordered;
+  }, [categoryOrder, products]);
 
   const filteredProducts = useMemo(
     () =>
-      [...products]
-        .filter((product) => {
-          const matchesSearch = product.name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase());
-          const matchesCategory =
-            selectedCategory === "all" || product.category === selectedCategory;
+      products.filter((product) => {
+        const matchesSearch = product.name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+        const matchesCategory =
+          selectedCategory === "all" || product.category === selectedCategory;
 
-          return matchesSearch && matchesCategory;
-        })
-        .sort((left, right) => {
-          const leftLive = isProductPurchasable(left) ? 0 : 1;
-          const rightLive = isProductPurchasable(right) ? 0 : 1;
-
-          if (leftLive !== rightLive) {
-            return leftLive - rightLive;
-          }
-
-          return left.name.localeCompare(right.name);
-        }),
+        return matchesSearch && matchesCategory;
+      }),
     [products, searchTerm, selectedCategory],
   );
+
+  const groupedProducts = useMemo(() => {
+    const groups = new Map();
+
+    availableCategories.forEach((category) => {
+      groups.set(category, []);
+    });
+
+    filteredProducts.forEach((product) => {
+      const list = groups.get(product.category) || [];
+      list.push(product);
+      groups.set(product.category, list);
+    });
+
+    for (const [category, list] of groups.entries()) {
+      groups.set(category, sortProducts(list));
+    }
+
+    return groups;
+  }, [availableCategories, filteredProducts]);
+
+  const visibleCategories = useMemo(
+    () =>
+      availableCategories.filter((category) => {
+        const count = groupedProducts.get(category)?.length || 0;
+        if (selectedCategory !== "all" && category !== selectedCategory) {
+          return false;
+        }
+        return count > 0;
+      }),
+    [availableCategories, groupedProducts, selectedCategory],
+  );
+
+  const categoryReorderEnabled =
+    selectedCategory === "all" &&
+    !searchTerm.trim() &&
+    visibleCategories.length > 1;
 
   const summary = useMemo(() => {
     const liveProducts = products.filter((product) =>
@@ -97,6 +239,117 @@ const AdminInventoryPage = ({ onToast }) => {
       blockedVariants,
     };
   }, [products]);
+
+  const handleCategoryDragEnd = async ({ active, over }) => {
+    if (!over || active.id === over.id || !categoryReorderEnabled) {
+      return;
+    }
+
+    const activeIndex = visibleCategories.indexOf(String(active.id));
+    const overIndex = visibleCategories.indexOf(String(over.id));
+
+    if (activeIndex === -1 || overIndex === -1) {
+      return;
+    }
+
+    const reorderedVisibleCategories = arrayMove(
+      visibleCategories,
+      activeIndex,
+      overIndex,
+    );
+    const hiddenCategories = availableCategories.filter(
+      (category) => !visibleCategories.includes(category),
+    );
+
+    try {
+      setSavingCategoryOrder(true);
+      await dispatch(
+        updateSiteCategoryOrder([
+          ...reorderedVisibleCategories,
+          ...hiddenCategories,
+        ]),
+      ).unwrap();
+      onToast("Category order saved.");
+    } catch (error) {
+      onToast(getErrorMessage(error, "Failed to save category order."), "error");
+    } finally {
+      setSavingCategoryOrder(false);
+    }
+  };
+
+  const handleProductDragEnd = async (category, categoryProducts, event) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const activeIndex = categoryProducts.findIndex((p) => p._id === active.id);
+    const overIndex = categoryProducts.findIndex((p) => p._id === over.id);
+
+    if (activeIndex === -1 || overIndex === -1) {
+      return;
+    }
+
+    const reorderedProducts = arrayMove(categoryProducts, activeIndex, overIndex);
+
+    try {
+      setSavingProductCategory(category);
+      await dispatch(
+        updateProductDisplayOrder({
+          category,
+          productIds: reorderedProducts.map((product) => product._id),
+        }),
+      ).unwrap();
+      onToast(`Saved product order for ${formatCategoryLabel(category)}.`);
+    } catch (error) {
+      onToast(getErrorMessage(error, "Failed to save product order."), "error");
+    } finally {
+      setSavingProductCategory("");
+    }
+  };
+
+  const renderProductCards = (category, categoryProducts) => (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={(event) => handleProductDragEnd(category, categoryProducts, event)}
+    >
+      <SortableContext
+        items={categoryProducts.map((product) => product._id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="space-y-3 sm:space-y-4">
+          {categoryProducts.map((product) => {
+            const flavorOptions = normalizeFlavorOptions(product);
+            const weightOptions = normalizeWeightOptions(product);
+            const portionTypeMeta = getPortionTypeMeta(product.portionType);
+
+            return (
+              <AdminInventoryProductCard
+                key={product._id}
+                product={product}
+                canOrder={isProductPurchasable(product)}
+                flavorOptions={flavorOptions}
+                weightOptions={weightOptions}
+                portionTypeMeta={portionTypeMeta}
+                availableFlavorCount={getAvailableFlavorOptions(product).length}
+                availableWeightCount={getAvailableWeightOptions(product).length}
+                savingKey={savingKey}
+                onProductToggle={handleProductToggle}
+                onEggTypeToggle={handleEggTypeToggle}
+                onTypedFlavorToggle={handleTypedFlavorToggle}
+                onFlavorWeightToggleByType={handleFlavorWeightToggleByType}
+                getTypedAvailability={getTypedAvailability}
+                isTypedFlavorOn={isTypedFlavorOn}
+                isEggTypeOn={isEggTypeOn}
+              />
+            );
+          })}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
 
   if (loading && !products.length) {
     return <LoadingState />;
@@ -134,7 +387,7 @@ const AdminInventoryPage = ({ onToast }) => {
             <ActionButton
               onClick={() => setSelectedCategory("all")}
               variant={selectedCategory === "all" ? "primary" : "soft"}
-              className={`rounded-full text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 ${
+              className={`rounded-full px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm ${
                 selectedCategory === "all" ? "" : "text-slate-700"
               }`}
             >
@@ -145,7 +398,7 @@ const AdminInventoryPage = ({ onToast }) => {
                 key={category}
                 onClick={() => setSelectedCategory(category)}
                 variant={selectedCategory === category ? "primary" : "soft"}
-                className="rounded-full text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2"
+                className="rounded-full px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
               >
                 {formatCategoryLabel(category)}
               </ActionButton>
@@ -159,41 +412,64 @@ const AdminInventoryPage = ({ onToast }) => {
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-200 lg:max-w-xs"
           />
         </div>
+
+        <div className="mt-3 text-xs text-primary-600">
+          {categoryReorderEnabled
+            ? "Drag categories and products to save menu order instantly."
+            : "Category drag is available when All categories is selected and search is cleared."}
+        </div>
       </SurfaceCard>
 
-      {filteredProducts.length ? (
-        <div className="space-y-3 sm:space-y-4">
-          {filteredProducts.map((product) => {
-            const flavorOptions = normalizeFlavorOptions(product);
-            const weightOptions = normalizeWeightOptions(product);
-            const portionTypeMeta = getPortionTypeMeta(product.portionType);
-            const availableFlavorCount =
-              getAvailableFlavorOptions(product).length;
-            const availableWeightCount =
-              getAvailableWeightOptions(product).length;
-            const canOrder = isProductPurchasable(product);
-            return (
-              <AdminInventoryProductCard
-                key={product._id}
-                product={product}
-                canOrder={canOrder}
-                flavorOptions={flavorOptions}
-                weightOptions={weightOptions}
-                portionTypeMeta={portionTypeMeta}
-                availableFlavorCount={availableFlavorCount}
-                availableWeightCount={availableWeightCount}
-                savingKey={savingKey}
-                onProductToggle={handleProductToggle}
-                onEggTypeToggle={handleEggTypeToggle}
-                onTypedFlavorToggle={handleTypedFlavorToggle}
-                onFlavorWeightToggleByType={handleFlavorWeightToggleByType}
-                getTypedAvailability={getTypedAvailability}
-                isTypedFlavorOn={isTypedFlavorOn}
-                isEggTypeOn={isEggTypeOn}
-              />
-            );
-          })}
-        </div>
+      {visibleCategories.length ? (
+        categoryReorderEnabled ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleCategoryDragEnd}
+          >
+            <SortableContext
+              items={visibleCategories}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {visibleCategories.map((category) => {
+                  const categoryProducts = groupedProducts.get(category) || [];
+
+                  return (
+                    <CategoryCard
+                      key={category}
+                      category={category}
+                      count={categoryProducts.length}
+                      sortable
+                      saving={
+                        savingCategoryOrder || savingProductCategory === category
+                      }
+                    >
+                      {renderProductCards(category, categoryProducts)}
+                    </CategoryCard>
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <div className="space-y-4">
+            {visibleCategories.map((category) => {
+              const categoryProducts = groupedProducts.get(category) || [];
+
+              return (
+                <CategoryCard
+                  key={category}
+                  category={category}
+                  count={categoryProducts.length}
+                  saving={savingProductCategory === category}
+                >
+                  {renderProductCards(category, categoryProducts)}
+                </CategoryCard>
+              );
+            })}
+          </div>
+        )
       ) : (
         <SurfaceCard className="p-8">
           <EmptyState message="No products match the current inventory filters." />

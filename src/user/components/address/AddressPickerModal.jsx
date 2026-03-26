@@ -1,10 +1,7 @@
 import React, { useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { showToast } from "@/features/uiSlice";
-import {
-  GEOAPIFY_API_KEY,
-  hasValidCoordinates,
-} from "@/user/components/order/orderHelpers";
+import { hasValidCoordinates } from "@/user/components/order/orderHelpers";
 import useAddressPicker from "@/user/hooks/useAddressPicker";
 import AddressPickerDetailsSection from "./AddressPickerDetailsSection";
 import AddressPickerMapSection from "./AddressPickerMapSection";
@@ -80,10 +77,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
     ? [Number(addressMeta.latitude), Number(addressMeta.longitude)]
     : [initialMapCenter.lat, initialMapCenter.lng];
 
-  const tileUrl = `https://maps.geoapify.com/v1/tile/carto/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(
-    GEOAPIFY_API_KEY,
-  )}`;
-
   const onSaveClick = () => {
     const result = handleSave();
     if (!result.success) {
@@ -126,10 +119,10 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
         <div className="flex-1 overflow-y-auto">
           <AddressPickerSearchSection
             addressQuery={addressQuery}
-            handleAddressQueryChange={handleAddressQueryChange}
             addressPredictions={addressPredictions}
-            handleSelectPrediction={handleSelectPrediction}
             addressLookupError={addressLookupError}
+            handleAddressQueryChange={handleAddressQueryChange}
+            handleSelectPrediction={handleSelectPrediction}
           />
 
           <AddressPickerMapSection
@@ -137,7 +130,6 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             autoDetecting={autoDetecting}
             mapLoadError={mapLoadError}
             mapSdkConfigured={mapSdkConfigured}
-            tileUrl={tileUrl}
             markerPosition={markerPosition}
             hasAddressCoordinates={hasAddressCoordinates}
             handleMapPinChange={handleMapPinChange}

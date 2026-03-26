@@ -26,6 +26,14 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [megaOpenKey, setMegaOpenKey] = useState("");
+  const isDeliveryUser = isAuthenticated && user?.role === "delivery";
+  const dashboardPath =
+    user?.role === "admin"
+      ? "/admin/orders"
+      : user?.role === "delivery"
+        ? "/delivery"
+        : "";
+  const brandPath = isDeliveryUser ? "/delivery" : "/";
 
   const cartCount = cartItems.reduce(
     (sum, item) => sum + Number(item.quantity || 0),
@@ -76,7 +84,8 @@ const Navbar = () => {
         <div className="mx-auto max-w-7xl px-3 py-2 sm:px-6 lg:px-8">
           <div className="relative flex h-14 items-center justify-between rounded-2xl border border-[rgba(201,168,76,0.28)] bg-[linear-gradient(160deg,rgba(255,255,255,.86),rgba(255,246,228,.72))] px-3 shadow-[0_10px_24px_rgba(18,12,2,0.16)] backdrop-blur-xl lg:h-[72px] lg:px-6">
             <nav className="hidden items-center gap-1 lg:flex">
-              {navLinks.map((link) => (
+              {!isDeliveryUser &&
+                navLinks.map((link) => (
                 <div
                   key={link.label}
                   className="relative"
@@ -97,11 +106,11 @@ const Navbar = () => {
                     />
                   </Link>
                 </div>
-              ))}
+                ))}
             </nav>
 
             <Link
-              to="/"
+              to={brandPath}
               className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2"
             >
               <span className="font-playfair text-lg font-bold text-[#2a1f0e] sm:text-xl lg:text-2xl">
@@ -110,39 +119,43 @@ const Navbar = () => {
             </Link>
 
             <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen((value) => !value)}
-                className="hidden h-9 w-9 items-center justify-center rounded-full border border-[rgba(201,168,76,0.35)] bg-white text-[#8b6914] transition lg:inline-flex"
-                aria-label="Toggle search"
-              >
-                <FiSearch className="h-4 w-4" />
-              </button>
+              {!isDeliveryUser && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsSearchOpen((value) => !value)}
+                    className="hidden h-9 w-9 items-center justify-center rounded-full border border-[rgba(201,168,76,0.35)] bg-white text-[#8b6914] transition lg:inline-flex"
+                    aria-label="Toggle search"
+                  >
+                    <FiSearch className="h-4 w-4" />
+                  </button>
 
-              <div
-                className={`hidden overflow-hidden rounded-full border transition-all duration-300 lg:flex ${
-                  isSearchOpen ? "w-52 px-3" : "w-0 px-0 border-transparent"
-                } border-[rgba(201,168,76,0.35)] bg-white`}
-              >
-                <input
-                  type="text"
-                  placeholder="Search cakes"
-                  className="w-full bg-transparent py-2 text-xs text-[#2a1f0e] outline-none"
-                />
-              </div>
+                  <div
+                    className={`hidden overflow-hidden rounded-full border transition-all duration-300 lg:flex ${
+                      isSearchOpen ? "w-52 px-3" : "w-0 px-0 border-transparent"
+                    } border-[rgba(201,168,76,0.35)] bg-white`}
+                  >
+                    <input
+                      type="text"
+                      placeholder="Search cakes"
+                      className="w-full bg-transparent py-2 text-xs text-[#2a1f0e] outline-none"
+                    />
+                  </div>
 
-              <Link
-                to="/cart"
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(201,168,76,0.35)] bg-white text-[#8b6914] transition"
-                aria-label="Open cart"
-              >
-                <FiShoppingBag className="h-4 w-4" />
-                {cartCount > 0 && (
-                  <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-[#c9a84c] px-1 text-[9px] font-bold text-[#120c02]">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
+                  <Link
+                    to="/cart"
+                    className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(201,168,76,0.35)] bg-white text-[#8b6914] transition"
+                    aria-label="Open cart"
+                  >
+                    <FiShoppingBag className="h-4 w-4" />
+                    {cartCount > 0 && (
+                      <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-[#c9a84c] px-1 text-[9px] font-bold text-[#120c02]">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+                </>
+              )}
 
               {isAuthenticated ? (
                 <>
@@ -153,9 +166,9 @@ const Navbar = () => {
                     <FiUser className="mr-1.5 h-4 w-4" />
                     Profile
                   </Link>
-                  {user?.role === "admin" && (
+                  {dashboardPath && (
                     <Link
-                      to="/admin/orders"
+                      to={dashboardPath}
                       className="hidden rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white lg:inline-flex"
                     >
                       <FiGrid className="mr-1.5 h-4 w-4" />
@@ -217,6 +230,8 @@ const Navbar = () => {
           cartCount={cartCount}
           isAuthenticated={isAuthenticated}
           user={user}
+          isDeliveryUser={isDeliveryUser}
+          dashboardPath={dashboardPath}
           onLogout={onLogout}
           closeMenu={() => setIsMobileMenuOpen(false)}
         />

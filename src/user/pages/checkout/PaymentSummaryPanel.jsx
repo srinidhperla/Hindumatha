@@ -48,8 +48,8 @@ const PaymentSummaryPanel = ({ pricing, freeDeliveryProgress }) => (
       </div>
     </div>
     <div className="commerce-note">
-      Use Razorpay test keys first. After that, switch to live keys in the
-      backend environment.
+      Secure Razorpay checkout will open in the next step for UPI and card
+      payments.
     </div>
   </aside>
 );

@@ -105,8 +105,8 @@ const ProductBasicsSection = ({
                       <input
                         type="text"
                         value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="flex-1 min-w-0 rounded-lg border border-gold-200/70 bg-white px-2 py-1 text-xs text-primary-800 focus:border-gold-400 focus:outline-none"
+                        onChange={(event) => setEditValue(event.target.value)}
+                        className="min-w-0 flex-1 rounded-lg border border-gold-200/70 bg-white px-2 py-1 text-xs text-primary-800 focus:border-gold-400 focus:outline-none"
                       />
                       <button
                         type="button"
@@ -141,14 +141,14 @@ const ProductBasicsSection = ({
                         }}
                         className="text-xs text-primary-600 hover:text-primary-800"
                       >
-                        ✏️
+                        Rename
                       </button>
                       <button
                         type="button"
                         onClick={() => onDeleteCategory(cat)}
                         className="text-xs text-red-400 hover:text-red-600"
                       >
-                        🗑️
+                        Delete
                       </button>
                     </>
                   )}
@@ -162,24 +162,23 @@ const ProductBasicsSection = ({
       {useCustomCategory && (
         <label className="mt-4 block">
           <span className="text-sm font-medium text-primary-700">
-            New Category Name
+            New Category
           </span>
           <input
             type="text"
             value={customCategory}
             onChange={(event) => onCustomCategoryChange(event.target.value)}
             required
-            placeholder="For example: photo-cakes"
+            placeholder="Type new category name"
             className={inputClassName}
           />
         </label>
       )}
 
-      {/* Cake type toggles */}
       <div className="mt-4 rounded-xl border border-gold-200/60 bg-gold-50/50 p-4 admin-motion hover:border-gold-300/70 hover:bg-gold-50/70">
         <p className="mb-3 text-sm font-semibold text-primary-700">Cake Type</p>
         <div className="flex flex-wrap gap-6">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex cursor-pointer items-center gap-3">
             <Toggle
               checked={formData.isEgg}
               onClick={() =>
@@ -195,7 +194,7 @@ const ProductBasicsSection = ({
             />
             <span className="text-sm font-medium text-primary-700">Egg</span>
           </label>
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className="flex cursor-pointer items-center gap-3">
             <Toggle
               checked={formData.isEggless}
               onClick={() =>

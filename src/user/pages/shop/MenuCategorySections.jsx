@@ -6,6 +6,7 @@ const MenuCategorySections = ({
   categorySections,
   openImagePreview,
   openQuickAdd,
+  highlightedProductId,
 }) => (
   <div className="menu-sections">
     {categorySections.map((section) => (
@@ -20,7 +21,12 @@ const MenuCategorySections = ({
           {section.items.map((product, productIndex) => (
             <article
               key={product._id}
-              className="menu-product-card animate-fadeInUp"
+              id={`menu-product-${product._id}`}
+              className={`menu-product-card animate-fadeInUp ${
+                highlightedProductId === product._id
+                  ? "ring-2 ring-[#c9a84c] ring-offset-2 ring-offset-[#fffaf0]"
+                  : ""
+              }`}
               style={{ animationDelay: `${Math.min(productIndex, 8) * 60}ms` }}
             >
               <div className="menu-product-image-wrap">

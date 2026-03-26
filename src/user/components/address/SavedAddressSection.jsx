@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import AddressPickerModal from "@/user/components/address/AddressPickerModal";
+import { formatAddressText } from "@/utils/mapsLinks";
 
 const SavedAddressSection = ({
   savedAddresses,
@@ -149,9 +150,7 @@ const SavedAddressSection = ({
 
               {/* Address text */}
               <p className="mb-1 line-clamp-2 text-sm leading-relaxed text-[#6a5130]">
-                {[address.street, address.city, address.state, address.zipCode]
-                  .filter(Boolean)
-                  .join(", ")}
+                {formatAddressText(address)}
               </p>
               <p className="text-xs font-medium text-[#8f7859]">
                 {address.phone || "No phone"}

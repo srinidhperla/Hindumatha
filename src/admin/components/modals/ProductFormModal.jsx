@@ -18,6 +18,7 @@ const ProductFormModal = ({
   customFlavor,
   customWeightLabel,
   imageItems,
+  isSubmitting,
   availableCategories,
   availableFlavors,
   onClose,
@@ -71,8 +72,13 @@ const ProductFormModal = ({
             type="submit"
             form="product-editor-form"
             variant="primary"
+            disabled={isSubmitting}
           >
-            {editingProduct ? "Update Product" : "Create Product"}
+            {isSubmitting
+              ? "Saving..."
+              : editingProduct
+                ? "Update Product"
+                : "Create Product"}
           </ActionButton>
         </div>
       }

@@ -38,6 +38,8 @@ const AdminProductsPage = ({ onToast }) => {
   const [customFlavor, setCustomFlavor] = useState("");
   const [customWeightLabel, setCustomWeightLabel] = useState("");
   const [imageItems, setImageItems] = useState([]);
+  const [isSubmittingProduct, setIsSubmittingProduct] = useState(false);
+  const [isSubmittingAddOn, setIsSubmittingAddOn] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [addOnForm, setAddOnForm] = useState({
@@ -219,6 +221,7 @@ const AdminProductsPage = ({ onToast }) => {
   const resetForm = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
+    setIsSubmittingProduct(false);
     setFormData(createDefaultProductForm());
     setUseCustomCategory(false);
     setCustomCategory("");
@@ -228,6 +231,7 @@ const AdminProductsPage = ({ onToast }) => {
   };
 
   const resetAddOnForm = () => {
+    setIsSubmittingAddOn(false);
     setAddOnForm({
       name: "",
       description: "",
@@ -450,6 +454,11 @@ const AdminProductsPage = ({ onToast }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    event.stopPropagation();
+
+    if (isSubmittingProduct) {
+      return;
+    }
 
     const finalCategory = normalizeCategoryValue(
       useCustomCategory ? customCategory : formData.category,
@@ -471,6 +480,8 @@ const AdminProductsPage = ({ onToast }) => {
     }
 
     try {
+      setIsSubmittingProduct(true);
+
       const productData = new FormData();
       const axes = getVariantAxes(formData);
       const minimumVariantPrice = getMinimumVariantPrice(
@@ -545,6 +556,8 @@ const AdminProductsPage = ({ onToast }) => {
       resetForm();
     } catch (error) {
       onToast(getErrorMessage(error, "Failed to save product."), "error");
+    } finally {
+      setIsSubmittingProduct(false);
     }
   };
 
@@ -677,6 +690,10 @@ const AdminProductsPage = ({ onToast }) => {
   const handleAddOnSubmit = async (event) => {
     event.preventDefault();
 
+    if (isSubmittingAddOn) {
+      return;
+    }
+
     const name = addOnForm.name.trim();
     const description = addOnForm.description.trim();
     const price = Number(addOnForm.price);
@@ -692,6 +709,7 @@ const AdminProductsPage = ({ onToast }) => {
     }
 
     try {
+      setIsSubmittingAddOn(true);
       const productData = new FormData();
       const imageToken = `new-addon-${Date.now()}`;
       productData.append("name", name);
@@ -723,6 +741,8 @@ const AdminProductsPage = ({ onToast }) => {
       resetAddOnForm();
     } catch (error) {
       onToast(getErrorMessage(error, "Failed to create addon."), "error");
+    } finally {
+      setIsSubmittingAddOn(false);
     }
   };
 
@@ -763,6 +783,7 @@ const AdminProductsPage = ({ onToast }) => {
           customFlavor={customFlavor}
           customWeightLabel={customWeightLabel}
           imageItems={imageItems}
+          isSubmitting={isSubmittingProduct}
           availableCategories={availableCategories}
           availableFlavors={availableFlavors}
           onClose={resetForm}

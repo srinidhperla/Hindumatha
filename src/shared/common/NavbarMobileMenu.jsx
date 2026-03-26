@@ -8,6 +8,8 @@ const NavbarMobileMenu = ({
   cartCount,
   isAuthenticated,
   user,
+  isDeliveryUser,
+  dashboardPath,
   onLogout,
   closeMenu,
 }) => (
@@ -17,31 +19,51 @@ const NavbarMobileMenu = ({
     }`}
   >
     <div className="space-y-1 px-4 py-4">
-      <div className="mb-2 grid grid-cols-3 gap-2 rounded-xl border border-[rgba(201,168,76,0.25)] bg-[#f8f1dd] p-2">
-        <Link
-          to="/"
-          onClick={closeMenu}
-          className="flex items-center justify-center gap-1 rounded-lg bg-white px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a5c0f]"
-        >
-          <FiHome className="h-3.5 w-3.5" /> Home
-        </Link>
-        <Link
-          to="/menu"
-          onClick={closeMenu}
-          className="flex items-center justify-center rounded-lg bg-white px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a5c0f]"
-        >
-          Order
-        </Link>
-        <Link
-          to="/cart"
-          onClick={closeMenu}
-          className="flex items-center justify-center rounded-lg bg-white px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a5c0f]"
-        >
-          Cart ({cartCount})
-        </Link>
-      </div>
+      {isDeliveryUser ? (
+        <div className="mb-2 grid grid-cols-2 gap-2 rounded-xl border border-[rgba(201,168,76,0.25)] bg-[#f8f1dd] p-2">
+          <Link
+            to={dashboardPath || "/delivery"}
+            onClick={closeMenu}
+            className="flex items-center justify-center gap-1 rounded-lg bg-white px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a5c0f]"
+          >
+            Dashboard
+          </Link>
+          <Link
+            to="/profile"
+            onClick={closeMenu}
+            className="flex items-center justify-center rounded-lg bg-white px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a5c0f]"
+          >
+            Profile
+          </Link>
+        </div>
+      ) : (
+        <div className="mb-2 grid grid-cols-3 gap-2 rounded-xl border border-[rgba(201,168,76,0.25)] bg-[#f8f1dd] p-2">
+          <Link
+            to="/"
+            onClick={closeMenu}
+            className="flex items-center justify-center gap-1 rounded-lg bg-white px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a5c0f]"
+          >
+            <FiHome className="h-3.5 w-3.5" /> Home
+          </Link>
+          <Link
+            to="/menu"
+            onClick={closeMenu}
+            className="flex items-center justify-center rounded-lg bg-white px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a5c0f]"
+          >
+            Order
+          </Link>
+          <Link
+            to="/cart"
+            onClick={closeMenu}
+            className="flex items-center justify-center rounded-lg bg-white px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7a5c0f]"
+          >
+            Cart ({cartCount})
+          </Link>
+        </div>
+      )}
 
-      {navLinks.map((link) => (
+      {!isDeliveryUser &&
+        navLinks.map((link) => (
         <Link
           key={link.label}
           to={link.path}
@@ -50,7 +72,7 @@ const NavbarMobileMenu = ({
         >
           {link.label}
         </Link>
-      ))}
+        ))}
       {isAuthenticated ? (
         <>
           <Link
@@ -60,9 +82,9 @@ const NavbarMobileMenu = ({
           >
             Profile
           </Link>
-          {user?.role === "admin" && (
+          {dashboardPath && (
             <Link
-              to="/admin/orders"
+              to={dashboardPath}
               onClick={closeMenu}
               className="block rounded-xl px-3 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#6a4c16] hover:bg-[#f9f4e8]"
             >

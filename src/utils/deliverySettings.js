@@ -1,8 +1,8 @@
-import { haversineDistance, isWithinDeliveryRadius } from "./deliveryGeo";
+import { haversineDistance, isWithinDeliveryRadius } from "./deliveryGeo.js";
 import {
   getAvailableSlotsForDateCore,
   getDeliveryDayKey,
-} from "./deliverySlots";
+} from "./deliverySlots.js";
 
 export const DAY_KEYS = [
   "monday",

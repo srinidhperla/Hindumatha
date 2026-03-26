@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import {
-  getCachedMatches,
-  loadAddressSuggestions,
-} from "@/user/hooks/useAddressPicker.utils";
+import { getCachedMatches, loadAddressSuggestions } from "@/user/hooks/useAddressPicker.utils";
 
 const useAddressPickerActions = ({
   formDataCity,
@@ -140,9 +137,7 @@ const useAddressPickerActions = ({
           latitude: nextLat,
           longitude: nextLng,
         }));
-        setAddressLookupError(
-          "Unable to resolve location. Try moving the pin.",
-        );
+        setAddressLookupError("Unable to resolve location. Try moving the pin.");
       }
     },
     [

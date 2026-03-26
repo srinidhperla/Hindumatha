@@ -6,10 +6,13 @@ import { showToast } from "@/features/uiSlice";
 import { downloadInvoicePDF } from "@/services/invoiceService";
 import OrderCard from "@/user/pages/account/OrderCard";
 import SeoMeta from "@/shared/seo/SeoMeta";
+import useUserOrderUpdates from "@/user/hooks/useUserOrderUpdates";
 
 const Orders = () => {
   const dispatch = useDispatch();
   const { myOrders, loading, error } = useSelector((state) => state.orders);
+
+  useUserOrderUpdates();
 
   useEffect(() => {
     dispatch(fetchMyOrders());

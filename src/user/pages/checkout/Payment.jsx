@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { clearCart } from "@/features/cart/cartSlice";
 import {
+  clearError,
   clearPaymentOrder,
   createPaymentOrder,
   verifyPaymentAndCreateOrder,
 } from "@/features/orders/orderSlice";
 import { showToast } from "@/features/uiSlice";
-import PaymentSuccessCard from "./PaymentSuccessCard";
 import PaymentSummaryPanel from "./PaymentSummaryPanel";
 import {
   CHECKOUT_STORAGE_KEY,
@@ -29,7 +29,6 @@ const Payment = () => {
     getPendingCheckout(location.state),
   );
   const [isLaunching, setIsLaunching] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
 
   const deliverySummaryLabel = getDeliverySummaryLabel(checkoutData?.orderData);
 
@@ -41,13 +40,9 @@ const Payment = () => {
   }, [checkoutData, navigate]);
 
   useEffect(() => {
-    if (isPaid) {
-      scrollToPageTop();
-    }
-  }, [isPaid]);
-
-  useEffect(() => {
+    dispatch(clearError());
     return () => {
+      dispatch(clearError());
       dispatch(clearPaymentOrder());
     };
   }, [dispatch]);
@@ -89,7 +84,7 @@ const Payment = () => {
           color: "#db2777",
         },
         handler: async (response) => {
-          await dispatch(
+          const placedOrder = await dispatch(
             verifyPaymentAndCreateOrder({
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
@@ -106,7 +101,9 @@ const Payment = () => {
               type: "success",
             }),
           );
-          setIsPaid(true);
+          navigate(`/order-confirmed/${placedOrder?._id}`, {
+            replace: true,
+          });
         },
         modal: {
           ondismiss: () => {
@@ -133,16 +130,6 @@ const Payment = () => {
 
   if (!checkoutData) {
     return null;
-  }
-
-  if (isPaid) {
-    return (
-      <PaymentSuccessCard
-        totalAmount={checkoutData.pricing.totalAmount}
-        onViewOrders={() => navigate("/orders")}
-        onBackHome={() => navigate("/")}
-      />
-    );
   }
 
   return (

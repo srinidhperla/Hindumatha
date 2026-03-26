@@ -70,6 +70,7 @@ const defaultSiteContent = {
       isActive: true,
     },
   ],
+  categoryOrder: ["cakes", "pastries", "breads", "cookies", "custom"],
   alertStatus: {
     configured: false,
     host: "",

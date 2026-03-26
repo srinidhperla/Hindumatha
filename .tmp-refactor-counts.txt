@@ -1,8 +1,0 @@
-src/user/pages/checkout/Order.jsx|297
-src/user/pages/checkout/orderPageUtils.js|85
-src/user/pages/checkout/useCheckoutDerivedData.js|175
-src/user/pages/checkout/useCheckoutAddressState.js|229
-src/user/pages/checkout/useCheckoutSubmit.js|293
-src/user/pages/checkout/CheckoutStepper.jsx|43
-src/user/pages/checkout/CheckoutEmptyState.jsx|21
-src/user/pages/checkout/CheckoutSuccessState.jsx|28

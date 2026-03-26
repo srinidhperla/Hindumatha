@@ -4,11 +4,37 @@ import {
   postPaymentCreate,
   postPaymentVerify,
   fetchAllOrders,
+  fetchAssignedDeliveryOrders,
+  fetchDeliveryPartners,
   fetchUserOrders,
   fetchSingleOrder,
   putOrderStatus,
+  putDeliveryStatus,
   putCancelOrder,
 } from "@/services/orderAPI";
+
+const upsertOrderById = (orders = [], nextOrder) => {
+  if (!nextOrder?._id) {
+    return orders;
+  }
+
+  const existingIndex = orders.findIndex((order) => order._id === nextOrder._id);
+  if (existingIndex === -1) {
+    return [nextOrder, ...orders];
+  }
+
+  const nextOrders = [...orders];
+  nextOrders[existingIndex] = nextOrder;
+  return nextOrders;
+};
+
+const shouldKeepDeliveryOrder = (order) =>
+  Boolean(
+    order?.assignedDeliveryPartner?._id &&
+      order?.status !== "delivered" &&
+      order?.status !== "cancelled" &&
+      order?.deliveryStatus !== "delivered",
+  );
 
 // Async thunks
 export const createOrder = createAsyncThunk(
@@ -76,6 +102,19 @@ export const fetchMyOrders = createAsyncThunk(
   },
 );
 
+export const fetchDeliveryOrders = createAsyncThunk(
+  "orders/fetchDeliveryOrders",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchAssignedDeliveryOrders();
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch delivery orders" },
+      );
+    }
+  },
+);
+
 export const fetchOrderById = createAsyncThunk(
   "orders/fetchOrderById",
   async (id, { rejectWithValue }) => {
@@ -91,12 +130,38 @@ export const fetchOrderById = createAsyncThunk(
 
 export const updateOrderStatus = createAsyncThunk(
   "orders/updateOrderStatus",
-  async ({ id, status }, { rejectWithValue }) => {
+  async ({ id, ...payload }, { rejectWithValue }) => {
     try {
-      return await putOrderStatus(id, status);
+      return await putOrderStatus(id, payload);
     } catch (error) {
       return rejectWithValue(
         error.response?.data || { message: "Failed to update order status" },
+      );
+    }
+  },
+);
+
+export const fetchAdminDeliveryPartners = createAsyncThunk(
+  "orders/fetchAdminDeliveryPartners",
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchDeliveryPartners();
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch delivery partners" },
+      );
+    }
+  },
+);
+
+export const updateAssignedDeliveryStatus = createAsyncThunk(
+  "orders/updateAssignedDeliveryStatus",
+  async ({ id, deliveryStatus }, { rejectWithValue }) => {
+    try {
+      return await putDeliveryStatus(id, deliveryStatus);
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to update delivery status" },
       );
     }
   },
@@ -118,6 +183,8 @@ export const cancelOrder = createAsyncThunk(
 const initialState = {
   orders: [],
   myOrders: [],
+  deliveryOrders: [],
+  deliveryPartners: [],
   currentOrder: null,
   paymentOrder: null,
   loading: false,
@@ -134,6 +201,25 @@ const orderSlice = createSlice({
     clearPaymentOrder: (state) => {
       state.paymentOrder = null;
     },
+    upsertIncomingOrder: (state, action) => {
+      state.orders = upsertOrderById(state.orders, action.payload);
+      state.myOrders = upsertOrderById(state.myOrders, action.payload);
+
+      if (shouldKeepDeliveryOrder(action.payload)) {
+        state.deliveryOrders = upsertOrderById(
+          state.deliveryOrders,
+          action.payload,
+        );
+      } else {
+        state.deliveryOrders = state.deliveryOrders.filter(
+          (order) => order._id !== action.payload?._id,
+        );
+      }
+
+      if (state.currentOrder?._id === action.payload?._id) {
+        state.currentOrder = action.payload;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -144,7 +230,8 @@ const orderSlice = createSlice({
       })
       .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders.push(action.payload);
+        state.orders = upsertOrderById(state.orders, action.payload);
+        state.myOrders = upsertOrderById(state.myOrders, action.payload);
         state.currentOrder = action.payload;
       })
       .addCase(createOrder.rejected, (state, action) => {
@@ -175,7 +262,8 @@ const orderSlice = createSlice({
       })
       .addCase(verifyPaymentAndCreateOrder.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders.push(action.payload);
+        state.orders = upsertOrderById(state.orders, action.payload);
+        state.myOrders = upsertOrderById(state.myOrders, action.payload);
         state.currentOrder = action.payload;
         state.paymentOrder = null;
       })
@@ -211,6 +299,19 @@ const orderSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.message || "Failed to fetch your orders";
       })
+      .addCase(fetchDeliveryOrders.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDeliveryOrders.fulfilled, (state, action) => {
+        state.loading = false;
+        state.deliveryOrders = action.payload;
+      })
+      .addCase(fetchDeliveryOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          action.payload?.message || "Failed to fetch delivery orders";
+      })
       // Fetch Single Order
       .addCase(fetchOrderById.pending, (state) => {
         state.loading = true;
@@ -226,12 +327,38 @@ const orderSlice = createSlice({
       })
       // Update Order Status
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        const index = state.orders.findIndex(
-          (o) => o._id === action.payload._id,
-        );
-        if (index !== -1) {
-          state.orders[index] = action.payload;
+        state.orders = upsertOrderById(state.orders, action.payload);
+        state.myOrders = upsertOrderById(state.myOrders, action.payload);
+        if (shouldKeepDeliveryOrder(action.payload)) {
+          state.deliveryOrders = upsertOrderById(
+            state.deliveryOrders,
+            action.payload,
+          );
+        } else {
+          state.deliveryOrders = state.deliveryOrders.filter(
+            (order) => order._id !== action.payload?._id,
+          );
         }
+        if (state.currentOrder?._id === action.payload._id) {
+          state.currentOrder = action.payload;
+        }
+      })
+      .addCase(fetchAdminDeliveryPartners.fulfilled, (state, action) => {
+        state.deliveryPartners = action.payload;
+      })
+      .addCase(updateAssignedDeliveryStatus.fulfilled, (state, action) => {
+        if (shouldKeepDeliveryOrder(action.payload)) {
+          state.deliveryOrders = upsertOrderById(
+            state.deliveryOrders,
+            action.payload,
+          );
+        } else {
+          state.deliveryOrders = state.deliveryOrders.filter(
+            (order) => order._id !== action.payload?._id,
+          );
+        }
+        state.orders = upsertOrderById(state.orders, action.payload);
+        state.myOrders = upsertOrderById(state.myOrders, action.payload);
         if (state.currentOrder?._id === action.payload._id) {
           state.currentOrder = action.payload;
         }
@@ -250,6 +377,9 @@ const orderSlice = createSlice({
         state.myOrders = state.myOrders.map((order) =>
           order._id === cancelledOrder._id ? cancelledOrder : order,
         );
+        state.deliveryOrders = state.deliveryOrders.map((order) =>
+          order._id === cancelledOrder._id ? cancelledOrder : order,
+        );
         if (state.currentOrder?._id === cancelledOrder._id) {
           state.currentOrder = cancelledOrder;
         }
@@ -261,5 +391,6 @@ const orderSlice = createSlice({
   },
 });
 
-export const { clearError, clearPaymentOrder } = orderSlice.actions;
+export const { clearError, clearPaymentOrder, upsertIncomingOrder } =
+  orderSlice.actions;
 export default orderSlice.reducer;

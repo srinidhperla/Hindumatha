@@ -104,7 +104,7 @@ const FeaturedProducts = ({ products }) => {
                 key={product._id}
                 className="group max-w-[300px] min-w-[260px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#c9a84c3d] bg-[linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,246,228,.88))] shadow-[0_10px_28px_rgba(18,12,2,0.14)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(18,12,2,0.2)] active:scale-[0.98] sm:min-w-[280px] lg:min-w-[300px]"
               >
-                <Link to={`/products/${product._id}`} className="block">
+                <Link to={`/menu?product=${product._id}`} className="block">
                   <div className="relative overflow-hidden">
                     <img
                       src={product.image}
@@ -120,7 +120,7 @@ const FeaturedProducts = ({ products }) => {
                   </div>
                 </Link>
                 <div className="p-4">
-                  <Link to={`/products/${product._id}`}>
+                  <Link to={`/menu?product=${product._id}`}>
                     <h3 className="mb-1 line-clamp-1 text-sm font-bold text-[#2a1f0e] transition-colors group-hover:text-[#8b6914] sm:text-base">
                       {product.name}
                     </h3>
@@ -133,7 +133,7 @@ const FeaturedProducts = ({ products }) => {
                       ₹{product.price}
                     </span>
                     <Link
-                      to={`/products/${product._id}`}
+                      to={`/menu?product=${product._id}`}
                       className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#7a5c0f] to-[#c9a84c] px-3.5 py-1.5 text-xs font-semibold text-white transition-all duration-300 hover:shadow-[0_10px_24px_rgba(122,92,15,0.35)] active:scale-95"
                     >
                       View

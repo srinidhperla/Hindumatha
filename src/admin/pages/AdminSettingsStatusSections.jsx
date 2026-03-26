@@ -16,7 +16,7 @@ export const PaymentGatewayStatusSection = ({ paymentStatus }) => {
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
             Gateway
@@ -97,6 +97,9 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
           <p className="mt-2 break-all text-sm font-semibold text-primary-900">
             {alertStatus.recipient || "No recipient configured"}
           </p>
+          <p className="mt-1 text-xs text-primary-500">
+            Source: {alertStatus.recipientSource || "unknown"}
+          </p>
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
@@ -104,6 +107,27 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
           </p>
           <p className="mt-2 break-all text-sm font-semibold text-primary-900">
             {alertStatus.from || "Not configured"}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
+            SMTP Server
+          </p>
+          <p className="mt-2 break-all text-sm font-semibold text-primary-900">
+            {alertStatus.host
+              ? `${alertStatus.host}:${alertStatus.port || 587}`
+              : "Not configured"}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
+            TLS Mode
+          </p>
+          <p className="mt-2 text-sm font-semibold text-primary-900">
+            {alertStatus.secure ? "SSL/TLS" : "STARTTLS/Plain"}
+          </p>
+          <p className="mt-1 text-xs text-primary-500">
+            Source: {alertStatus.secureSource || "unknown"}
           </p>
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">

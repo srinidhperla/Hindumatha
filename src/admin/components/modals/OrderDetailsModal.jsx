@@ -1,7 +1,17 @@
-import React, { useState } from "react";
-import { getOrderItems } from "../../pages/adminShared";
+import React from "react";
+import { getOrderItems, ORDER_STATUS_OPTIONS } from "../../pages/adminShared";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
 import { downloadInvoicePDF } from "@/services/invoiceService";
+import { buildGoogleMapsSearchUrl, formatAddressText } from "@/utils/mapsLinks";
+
+const ESTIMATED_DELIVERY_LABELS = {
+  "15min": "15 minutes",
+  "30min": "30 minutes",
+  "45min": "45 minutes",
+  "1hour": "1 hour",
+  "1.5hours": "1.5 hours",
+  "2hours": "2 hours",
+};
 
 const getPaymentMethodLabel = (paymentMethod) => {
   if (!paymentMethod) return "Not specified";
@@ -21,42 +31,62 @@ const getPaymentStatusClasses = (paymentStatus) => {
   }
 };
 
+const formatRequestedDelivery = (order) => {
+  if (order?.deliveryMode === "now") {
+    return "Deliver now";
+  }
+
+  const dateLabel = order?.deliveryDate
+    ? new Date(order.deliveryDate).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "Scheduled";
+
+  return `${dateLabel}${order?.deliveryTime ? ` at ${order.deliveryTime}` : ""}`;
+};
+
+const formatEstimatedDelivery = (order) => {
+  const value = String(order?.estimatedDeliveryTime || "").trim();
+
+  if (!value) {
+    return "Awaiting admin acceptance";
+  }
+
+  if (value === "custom") {
+    return order?.customDeliveryTime || "Custom timing";
+  }
+
+  return ESTIMATED_DELIVERY_LABELS[value] || value;
+};
+
 const buildDeliveryShareText = (order) => {
   const address = order?.deliveryAddress || {};
   const lines = [
     `Order: ${getOrderDisplayCode(order)}`,
     `Customer: ${order?.user?.name || "Guest Customer"}`,
-    `Phone: ${order?.user?.phone || "N/A"}`,
-    `Address: ${[
-      address.label,
-      address.street,
-      address.landmark,
-      address.city,
-      address.state,
-      address.zipCode,
-    ]
-      .filter(Boolean)
-      .join(", ")}`,
-    `Delivery: ${order?.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString("en-IN") : "N/A"}${
-      order?.deliveryTime ? `, ${order.deliveryTime}` : ""
-    }`,
+    `Phone: ${order?.user?.phone || address?.phone || "N/A"}`,
+    `Address: ${formatAddressText(address) || "Address not provided"}`,
+    `Customer asked for: ${formatRequestedDelivery(order)}`,
+    `Estimated delivery: ${formatEstimatedDelivery(order)}`,
   ];
 
-  if (
-    Number.isFinite(Number(address.lat)) &&
-    Number.isFinite(Number(address.lng))
-  ) {
-    lines.push(
-      `Maps: https://maps.google.com/?q=${address.lat},${address.lng}`,
-    );
+  const mapsLink = buildGoogleMapsSearchUrl(address);
+  if (mapsLink) {
+    lines.push(`Maps: ${mapsLink}`);
   }
 
   return lines.join("\n");
 };
 
-const OrderDetailsModal = ({ order, onClose, onStatusChange, onToast }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-
+const OrderDetailsModal = ({
+  order,
+  onClose,
+  onStatusChange,
+  onRequestAction,
+  onToast,
+}) => {
   if (!order) return null;
 
   const handleCopyAddress = async () => {
@@ -64,19 +94,8 @@ const OrderDetailsModal = ({ order, onClose, onStatusChange, onToast }) => {
     try {
       await navigator.clipboard.writeText(shareText);
       onToast?.("Delivery details copied.", "success");
-    } catch (error) {
+    } catch {
       onToast?.("Failed to copy delivery details.", "error");
-    }
-  };
-
-  const handleAcceptOrder = async () => {
-    if (isProcessing) return;
-
-    setIsProcessing(true);
-    try {
-      await onStatusChange(order._id, "confirmed");
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -84,14 +103,22 @@ const OrderDetailsModal = ({ order, onClose, onStatusChange, onToast }) => {
     try {
       downloadInvoicePDF(order);
       onToast?.("Opening invoice for download...", "success");
-    } catch (error) {
+    } catch {
       onToast?.("Failed to generate invoice.", "error");
     }
   };
 
+  const canAssignDelivery =
+    order.status !== "pending" &&
+    order.status !== "cancelled" &&
+    order.status !== "delivered";
+  const canEditProgressStatus = ["confirmed", "preparing", "ready"].includes(
+    String(order.status || ""),
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-primary-900/70 via-primary-900/55 to-black/60 p-4 backdrop-blur-md">
-      <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/35 bg-white/25 p-6 shadow-[0_30px_80px_rgba(10,10,20,0.45)] backdrop-blur-2xl">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/35 bg-white/25 p-6 shadow-[0_30px_80px_rgba(10,10,20,0.45)] backdrop-blur-2xl">
         <div className="mb-6 flex items-start justify-between rounded-2xl border border-white/40 bg-white/35 p-4 backdrop-blur-xl">
           <div>
             <h2 className="text-xl font-semibold text-primary-900">
@@ -133,7 +160,7 @@ const OrderDetailsModal = ({ order, onClose, onStatusChange, onToast }) => {
               {order.user?.email || "No email"}
             </p>
             <p className="text-sm text-primary-700">
-              {order.user?.phone || "No phone"}
+              {order.user?.phone || order.deliveryAddress?.phone || "No phone"}
             </p>
           </div>
 
@@ -144,29 +171,20 @@ const OrderDetailsModal = ({ order, onClose, onStatusChange, onToast }) => {
                 {order.deliveryAddress.label}
               </p>
             )}
-            <p className="mt-2 text-sm text-primary-800">
-              {order.deliveryAddress?.street || ""}
+            <p className="mt-2 text-sm font-semibold text-primary-900">
+              Customer asked for: {formatRequestedDelivery(order)}
             </p>
-            {order.deliveryAddress?.landmark && (
-              <p className="text-sm text-primary-700">
-                {order.deliveryAddress.landmark}
+            <p className="mt-1 text-sm text-primary-700">
+              Estimated: {formatEstimatedDelivery(order)}
+            </p>
+            <p className="mt-3 text-sm text-primary-800">
+              {formatAddressText(order.deliveryAddress) || "Address not provided"}
+            </p>
+            {order.assignedDeliveryPartner?.name && (
+              <p className="mt-2 text-sm text-primary-700">
+                Assigned delivery partner: {order.assignedDeliveryPartner.name}
               </p>
             )}
-            <p className="text-sm text-primary-700">
-              {[
-                order.deliveryAddress?.city,
-                order.deliveryAddress?.state,
-                order.deliveryAddress?.zipCode,
-              ]
-                .filter(Boolean)
-                .join(", ") || "Address not provided"}
-            </p>
-            <p className="mt-2 text-sm text-primary-700">
-              {order.deliveryDate
-                ? new Date(order.deliveryDate).toLocaleDateString("en-IN")
-                : "No delivery date"}
-              {order.deliveryTime ? `, ${order.deliveryTime}` : ""}
-            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -175,10 +193,9 @@ const OrderDetailsModal = ({ order, onClose, onStatusChange, onToast }) => {
               >
                 Copy Address
               </button>
-              {Number.isFinite(Number(order.deliveryAddress?.lat)) &&
-                Number.isFinite(Number(order.deliveryAddress?.lng)) && (
+              {formatAddressText(order.deliveryAddress) && (
                   <a
-                    href={`https://maps.google.com/?q=${order.deliveryAddress.lat},${order.deliveryAddress.lng}`}
+                    href={buildGoogleMapsSearchUrl(order.deliveryAddress)}
                     target="_blank"
                     rel="noreferrer"
                     className="rounded-lg border border-white/55 bg-white/55 px-3 py-1.5 text-xs font-semibold text-primary-800 admin-motion hover:bg-white/80"
@@ -206,12 +223,12 @@ const OrderDetailsModal = ({ order, onClose, onStatusChange, onToast }) => {
                   </p>
                   <p className="text-sm text-primary-700">
                     Qty: {item.quantity || 0}
-                    {item.size ? ` • ${item.size}` : ""}
-                    {item.flavor ? ` • ${item.flavor}` : ""}
+                    {item.size ? ` | ${item.size}` : ""}
+                    {item.flavor ? ` | ${item.flavor}` : ""}
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-primary-900">
-                  ₹
+                  Rs.
                   {((item.price || 0) * (item.quantity || 0)).toLocaleString(
                     "en-IN",
                   )}
@@ -261,25 +278,62 @@ const OrderDetailsModal = ({ order, onClose, onStatusChange, onToast }) => {
                 Total Amount
               </p>
               <p className="text-lg font-bold text-primary-900">
-                ₹{order.totalAmount?.toLocaleString("en-IN") || 0}
+                Rs.{order.totalAmount?.toLocaleString("en-IN") || 0}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               {order.status === "pending" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onRequestAction?.("accept", order)}
+                    className="rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRequestAction?.("reject", order)}
+                    className="rounded-xl bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700"
+                  >
+                    Reject
+                  </button>
+                </>
+              )}
+              {canEditProgressStatus && (
+                <select
+                  value={order.status}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    if (!nextValue || nextValue === order.status) return;
+                    if (nextValue === "cancelled") {
+                      onRequestAction?.("reject", order);
+                      return;
+                    }
+                    onStatusChange?.(order._id, nextValue);
+                  }}
+                  className="rounded-xl border border-white/60 bg-white/65 px-3 py-2 text-sm font-semibold text-primary-900 hover:bg-white"
+                  aria-label="Update order status"
+                  title="Update order status"
+                >
+                  {ORDER_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {canAssignDelivery && (
                 <button
                   type="button"
-                  onClick={handleAcceptOrder}
-                  disabled={isProcessing}
-                  className="rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => onRequestAction?.("assign", order)}
+                  className="rounded-xl border border-white/60 bg-white/65 px-4 py-2 font-semibold text-primary-900 hover:bg-white"
                 >
-                  {isProcessing ? "Accepting..." : "Accept Order"}
+                  {order.assignedDeliveryPartner
+                    ? "Reassign Delivery"
+                    : "Assign Delivery"}
                 </button>
-              )}
-              {order.status === "confirmed" && (
-                <span className="rounded-xl bg-emerald-100 px-4 py-2 font-semibold text-emerald-700">
-                  Accepted
-                </span>
               )}
               <button
                 type="button"

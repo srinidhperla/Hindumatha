@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "@/features/cart/cartSlice";
 import { fetchProducts } from "@/features/products/productSlice";
@@ -15,6 +16,7 @@ import {
   normalizeFlavorOptions,
 } from "@/utils/productOptions";
 import SeoMeta from "@/shared/seo/SeoMeta";
+import { MenuItemSkeleton } from "@/shared/ui/Skeleton";
 import MenuCategorySections from "./MenuCategorySections";
 import MenuControls from "./MenuControls";
 import MenuCustomOrderCta from "./MenuCustomOrderCta";
@@ -25,27 +27,56 @@ import MenuQuickAddModal from "./MenuQuickAddModal";
 
 const Menu = () => {
   const dispatch = useDispatch();
+  const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [highlightedProductId, setHighlightedProductId] = useState("");
   const [quickAddProductId, setQuickAddProductId] = useState(null);
   const [quickAddFlavor, setQuickAddFlavor] = useState("");
   const [quickAddWeight, setQuickAddWeight] = useState("");
   const [quickAddEggType, setQuickAddEggType] = useState("");
   const [quickAddQuantity, setQuickAddQuantity] = useState(1);
   const [imagePreview, setImagePreview] = useState(null);
-  const { products, loading } = useSelector((state) => state.products);
-  const { businessInfo } = useSelector((state) => state.site);
+  const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [retryScheduled, setRetryScheduled] = useState(false);
+  const { products, loading, error } = useSelector((state) => state.products);
+  const { categoryOrder = [] } = useSelector((state) => state.site);
 
-  // Silently poll products every 15s so inventory changes auto-reflect
   useEffect(() => {
     dispatch(fetchProducts());
-    const interval = setInterval(() => dispatch(fetchProducts()), 2000);
-    return () => clearInterval(interval);
   }, [dispatch]);
 
+  useEffect(() => {
+    if (!error || loading) {
+      setLoadError(false);
+      setRetryScheduled(false);
+      return undefined;
+    }
+
+    setLoadError(true);
+
+    if (retryCount >= 1 || retryScheduled) {
+      return undefined;
+    }
+
+    setRetryScheduled(true);
+    const retryTimer = window.setTimeout(() => {
+      setRetryCount((prev) => prev + 1);
+      dispatch(fetchProducts({ force: true }));
+    }, 3000);
+
+    return () => window.clearTimeout(retryTimer);
+  }, [dispatch, error, loading, retryCount, retryScheduled]);
+
   const normalizedProducts = useMemo(
-    () =>
-      products.map((product) => ({
+    () => {
+      const categoryOrderMap = new Map(
+        categoryOrder.map((category, index) => [String(category), index]),
+      );
+
+      return products
+        .map((product) => ({
         ...product,
         primaryImage: product.images?.[0] || product.image,
         categoryLabel: formatCategoryLabel(product.category),
@@ -56,8 +87,29 @@ const Menu = () => {
         orderableWeights: getOrderableWeights(product),
         canOrder: isProductPurchasable(product),
         hasExplicitFlavors: normalizeFlavorOptions(product).length > 0,
-      })),
-    [products],
+        }))
+        .sort((left, right) => {
+          const leftCategoryOrder = categoryOrderMap.get(left.category) ?? 999;
+          const rightCategoryOrder =
+            categoryOrderMap.get(right.category) ?? 999;
+          if (leftCategoryOrder !== rightCategoryOrder) {
+            return leftCategoryOrder - rightCategoryOrder;
+          }
+
+          const leftDisplayOrder = Number(left.displayOrder);
+          const rightDisplayOrder = Number(right.displayOrder);
+          if (
+            Number.isFinite(leftDisplayOrder) &&
+            Number.isFinite(rightDisplayOrder) &&
+            leftDisplayOrder !== rightDisplayOrder
+          ) {
+            return leftDisplayOrder - rightDisplayOrder;
+          }
+
+          return left.name.localeCompare(right.name);
+        });
+    },
+    [categoryOrder, products],
   );
 
   // Products visible on menu: all that aren't master-toggled OFF
@@ -107,6 +159,64 @@ const Menu = () => {
       ),
     }))
     .filter((section) => section.items.length > 0);
+
+  const targetProductId = useMemo(() => {
+    const query = new URLSearchParams(location.search);
+    return query.get("product") || "";
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!targetProductId) {
+      setHighlightedProductId("");
+      return;
+    }
+
+    const targetProduct = visibleProducts.find(
+      (product) => product._id === targetProductId,
+    );
+    if (!targetProduct) {
+      return;
+    }
+
+    if (
+      targetProduct.categoryLabel &&
+      selectedCategory !== "All" &&
+      selectedCategory !== targetProduct.categoryLabel
+    ) {
+      setSelectedCategory(targetProduct.categoryLabel);
+    }
+
+    if (searchTerm) {
+      setSearchTerm("");
+    }
+
+    const scrollTimer = setTimeout(() => {
+      const element = document.getElementById(
+        `menu-product-${targetProductId}`,
+      );
+      if (!element) {
+        return;
+      }
+
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedProductId(targetProductId);
+
+      setTimeout(() => {
+        setHighlightedProductId((currentId) =>
+          currentId === targetProductId ? "" : currentId,
+        );
+      }, 1800);
+    }, 120);
+
+    return () => clearTimeout(scrollTimer);
+  }, [
+    targetProductId,
+    visibleProducts,
+    selectedCategory,
+    searchTerm,
+    setSelectedCategory,
+    setSearchTerm,
+  ]);
 
   const openQuickAdd = (product) => {
     if (!product.canOrder) return;
@@ -271,7 +381,8 @@ const Menu = () => {
 
         <div className="menu-results-bar">
           <p>
-            <span>{filteredProducts.length}</span> items found
+            <span>{loading && !products.length ? "Loading" : filteredProducts.length}</span>{" "}
+            {loading && !products.length ? "menu items" : "items found"}
           </p>
         </div>
 
@@ -283,8 +394,41 @@ const Menu = () => {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <MenuItemSkeleton key={i} />
+            ))}
+          </div>
+        ) : loadError ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+            <p className="mb-4 text-sm font-medium text-red-700">
+              Failed to load menu after retrying once. Please try again.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setLoadError(false);
+                setRetryCount(0);
+                setRetryScheduled(false);
+                dispatch(fetchProducts({ force: true }));
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              Retry
+            </button>
           </div>
         ) : filteredProducts.length === 0 ? (
           <MenuEmptyState clearFilters={clearFilters} />
@@ -293,6 +437,7 @@ const Menu = () => {
             categorySections={categorySections}
             openImagePreview={openImagePreview}
             openQuickAdd={openQuickAdd}
+            highlightedProductId={highlightedProductId}
           />
         )}
 

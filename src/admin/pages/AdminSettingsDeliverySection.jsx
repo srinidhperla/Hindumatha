@@ -9,7 +9,6 @@ export const AdminSettingsDeliverySection = ({
   onDeliverySettingsChange,
   onStoreLocationSelect,
   onUseCurrentStoreLocation,
-  onCopyCoordinates,
   onCopyMapsLink,
   onCopyDeliveryConfig,
   onDownloadDeliveryConfig,
@@ -39,13 +38,6 @@ export const AdminSettingsDeliverySection = ({
           >
             Use Current Browser Location
           </ActionButton>
-          <ActionButton
-            type="button"
-            onClick={onCopyCoordinates}
-            variant="soft"
-          >
-            Copy Lat/Lng
-          </ActionButton>
           <ActionButton type="button" onClick={onCopyMapsLink} variant="soft">
             Copy Maps Link
           </ActionButton>
@@ -73,7 +65,7 @@ export const AdminSettingsDeliverySection = ({
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
         <label className="block">
           <span className="block text-sm font-medium text-primary-700">
             Delivery Enabled
@@ -101,34 +93,12 @@ export const AdminSettingsDeliverySection = ({
             className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
           />
         </label>
+      </div>
 
-        <label className="block">
-          <span className="block text-sm font-medium text-primary-700">
-            Store Latitude
-          </span>
-          <input
-            type="number"
-            step="0.000001"
-            name="storeLat"
-            value={deliverySettings.storeLocation?.lat ?? ""}
-            onChange={onDeliverySettingsChange}
-            className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
-          />
-        </label>
-
-        <label className="block">
-          <span className="block text-sm font-medium text-primary-700">
-            Store Longitude
-          </span>
-          <input
-            type="number"
-            step="0.000001"
-            name="storeLng"
-            value={deliverySettings.storeLocation?.lng ?? ""}
-            onChange={onDeliverySettingsChange}
-            className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
-          />
-        </label>
+      <div className="mt-4 rounded-2xl border border-gold-200/70 bg-cream-50 px-4 py-3 text-sm text-primary-700">
+        Search for the store area below, use current browser location, or drop
+        the pin on the map. The system keeps coordinates internally for radius
+        checks, but the admin flow stays address-first.
       </div>
 
       <div className="mt-5">

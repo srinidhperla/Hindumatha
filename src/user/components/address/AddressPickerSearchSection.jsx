@@ -1,11 +1,23 @@
 import React from "react";
 
+const getPredictionParts = (description = "") => {
+  const [title, ...rest] = String(description || "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return {
+    title: title || description,
+    subtitle: rest.join(", "),
+  };
+};
+
 const AddressPickerSearchSection = ({
   addressQuery,
-  handleAddressQueryChange,
   addressPredictions,
-  handleSelectPrediction,
   addressLookupError,
+  handleAddressQueryChange,
+  handleSelectPrediction,
 }) => (
   <div className="px-4 pt-3 sm:px-5">
     <div className="relative">
@@ -26,43 +38,63 @@ const AddressPickerSearchSection = ({
         type="text"
         value={addressQuery}
         onChange={handleAddressQueryChange}
-        placeholder="Search for area, street name..."
-        className="w-full rounded-xl border border-primary-200 bg-white py-3 pl-11 pr-4 text-sm text-primary-800 placeholder-primary-400 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+        placeholder="Search for area, street name or landmark..."
+        className="w-full rounded-2xl border border-primary-200 bg-white py-3.5 pl-11 pr-4 text-sm text-primary-800 placeholder-primary-400 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
         autoFocus
       />
     </div>
 
     {addressPredictions.length > 0 && (
-      <div className="mt-1 max-h-44 overflow-y-auto rounded-xl border border-primary-200 bg-white shadow-lg">
+      <div className="mt-3 overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-[0_18px_40px_rgba(18,12,2,0.08)]">
         {addressPredictions.map((prediction) => {
-          const key = prediction.place_id || prediction.description;
+          const predictionKey = [
+            prediction.place_id,
+            prediction.description,
+          ]
+            .filter(Boolean)
+            .join("-");
+          const { title, subtitle } = getPredictionParts(
+            prediction.description,
+          );
+
           return (
             <button
-              key={key}
+              key={predictionKey}
               type="button"
               onClick={() => handleSelectPrediction(prediction)}
-              className="flex w-full items-start gap-3 border-b border-cream-100 px-4 py-3 text-left text-sm text-primary-700 transition hover:bg-caramel-50 last:border-b-0"
+              className="flex w-full items-start gap-3 border-b border-primary-100/70 px-4 py-3 text-left transition last:border-b-0 hover:bg-cream-50"
             >
-              <svg
-                className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <span className="line-clamp-2">{prediction.description}</span>
+              <span className="mt-0.5 inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-500">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-primary-900">
+                  {title}
+                </span>
+                {subtitle && (
+                  <span className="mt-0.5 block text-xs text-primary-500">
+                    {subtitle}
+                  </span>
+                )}
+              </span>
             </button>
           );
         })}

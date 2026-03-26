@@ -150,6 +150,13 @@ export const useCheckoutSubmit = ({
       const normalizedStreet = formData.address.trim();
       const normalizedCity = formData.city.trim();
       const normalizedPincode = formData.pincode.trim();
+      const resolvedFormattedAddress = String(
+        addressMeta.formattedAddress ||
+          addressQuery ||
+          [normalizedStreet, normalizedCity, normalizedPincode]
+            .filter(Boolean)
+            .join(", "),
+      ).trim();
       const profileAddress = {
         street: normalizedStreet,
         city: normalizedCity,
@@ -223,7 +230,7 @@ export const useCheckoutSubmit = ({
           longitude: Number.isFinite(Number(addressMeta.longitude))
             ? Number(addressMeta.longitude)
             : undefined,
-          formattedAddress: addressQuery || "",
+          formattedAddress: resolvedFormattedAddress,
           isDefault: true,
         });
       } else if (saveAddressForNextTime && !isAlreadySaved) {
@@ -247,7 +254,7 @@ export const useCheckoutSubmit = ({
           longitude: Number.isFinite(Number(addressMeta.longitude))
             ? Number(addressMeta.longitude)
             : undefined,
-          formattedAddress: addressQuery || "",
+          formattedAddress: resolvedFormattedAddress,
           isDefault: true,
         });
       }
@@ -271,7 +278,7 @@ export const useCheckoutSubmit = ({
           lat: Number(addressMeta.latitude),
           lng: Number(addressMeta.longitude),
           label: addressLabel.trim() || "Home",
-          formattedAddress: addressQuery || "",
+          formattedAddress: resolvedFormattedAddress,
         },
         deliveryMode: formData.deliveryMode,
         deliveryDateTime:
@@ -317,16 +324,22 @@ export const useCheckoutSubmit = ({
         return;
       }
 
-      await dispatch(createOrder(checkoutPayload)).unwrap();
+      const result = await dispatch(createOrder(checkoutPayload)).unwrap();
       dispatch(clearCart());
       dispatch(
         showToast({ message: "Order placed successfully.", type: "success" }),
       );
-      setOrderSuccess(true);
+      // FIX 3: Redirect to order-confirmed page after successful order
+      const orderId = result?._id;
+      if (orderId) {
+        scrollToPageTop();
+        navigate(`/order-confirmed/${orderId}`);
+      } else {
+        setOrderSuccess(true);
+      }
     } catch (submitError) {
       const errorMessage =
         submitError?.error || submitError?.message || "Failed to create order";
-      console.error("Order failed:", errorMessage);
       dispatch(showToast({ message: errorMessage, type: "error" }));
     }
   };

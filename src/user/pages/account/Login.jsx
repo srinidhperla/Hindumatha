@@ -20,7 +20,12 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(user?.role === "admin" ? "/admin" : "/");
+      // FIX 10: Handle role-based redirects - admin to /admin, delivery to /delivery, user to /
+      const redirectPath =
+        user?.role === "admin" ? "/admin" :
+        user?.role === "delivery" ? "/delivery" :
+        "/";
+      navigate(redirectPath);
     }
   }, [isAuthenticated, navigate, user]);
 

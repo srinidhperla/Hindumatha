@@ -3,6 +3,12 @@ import { updateProfile } from "@/features/auth/authSlice";
 import { showToast } from "@/features/uiSlice";
 import { normalizeUserSavedAddresses } from "@/user/components/order/orderHelpers";
 
+const getAddressText = (address = {}) =>
+  String(address?.formattedAddress || "").trim() ||
+  [address?.street, address?.landmark, address?.city, address?.state, address?.zipCode]
+    .filter(Boolean)
+    .join(", ");
+
 const toSavedAddressPayload = (addresses) =>
   addresses.map((address) => ({
     label: address.label || "Saved address",
@@ -42,6 +48,7 @@ export const useCheckoutAddressState = ({
     placeId: "",
     latitude: null,
     longitude: null,
+    formattedAddress: "",
   });
   const [addressQuery, setAddressQuery] = useState("");
 
@@ -75,7 +82,10 @@ export const useCheckoutAddressState = ({
       longitude: Number.isFinite(Number(defaultAddress.longitude))
         ? Number(defaultAddress.longitude)
         : null,
+      formattedAddress: getAddressText(defaultAddress),
     });
+    setAddressLabel(defaultAddress.label || "Home");
+    setAddressQuery(getAddressText(defaultAddress));
   }, [selectedAddressFromState, setFormData, user]);
 
   useEffect(() => {
@@ -154,7 +164,10 @@ export const useCheckoutAddressState = ({
       longitude: Number.isFinite(Number(address.longitude))
         ? Number(address.longitude)
         : null,
+      formattedAddress: getAddressText(address),
     });
+    setAddressLabel(address.label || "Home");
+    setAddressQuery(getAddressText(address));
   };
 
   const handleSavedAddressSelect = (address) => {
@@ -170,7 +183,12 @@ export const useCheckoutAddressState = ({
     setEditingAddressId("");
     setSelectedAddressId("");
     setAddressQuery("");
-    setAddressMeta({ placeId: "", latitude: null, longitude: null });
+    setAddressMeta({
+      placeId: "",
+      latitude: null,
+      longitude: null,
+      formattedAddress: "",
+    });
     setFormData((prev) => ({
       ...prev,
       address: "",
@@ -190,6 +208,7 @@ export const useCheckoutAddressState = ({
   };
 
   const handleDeleteSavedAddress = async (addressId) => {
+    const wasModalOpen = addressMode === "edit" || addressMode === "new";
     const nextAddresses = savedAddresses.filter(
       (entry) => entry.id !== addressId,
     );
@@ -207,16 +226,36 @@ export const useCheckoutAddressState = ({
     try {
       await persistAddressesToProfile(nextAddresses, "Address deleted.");
 
-      if (selectedAddressId !== addressId) {
+      // If deleted address was selected, switch to a new default
+      if (selectedAddressId !== addressId && !wasModalOpen) {
         return;
       }
 
+      // Select a fallback address if available, otherwise clear selection
       const fallback =
         nextAddresses.find((entry) => entry.isDefault) || nextAddresses[0];
       if (fallback) {
-        handleSavedAddressSelect(fallback);
+        setSelectedAddressId(fallback.id);
+        setEditingAddressId(wasModalOpen ? fallback.id : "");
+        setAddressMode(wasModalOpen ? "edit" : "saved");
+        applySelectedAddress(fallback);
       } else {
-        handleStartNewAddress();
+        setAddressMode("new");
+        setEditingAddressId("");
+        setSelectedAddressId("");
+        setAddressQuery("");
+        setAddressMeta({
+          placeId: "",
+          latitude: null,
+          longitude: null,
+          formattedAddress: "",
+        });
+        setSaveAddressForNextTime(true);
+        setFormData((prev) => ({
+          ...prev,
+          address: "",
+          pincode: "",
+        }));
       }
     } catch (error) {
       dispatch(

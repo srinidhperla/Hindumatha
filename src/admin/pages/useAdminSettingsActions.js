@@ -100,8 +100,6 @@ export const useAdminSettingsActions = ({
       `Delivery radius (km): ${
         Number.isFinite(radius) && radius >= 0 ? radius : "N/A"
       }`,
-      `Store latitude: ${lat}`,
-      `Store longitude: ${lng}`,
       `Google Maps: ${buildMapsUrl(lat, lng)}`,
     ].join("\n");
 
@@ -131,8 +129,6 @@ export const useAdminSettingsActions = ({
       `Delivery radius (km): ${
         Number.isFinite(radius) && radius >= 0 ? radius : "N/A"
       }`,
-      `Store latitude: ${lat}`,
-      `Store longitude: ${lng}`,
       `Google Maps: ${buildMapsUrl(lat, lng)}`,
     ].join("\n");
 

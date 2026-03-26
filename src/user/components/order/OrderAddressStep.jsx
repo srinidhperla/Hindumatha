@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import AddressPickerModal from "@/user/components/address/AddressPickerModal";
+import { formatAddressText } from "@/utils/mapsLinks";
 
 const OrderAddressStep = ({
   savedAddresses,
@@ -75,9 +76,7 @@ const OrderAddressStep = ({
                           )}
                         </p>
                         <p className="mt-1 text-sm text-primary-600">
-                          {[address.street, address.city, address.zipCode]
-                            .filter(Boolean)
-                            .join(", ")}
+                          {formatAddressText(address)}
                         </p>
                       </div>
                     </div>

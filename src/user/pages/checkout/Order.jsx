@@ -152,6 +152,7 @@ const Order = () => {
         placeId: "",
         latitude: null,
         longitude: null,
+        formattedAddress: "",
       });
     }
 
@@ -190,6 +191,7 @@ const Order = () => {
       placeId: addressData.placeId || "",
       latitude: Number(addressData.latitude),
       longitude: Number(addressData.longitude),
+      formattedAddress: addressData.formattedAddress || "",
     });
     addressState.setAddressLabel(addressData.label || "Home");
     addressState.setAddressQuery(addressData.formattedAddress || "");

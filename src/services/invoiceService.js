@@ -23,7 +23,6 @@ export const downloadInvoicePDF = (order) => {
 
     document.body.appendChild(iframe);
   } catch (error) {
-    console.error("Error downloading invoice:", error);
     throw error;
   }
 };
@@ -42,7 +41,6 @@ export const downloadInvoiceHTML = (order) => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error("Error downloading invoice HTML:", error);
     throw error;
   }
 };

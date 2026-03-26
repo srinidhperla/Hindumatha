@@ -1,6 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   fetchSite,
+  putCategoryOrder,
   putSiteSettings,
   getAlertStatus,
   postTestAlertEmail,
@@ -33,6 +34,19 @@ export const updateSiteSettings = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         toRejectPayload(error, "Failed to update settings"),
+      );
+    }
+  },
+);
+
+export const updateSiteCategoryOrder = createAsyncThunk(
+  "site/updateSiteCategoryOrder",
+  async (categoryOrder, { rejectWithValue }) => {
+    try {
+      return await putCategoryOrder(categoryOrder);
+    } catch (error) {
+      return rejectWithValue(
+        toRejectPayload(error, "Failed to update category order"),
       );
     }
   },

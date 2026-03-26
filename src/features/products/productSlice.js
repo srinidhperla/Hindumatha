@@ -5,6 +5,7 @@ import {
   createNewProduct,
   updateExistingProduct,
   patchProductInventory,
+  putProductDisplayOrder,
   deleteExistingProduct,
   postProductReview,
   renameCategoryAPI,
@@ -17,7 +18,7 @@ const getErrorPayload = (error, fallbackMessage) =>
 // Async Thunks
 export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
-  async (_, { rejectWithValue }) => {
+  async (options = {}, { rejectWithValue }) => {
     try {
       return await fetchAllProducts();
     } catch (error) {
@@ -25,6 +26,15 @@ export const fetchProducts = createAsyncThunk(
         getErrorPayload(error, "Failed to fetch products"),
       );
     }
+  },
+  {
+    condition: (options = {}, { getState }) => {
+      const { products } = getState();
+      if (options?.force) {
+        return true;
+      }
+      return !products.loading && !products.loaded;
+    },
   },
 );
 
@@ -133,6 +143,19 @@ export const deleteCategory = createAsyncThunk(
   },
 );
 
+export const updateProductDisplayOrder = createAsyncThunk(
+  "products/updateProductDisplayOrder",
+  async ({ category, productIds }, { rejectWithValue }) => {
+    try {
+      return await putProductDisplayOrder({ category, productIds });
+    } catch (error) {
+      return rejectWithValue(
+        getErrorPayload(error, "Failed to save product order"),
+      );
+    }
+  },
+);
+
 const initialState = {
   products: [],
   product: null,
@@ -206,6 +229,18 @@ const productSlice = createSlice({
         if (state.product?._id === action.payload._id) {
           state.product = action.payload;
         }
+      })
+      .addCase(updateProductDisplayOrder.fulfilled, (state, action) => {
+        const updatedProducts = Array.isArray(action.payload?.products)
+          ? action.payload.products
+          : [];
+        const updatedMap = new Map(
+          updatedProducts.map((product) => [product._id, product]),
+        );
+
+        state.products = state.products.map((product) =>
+          updatedMap.get(product._id) || product,
+        );
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.products = state.products.filter((p) => p._id !== action.payload);

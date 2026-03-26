@@ -8,12 +8,23 @@ import {
 } from "@/utils/productOptions";
 import { toCoordinate } from "@/user/components/order/addressGeocoding";
 export {
+  GOOGLE_MAPS_API_KEY,
   GEOAPIFY_API_KEY,
+  attachGoogleMapClickListener,
+  attachGoogleMarkerDragEnd,
+  calculateDistanceMatrix,
+  createGoogleInfoWindow,
+  createGoogleMap,
+  createGoogleMarker,
+  flyToGoogleLocation,
   hasValidCoordinates,
+  isGoogleMapsSdkReady,
+  removeGoogleInstance,
   reverseGeocodeCoordinates,
   searchAddressSuggestions,
-  toAddressFromPlaceResult,
+  setGoogleMarkerCoordinates,
   toAddressFromSuggestion,
+  waitForGoogleMapsSdk,
 } from "@/user/components/order/addressGeocoding";
 
 const CHECKOUT_STORAGE_KEY = "bakeryPendingCheckout";

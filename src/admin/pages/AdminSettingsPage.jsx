@@ -53,7 +53,6 @@ const AdminSettingsPage = ({ onToast }) => {
 
   const {
     handleUseCurrentStoreLocation,
-    handleCopyCoordinates,
     handleCopyMapsLink,
     handleCopyDeliveryConfig,
     handleDownloadDeliveryConfig,
@@ -97,7 +96,6 @@ const AdminSettingsPage = ({ onToast }) => {
         onDeliverySettingsChange={handleDeliverySettingsChange}
         onStoreLocationSelect={handleStoreLocationSelect}
         onUseCurrentStoreLocation={handleUseCurrentStoreLocation}
-        onCopyCoordinates={handleCopyCoordinates}
         onCopyMapsLink={handleCopyMapsLink}
         onCopyDeliveryConfig={handleCopyDeliveryConfig}
         onDownloadDeliveryConfig={handleDownloadDeliveryConfig}

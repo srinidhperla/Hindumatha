@@ -34,6 +34,7 @@ const useProfileAddressBook = ({ user, dispatch, fallbackPhone }) => {
           longitude: Number.isFinite(Number(address?.longitude))
             ? Number(address.longitude)
             : undefined,
+          formattedAddress: address?.formattedAddress || "",
           isDefault: address?.isDefault === true,
         }))
       : [];
@@ -168,6 +169,7 @@ const useProfileAddressBook = ({ user, dispatch, fallbackPhone }) => {
 
     try {
       await persistSavedAddresses(nextAddresses, "Address removed.");
+      setSavedAddresses(nextAddresses);
       if (editingAddressIndex === index) {
         resetAddressDraft();
       }

@@ -94,7 +94,10 @@ const AdminDashboard = () => {
         <Suspense fallback={<AdminPageFallback />}>
           <Routes>
             <Route index element={<Navigate to="overview" replace />} />
-            <Route path="overview" element={<AdminOverviewPage />} />
+            <Route
+              path="overview"
+              element={<AdminOverviewPage onToast={showToast} />}
+            />
             <Route
               path="orders"
               element={<AdminOrdersPage onToast={showToast} />}

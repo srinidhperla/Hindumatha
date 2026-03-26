@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const HIDDEN_PATHS = new Set(["/", "/login", "/register"]);
 
@@ -26,6 +27,7 @@ const formatPageLabel = (pathname) => {
 const PageBackBar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
 
   if (HIDDEN_PATHS.has(location.pathname)) {
     return null;
@@ -36,6 +38,16 @@ const PageBackBar = () => {
   const handleBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
+      return;
+    }
+
+    if (user?.role === "delivery") {
+      navigate("/delivery");
+      return;
+    }
+
+    if (user?.role === "admin") {
+      navigate("/admin/orders");
       return;
     }
 

@@ -5,11 +5,14 @@ export const fetchSite = () => apiClient.get("/site").then((res) => res.data);
 export const putSiteSettings = (settingsData) =>
   apiClient.put("/site/settings", settingsData).then((res) => res.data);
 
+export const putCategoryOrder = (categoryOrder) =>
+  apiClient.put("/site/category-order", { categoryOrder }).then((res) => res.data);
+
 export const getAlertStatus = () =>
   apiClient.get("/site/alerts/status").then((res) => res.data);
 
 export const postTestAlertEmail = () =>
-  apiClient.post("/site/alerts/test-email", {}).then((res) => res.data);
+  apiClient.post("/admin/test-email", {}).then((res) => res.data);
 
 export const getPaymentStatus = () =>
   apiClient.get("/site/payments/status").then((res) => res.data);

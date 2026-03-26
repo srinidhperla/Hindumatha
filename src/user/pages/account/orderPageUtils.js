@@ -48,6 +48,7 @@ export const getOrderTimelineEvents = (order) => {
 
 export const getTimelineActorLabel = (actorRole) => {
   if (actorRole === "admin") return "by bakery";
+  if (actorRole === "delivery") return "by delivery partner";
   if (actorRole === "user") return "by you";
   return "automatic";
 };
@@ -55,12 +56,62 @@ export const getTimelineActorLabel = (actorRole) => {
 export const formatAddress = (deliveryAddress = {}) =>
   [
     deliveryAddress.street,
+    deliveryAddress.landmark,
     deliveryAddress.city,
     deliveryAddress.state,
     deliveryAddress.zipCode,
   ]
     .filter(Boolean)
     .join(", ");
+
+export const formatRequestedDelivery = (order) => {
+  if (order?.deliveryMode === "now") {
+    return "Deliver now";
+  }
+
+  const dateLabel = order?.deliveryDate
+    ? new Date(order.deliveryDate).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "Scheduled";
+
+  return `${dateLabel}${order?.deliveryTime ? ` at ${order.deliveryTime}` : ""}`;
+};
+
+export const formatEstimatedDelivery = (order) => {
+  const key = String(order?.estimatedDeliveryTime || "").trim();
+  if (!key) {
+    return "Awaiting bakery confirmation";
+  }
+
+  if (key === "custom") {
+    return order?.customDeliveryTime || "Custom timing";
+  }
+
+  const labels = {
+    "15min": "15 minutes",
+    "30min": "30 minutes",
+    "45min": "45 minutes",
+    "1hour": "1 hour",
+    "1.5hours": "1.5 hours",
+    "2hours": "2 hours",
+  };
+
+  return labels[key] || key;
+};
+
+export const getRejectionReasonLabel = (reason) => {
+  const labels = {
+    outOfStock: "Out of stock",
+    tooFar: "Too far from delivery area",
+    shopClosed: "Shop closed",
+    other: "Other",
+  };
+
+  return labels[reason] || reason || "";
+};
 
 export const getPaymentMethodLabel = (paymentMethod) => {
   if (!paymentMethod) {

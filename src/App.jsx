@@ -1,5 +1,11 @@
 import React, { Suspense, lazy, useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import {
+  Navigate,
+  Routes,
+  Route,
+  useLocation,
+  useParams,
+} from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Navbar from "@/shared/common/Navbar";
 import Footer from "@/shared/common/Footer";
@@ -8,6 +14,7 @@ import UserToast from "@/shared/ui/Toast";
 import PageBackBar from "@/shared/common/PageBackBar";
 import PrivateRoute from "@/user/components/auth/PrivateRoute";
 import AdminRoute from "@/admin/components/routes/AdminRoute";
+import DeliveryRoute from "@/delivery/components/routes/DeliveryRoute";
 import { getProfile } from "@/features/auth/authSlice";
 import { fetchSiteContent } from "@/features/site/siteSlice";
 import { fetchProducts } from "@/features/products/productSlice";
@@ -22,16 +29,23 @@ const Login = lazy(() => import("@/user/pages/account/Login"));
 const Register = lazy(() => import("@/user/pages/account/Register"));
 const Order = lazy(() => import("@/user/pages/checkout/Order"));
 const Payment = lazy(() => import("@/user/pages/checkout/Payment"));
+const OrderConfirmed = lazy(() => import("@/user/pages/OrderConfirmed"));
 const Orders = lazy(() => import("@/user/pages/account/Orders"));
 const Profile = lazy(() => import("@/user/pages/account/Profile"));
-const ProductDetails = lazy(() => import("@/user/pages/shop/ProductDetails"));
 const AdminDashboard = lazy(() => import("@/admin/pages/AdminDashboard"));
+const DeliveryDashboard = lazy(() => import("@/delivery/pages/DeliveryDashboard"));
 
 const RouteFallback = () => (
   <div className="mx-auto flex w-full max-w-7xl items-center justify-center px-4 py-12 text-sm font-medium text-primary-500">
     Loading page...
   </div>
 );
+
+const ProductRouteRedirect = () => {
+  const { id } = useParams();
+  const targetPath = id ? `/menu?product=${encodeURIComponent(id)}` : "/menu";
+  return <Navigate to={targetPath} replace />;
+};
 
 const RouteViewportReset = () => {
   const location = useLocation();
@@ -69,6 +83,33 @@ function App() {
   const { loaded: siteLoaded, loading: siteLoading } = useSelector(
     (state) => state.site,
   );
+  const hideFooter = user?.role === "delivery";
+
+  // Ping backend on app load to wake up Render server
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 5000);
+
+    const pingBackend = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || "/api";
+        await fetch(`${apiUrl}/health`, {
+          method: "GET",
+          signal: controller.signal,
+        });
+      } catch {
+        // Silently fail - health check is just to wake up server
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+    };
+    pingBackend();
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   useEffect(() => {
     if (token && !user && !loading) {
@@ -111,7 +152,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/menu" element={<Menu />} />
-              <Route path="/products/:id" element={<ProductDetails />} />
+              <Route path="/products/:id" element={<ProductRouteRedirect />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/cart" element={<Cart />} />
@@ -130,6 +171,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Payment />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/order-confirmed/:orderId"
+                element={
+                  <PrivateRoute>
+                    <OrderConfirmed />
                   </PrivateRoute>
                 }
               />
@@ -157,10 +206,18 @@ function App() {
                   </AdminRoute>
                 }
               />
+              <Route
+                path="/delivery/*"
+                element={
+                  <DeliveryRoute>
+                    <DeliveryDashboard />
+                  </DeliveryRoute>
+                }
+              />
             </Routes>
           </Suspense>
         </main>
-        <Footer />
+        {!hideFooter && <Footer />}
       </div>
     </AdminOrderAlertsProvider>
   );

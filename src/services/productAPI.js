@@ -17,6 +17,11 @@ export const patchProductInventory = (id, inventoryData) =>
     .patch(`/products/${id}/inventory`, inventoryData)
     .then((res) => res.data);
 
+export const putProductDisplayOrder = ({ category, productIds }) =>
+  apiClient
+    .put("/products/display-order", { category, productIds })
+    .then((res) => res.data);
+
 export const deleteExistingProduct = (id) =>
   apiClient.delete(`/products/${id}`).then((res) => res.data);
 
