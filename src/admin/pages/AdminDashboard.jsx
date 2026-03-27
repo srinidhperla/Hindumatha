@@ -1,9 +1,17 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { io } from "socket.io-client";
 import AdminToast from "@/admin/components/ui/AdminToast";
 import { fetchOrders } from "@/features/orders/orderSlice";
 import { fetchProducts } from "@/features/products/productSlice";
+import {
+  fetchAlertStatus,
+  fetchPaymentStatus,
+  fetchSiteContent,
+} from "@/features/site/siteThunks";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const AdminAnalyticsPage = lazy(() => import("./AdminAnalyticsPage"));
 const AdminDeliveryTimingPage = lazy(() => import("./AdminDeliveryTimingPage"));
@@ -33,15 +41,77 @@ const AdminDashboard = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const [toast, setToast] = useState(null);
+  const [syncVersion, setSyncVersion] = useState(0);
+  const { token, user } = useSelector((state) => state.auth);
 
   const { loaded: productsLoaded } = useSelector((state) => state.products);
 
   useEffect(() => {
     dispatch(fetchOrders());
+    dispatch(fetchSiteContent());
+    dispatch(fetchAlertStatus());
+    dispatch(fetchPaymentStatus());
     if (!productsLoaded) {
       dispatch(fetchProducts());
     }
   }, [dispatch, productsLoaded]);
+
+  useEffect(() => {
+    if (!token || user?.role !== "admin") {
+      return undefined;
+    }
+
+    const socket = io(API_URL, {
+      auth: { token },
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+      reconnection: true,
+    });
+
+    const refreshAdminData = (scope = "") => {
+      const normalizedScope = String(scope || "").toLowerCase();
+
+      if (!normalizedScope || normalizedScope === "orders") {
+        dispatch(fetchOrders());
+      }
+
+      if (
+        !normalizedScope ||
+        normalizedScope === "products" ||
+        normalizedScope === "inventory"
+      ) {
+        dispatch(fetchProducts({ force: true }));
+      }
+
+      if (!normalizedScope || normalizedScope === "settings") {
+        dispatch(fetchSiteContent());
+        dispatch(fetchAlertStatus());
+        dispatch(fetchPaymentStatus());
+      }
+
+      setSyncVersion((current) => current + 1);
+    };
+
+    const handleAdminSync = (event) => {
+      refreshAdminData(event?.scope);
+    };
+
+    // Keep legacy order events in sync too.
+    const handleOrderEvent = () => {
+      refreshAdminData("orders");
+    };
+
+    socket.on("admin-data-updated", handleAdminSync);
+    socket.on("order-created", handleOrderEvent);
+    socket.on("order-status-updated", handleOrderEvent);
+
+    return () => {
+      socket.off("admin-data-updated", handleAdminSync);
+      socket.off("order-created", handleOrderEvent);
+      socket.off("order-status-updated", handleOrderEvent);
+      socket.disconnect();
+    };
+  }, [dispatch, token, user?.role]);
 
   useEffect(() => {
     if (!toast) {
@@ -96,28 +166,41 @@ const AdminDashboard = () => {
             <Route index element={<Navigate to="overview" replace />} />
             <Route
               path="overview"
-              element={<AdminOverviewPage onToast={showToast} />}
+              element={
+                <AdminOverviewPage onToast={showToast} syncVersion={syncVersion} />
+              }
             />
             <Route
               path="orders"
-              element={<AdminOrdersPage onToast={showToast} />}
+              element={
+                <AdminOrdersPage onToast={showToast} syncVersion={syncVersion} />
+              }
             />
             <Route
               path="products"
-              element={<AdminProductsPage onToast={showToast} />}
+              element={
+                <AdminProductsPage onToast={showToast} syncVersion={syncVersion} />
+              }
             />
             <Route
               path="inventory"
-              element={<AdminInventoryPage onToast={showToast} />}
+              element={
+                <AdminInventoryPage onToast={showToast} syncVersion={syncVersion} />
+              }
             />
             <Route
               path="delivery-timing"
-              element={<AdminDeliveryTimingPage onToast={showToast} />}
+              element={<AdminDeliveryTimingPage syncVersion={syncVersion} />}
             />
-            <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route
+              path="analytics"
+              element={<AdminAnalyticsPage syncVersion={syncVersion} />}
+            />
             <Route
               path="settings"
-              element={<AdminSettingsPage onToast={showToast} />}
+              element={
+                <AdminSettingsPage onToast={showToast} syncVersion={syncVersion} />
+              }
             />
           </Routes>
         </Suspense>

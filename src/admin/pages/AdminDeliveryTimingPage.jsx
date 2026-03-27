@@ -7,7 +7,7 @@ import {
   toTwelveHourParts,
 } from "./adminDeliveryTimingUtils";
 
-const AdminDeliveryTimingPage = () => {
+const AdminDeliveryTimingPage = ({ syncVersion = 0 }) => {
   const {
     saving,
     activeDeliveryDay,
@@ -37,8 +37,10 @@ const AdminDeliveryTimingPage = () => {
     handleSaveDeliveryFee,
   } = useAdminDeliveryTimingState();
 
+  const renderSyncVersion = syncVersion;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-sync-version={renderSyncVersion}>
       <AdminDeliveryTimingSection
         normalizedEditorDeliverySettings={normalizedEditorDeliverySettings}
         pauseUntilLabel={pauseUntilLabel}

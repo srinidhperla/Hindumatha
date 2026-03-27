@@ -15,7 +15,7 @@ import { AdminSettingsDeliverySection } from "./AdminSettingsDeliverySection";
 import { useAdminSettingsState } from "./useAdminSettingsState";
 import { useAdminSettingsActions } from "./useAdminSettingsActions";
 
-const AdminSettingsPage = ({ onToast }) => {
+const AdminSettingsPage = ({ onToast, syncVersion = 0 }) => {
   const dispatch = useDispatch();
   const {
     businessInfo: savedBusinessInfo,
@@ -70,8 +70,11 @@ const AdminSettingsPage = ({ onToast }) => {
     coupons,
   });
 
+  // Keep prop consumption explicit for realtime sync re-rendering.
+  const renderSyncVersion = syncVersion;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-sync-version={renderSyncVersion}>
       <PaymentGatewayStatusSection paymentStatus={paymentStatus} />
 
       <AlertEmailStatusSection

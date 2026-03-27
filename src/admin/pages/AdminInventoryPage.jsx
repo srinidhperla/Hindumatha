@@ -112,7 +112,7 @@ const sortProducts = (products = []) =>
     return left.name.localeCompare(right.name);
   });
 
-const AdminInventoryPage = ({ onToast }) => {
+const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
   const dispatch = useDispatch();
   const { products, loading } = useSelector((state) => state.products);
   const { categoryOrder = [] } = useSelector((state) => state.site);
@@ -160,7 +160,7 @@ const AdminInventoryPage = ({ onToast }) => {
     });
 
     return ordered;
-  }, [categoryOrder, products]);
+  }, [categoryOrder, products, syncVersion]);
 
   const filteredProducts = useMemo(
     () =>

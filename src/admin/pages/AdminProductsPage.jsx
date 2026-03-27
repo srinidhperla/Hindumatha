@@ -26,7 +26,7 @@ import AddOnFormModal from "../components/modals/AddOnFormModal";
 import AdminProductsToolbar from "../components/products/AdminProductsToolbar";
 import AdminProductsGrid from "../components/products/AdminProductsGrid";
 
-const AdminProductsPage = ({ onToast }) => {
+const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
   const dispatch = useDispatch();
   const { products, loading } = useSelector((state) => state.products);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,7 +58,7 @@ const AdminProductsPage = ({ onToast }) => {
           ...products.map((product) => product.category).filter(Boolean),
         ]),
       ),
-    [products],
+    [products, syncVersion],
   );
 
   const availableFlavors = useMemo(

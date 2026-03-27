@@ -87,7 +87,44 @@ const canEditProgressStatus = (status) =>
 
 const getProgressEditOptions = () => ORDER_STATUS_OPTIONS;
 
-const AdminOrdersPage = ({ onToast }) => {
+const SORTABLE_COLUMNS = {
+  order: "order",
+  customer: "customer",
+  status: "status",
+  paymentStatus: "paymentStatus",
+  paymentMethod: "paymentMethod",
+  totalAmount: "totalAmount",
+  requestedDelivery: "requestedDelivery",
+  estimatedDelivery: "estimatedDelivery",
+  createdAt: "createdAt",
+};
+
+const getSortValue = (order, field) => {
+  switch (field) {
+    case SORTABLE_COLUMNS.order:
+      return getOrderDisplayCode(order);
+    case SORTABLE_COLUMNS.customer:
+      return order?.user?.name || "";
+    case SORTABLE_COLUMNS.status:
+      return order?.status || "";
+    case SORTABLE_COLUMNS.paymentStatus:
+      return order?.paymentStatus || "";
+    case SORTABLE_COLUMNS.paymentMethod:
+      return getPaymentMethodLabel(order?.paymentMethod || "");
+    case SORTABLE_COLUMNS.totalAmount:
+      return Number(order?.totalAmount || 0);
+    case SORTABLE_COLUMNS.requestedDelivery:
+      return formatRequestedDelivery(order);
+    case SORTABLE_COLUMNS.estimatedDelivery:
+      return formatEstimatedDelivery(order);
+    case SORTABLE_COLUMNS.createdAt:
+      return new Date(order?.createdAt || 0).getTime();
+    default:
+      return "";
+  }
+};
+
+const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
   const dispatch = useDispatch();
   const { orders, deliveryPartners, loading } = useSelector(
     (state) => state.orders,
@@ -96,6 +133,8 @@ const AdminOrdersPage = ({ onToast }) => {
   const [actionMode, setActionMode] = useState("");
   const [actionOrder, setActionOrder] = useState(null);
   const [actionSubmitting, setActionSubmitting] = useState(false);
+  const [sortField, setSortField] = useState(SORTABLE_COLUMNS.createdAt);
+  const [sortDirection, setSortDirection] = useState("desc");
   const latestOrder = useMemo(() => orders?.[0] || null, [orders]);
   const handledOrderRef = useRef(null);
   const {
@@ -116,7 +155,36 @@ const AdminOrdersPage = ({ onToast }) => {
   useEffect(() => {
     dispatch(fetchOrders());
     dispatch(fetchAdminDeliveryPartners());
-  }, [dispatch]);
+  }, [dispatch, syncVersion]);
+
+  const sortedOrders = useMemo(() => {
+    const directionMultiplier = sortDirection === "asc" ? 1 : -1;
+    return [...(orders || [])].sort((left, right) => {
+      const leftValue = getSortValue(left, sortField);
+      const rightValue = getSortValue(right, sortField);
+
+      if (typeof leftValue === "number" && typeof rightValue === "number") {
+        return (leftValue - rightValue) * directionMultiplier;
+      }
+
+      return (
+        String(leftValue || "").localeCompare(String(rightValue || ""), "en", {
+          sensitivity: "base",
+          numeric: true,
+        }) * directionMultiplier
+      );
+    });
+  }, [orders, sortDirection, sortField]);
+
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortField(field);
+    setSortDirection("asc");
+  };
 
   useEffect(() => {
     if (
@@ -246,8 +314,53 @@ const AdminOrdersPage = ({ onToast }) => {
         </SurfaceCard>
       )}
 
-      <div className="grid gap-4">
-        {orders?.map((order) => {
+      <SurfaceCard className="overflow-hidden p-0">
+        <div className="overflow-x-auto">
+          <table className="min-w-[1480px] divide-y divide-gold-200/60 text-sm">
+            <thead className="bg-gold-50/50">
+              <tr>
+                {[
+                  { key: SORTABLE_COLUMNS.order, label: "Order" },
+                  { key: SORTABLE_COLUMNS.customer, label: "Customer" },
+                  { key: SORTABLE_COLUMNS.status, label: "Status" },
+                  { key: SORTABLE_COLUMNS.paymentStatus, label: "Payment" },
+                  { key: SORTABLE_COLUMNS.paymentMethod, label: "Method" },
+                  { key: SORTABLE_COLUMNS.totalAmount, label: "Total" },
+                  { key: SORTABLE_COLUMNS.requestedDelivery, label: "Requested" },
+                  { key: SORTABLE_COLUMNS.estimatedDelivery, label: "Estimated" },
+                  { key: SORTABLE_COLUMNS.createdAt, label: "Created" },
+                ].map((column) => (
+                  <th
+                    key={column.key}
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700"
+                  >
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:text-primary-900"
+                      onClick={() => toggleSort(column.key)}
+                    >
+                      {column.label}
+                      {sortField === column.key
+                        ? sortDirection === "asc"
+                          ? "▲"
+                          : "▼"
+                        : "↕"}
+                    </button>
+                  </th>
+                ))}
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700">
+                  View Details
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700">
+                  Assign to Delivery
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700">
+                  Status Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gold-200/40 bg-white">
+              {sortedOrders.map((order) => {
           const canAssignDelivery =
             order.status !== "pending" &&
             order.status !== "cancelled" &&
@@ -255,185 +368,149 @@ const AdminOrdersPage = ({ onToast }) => {
           const isProgressEditable = canEditProgressStatus(order.status);
 
           return (
-            <SurfaceCard
-              key={order._id}
-              className="p-5 admin-motion hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(18,12,2,0.14)]"
-            >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Order
-                  </p>
-                  <p className="mt-1 break-all text-sm font-semibold text-primary-900">
-                    {getOrderDisplayCode(order)}
-                  </p>
-                  <p className="mt-2 text-sm text-primary-700">
-                    {order.user?.name || "Guest Customer"}
-                  </p>
-                  <p className="text-xs text-primary-500">
-                    {order.user?.email || "No email"}
-                  </p>
-                  <p className="text-xs font-semibold text-primary-700">
-                    {order.deliveryAddress?.phone ||
-                      order.user?.phone ||
-                      "No phone"}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusChip
-                    tone={getStatusTone(order.status)}
-                    className="capitalize"
-                  >
-                    {order.status}
-                  </StatusChip>
-                  <StatusChip
-                    tone={getPaymentStatusTone(order.paymentStatus)}
-                    className="capitalize"
-                  >
-                    {order.paymentStatus || "pending"}
-                  </StatusChip>
-                  <StatusChip tone="info">
-                    {getPaymentMethodLabel(order.paymentMethod)}
-                  </StatusChip>
-                  <StatusChip tone="accent">
-                    Rs.{Number(order.totalAmount || 0).toLocaleString("en-IN")}
-                  </StatusChip>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_240px]">
-                <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-500">
-                    Order summary
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-primary-900">
-                    {getOrderSummary(order)}
-                  </p>
-                  <p className="text-xs text-primary-600">
-                    Qty: {getOrderItemCount(order)}
-                  </p>
-                  {order.assignedDeliveryPartner?.name && (
-                    <p className="mt-2 text-xs font-semibold text-primary-700">
-                      Assigned to: {order.assignedDeliveryPartner.name}
+                <tr key={order._id} className="align-top hover:bg-gold-50/25">
+                  <td className="px-4 py-3">
+                    <p className="font-semibold text-primary-900">
+                      {getOrderDisplayCode(order)}
                     </p>
-                  )}
-                </div>
-
-                <div className="rounded-2xl border border-gold-200/60 bg-white/80 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-500">
-                    Customer asked for
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-primary-900">
-                    {formatRequestedDelivery(order)}
-                  </p>
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-primary-500">
-                    Estimated delivery
-                  </p>
-                  <p className="mt-1 text-sm text-primary-700">
-                    {formatEstimatedDelivery(order)}
-                  </p>
-                  {order.status === "cancelled" &&
-                    getRejectionReasonLabel(order) && (
-                      <p className="mt-2 text-sm text-rose-700">
-                        Reason: {getRejectionReasonLabel(order)}
-                        {order.rejectionMessage
-                          ? ` - ${order.rejectionMessage}`
-                          : ""}
+                    <p className="text-xs text-primary-600">
+                      {getOrderSummary(order)}
+                    </p>
+                    <p className="text-xs text-primary-500">
+                      Qty: {getOrderItemCount(order)}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-primary-900">
+                      {order.user?.name || "Guest Customer"}
+                    </p>
+                    <p className="text-xs text-primary-500">
+                      {order.user?.email || "No email"}
+                    </p>
+                    <p className="text-xs text-primary-700">
+                      {order.deliveryAddress?.phone ||
+                        order.user?.phone ||
+                        "No phone"}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusChip tone={getStatusTone(order.status)} className="capitalize">
+                      {order.status}
+                    </StatusChip>
+                    {order.status === "cancelled" && getRejectionReasonLabel(order) && (
+                      <p className="mt-1 text-xs text-rose-700">
+                        {getRejectionReasonLabel(order)}
                       </p>
                     )}
-                </div>
-
-                <div className="rounded-2xl border border-gold-200/60 bg-white/80 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-500">
-                    Delivery address
-                  </p>
-                  <p className="mt-1 text-sm text-primary-700">
-                    {[
-                      order.deliveryAddress?.street,
-                      order.deliveryAddress?.landmark,
-                      order.deliveryAddress?.city,
-                      order.deliveryAddress?.state,
-                      order.deliveryAddress?.zipCode,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "Address not provided"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {order.status === "pending" && (
-                  <ActionButton
-                    type="button"
-                    variant="success"
-                    onClick={() => openActionModal("accept", order)}
-                  >
-                    Accept
-                  </ActionButton>
-                )}
-                {order.status === "pending" && (
-                  <ActionButton
-                    type="button"
-                    variant="danger"
-                    onClick={() => openActionModal("reject", order)}
-                  >
-                    Reject
-                  </ActionButton>
-                )}
-                {canAssignDelivery && (
-                  <ActionButton
-                    type="button"
-                    variant="secondary"
-                    onClick={() => openActionModal("assign", order)}
-                  >
-                    {order.assignedDeliveryPartner
-                      ? "Reassign Delivery"
-                      : "Assign to Delivery"}
-                  </ActionButton>
-                )}
-                {isProgressEditable && (
-                  <select
-                    value={order.status}
-                    onChange={(event) => {
-                      const nextValue = event.target.value;
-                      if (!nextValue || nextValue === order.status) return;
-                      if (nextValue === "cancelled") {
-                        // Backend requires rejectionReason for cancelled status.
-                        openActionModal("reject", order);
-                        return;
-                      }
-                      handleDirectStatusChange(order._id, nextValue);
-                    }}
-                    className="rounded-2xl border border-gold-200/70 bg-white px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
-                    aria-label="Update order progress"
-                    title="Update order progress"
-                  >
-                    {getProgressEditOptions().map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <ActionButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setSelectedOrder(order)}
-                >
-                  View Details
-                </ActionButton>
-              </div>
-            </SurfaceCard>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusChip
+                      tone={getPaymentStatusTone(order.paymentStatus)}
+                      className="capitalize"
+                    >
+                      {order.paymentStatus || "pending"}
+                    </StatusChip>
+                  </td>
+                  <td className="px-4 py-3 text-primary-800">
+                    {getPaymentMethodLabel(order.paymentMethod)}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-primary-900">
+                    Rs.{Number(order.totalAmount || 0).toLocaleString("en-IN")}
+                  </td>
+                  <td className="px-4 py-3 text-primary-700">
+                    {formatRequestedDelivery(order)}
+                  </td>
+                  <td className="px-4 py-3 text-primary-700">
+                    {formatEstimatedDelivery(order)}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-primary-600">
+                    {new Date(order.createdAt).toLocaleString("en-IN")}
+                  </td>
+                  <td className="px-4 py-3">
+                    <ActionButton
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      View Details
+                    </ActionButton>
+                  </td>
+                  <td className="px-4 py-3">
+                    {canAssignDelivery ? (
+                      <ActionButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => openActionModal("assign", order)}
+                      >
+                        {order.assignedDeliveryPartner
+                          ? "Reassign Delivery"
+                          : "Assign to Delivery"}
+                      </ActionButton>
+                    ) : (
+                      <span className="text-xs text-primary-500">N/A</span>
+                    )}
+                    {order.assignedDeliveryPartner?.name && (
+                      <p className="mt-1 text-xs text-primary-700">
+                        {order.assignedDeliveryPartner.name}
+                      </p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex min-w-[240px] flex-wrap gap-2">
+                      {order.status === "pending" && (
+                        <ActionButton
+                          type="button"
+                          variant="success"
+                          onClick={() => openActionModal("accept", order)}
+                        >
+                          Accept
+                        </ActionButton>
+                      )}
+                      {order.status === "pending" && (
+                        <ActionButton
+                          type="button"
+                          variant="danger"
+                          onClick={() => openActionModal("reject", order)}
+                        >
+                          Reject
+                        </ActionButton>
+                      )}
+                      {isProgressEditable && (
+                        <select
+                          value={order.status}
+                          onChange={(event) => {
+                            const nextValue = event.target.value;
+                            if (!nextValue || nextValue === order.status) return;
+                            if (nextValue === "cancelled") {
+                              openActionModal("reject", order);
+                              return;
+                            }
+                            handleDirectStatusChange(order._id, nextValue);
+                          }}
+                          className="rounded-2xl border border-gold-200/70 bg-white px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
+                          aria-label="Update order progress"
+                          title="Update order progress"
+                        >
+                          {getProgressEditOptions().map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </td>
+                </tr>
           );
-        })}
+              })}
+            </tbody>
+          </table>
+        </div>
 
-        {!orders?.length && (
-          <SurfaceCard className="p-8 text-center text-primary-600">
-            No orders yet.
-          </SurfaceCard>
+        {!sortedOrders?.length && (
+          <div className="p-8 text-center text-primary-600">No orders yet.</div>
         )}
-      </div>
+      </SurfaceCard>
 
       <OrderDetailsModal
         order={selectedOrder}

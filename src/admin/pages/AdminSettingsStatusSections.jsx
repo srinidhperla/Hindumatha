@@ -82,12 +82,15 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
-            SMTP
+            Email Provider
           </p>
           <p
             className={`mt-2 text-sm font-semibold ${alertStatus.configured ? "text-emerald-700" : "text-amber-700"}`}
           >
             {alertStatus.configured ? "Configured" : "Not configured"}
+          </p>
+          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-primary-500">
+            {alertStatus.provider || "none"}
           </p>
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
@@ -111,23 +114,20 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
-            SMTP Server
+            Sender
           </p>
           <p className="mt-2 break-all text-sm font-semibold text-primary-900">
-            {alertStatus.host
-              ? `${alertStatus.host}:${alertStatus.port || 587}`
-              : "Not configured"}
+            {alertStatus.resendFrom || alertStatus.from || "Not configured"}
           </p>
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
-            TLS Mode
+            Missing Fields
           </p>
           <p className="mt-2 text-sm font-semibold text-primary-900">
-            {alertStatus.secure ? "SSL/TLS" : "STARTTLS/Plain"}
-          </p>
-          <p className="mt-1 text-xs text-primary-500">
-            Source: {alertStatus.secureSource || "unknown"}
+            {(alertStatus.missingResendFields || []).length
+              ? alertStatus.missingResendFields.join(", ")
+              : "None"}
           </p>
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">

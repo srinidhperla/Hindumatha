@@ -23,7 +23,7 @@ const COLORS = ["#7a5c0f", "#c9a84c", "#15803d", "#0284c7", "#dc2626", "#9333ea"
 const currencyFormatter = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
-const AdminAnalyticsPage = () => {
+const AdminAnalyticsPage = ({ syncVersion = 0 }) => {
   const [analytics, setAnalytics] = useState({
     totalRevenue: 0,
     averageOrderValue: 0,
@@ -79,7 +79,7 @@ const AdminAnalyticsPage = () => {
 
   useEffect(() => {
     loadAnalytics();
-  }, []);
+  }, [syncVersion]);
 
   const statusChartData = useMemo(
     () =>

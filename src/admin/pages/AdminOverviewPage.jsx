@@ -47,7 +47,7 @@ const formatRequestedDelivery = (order) => {
 const canEditProgressStatus = (status) =>
   ["confirmed", "preparing", "ready"].includes(String(status || ""));
 
-const AdminOverviewPage = ({ onToast = () => {} }) => {
+const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
   const dispatch = useDispatch();
   const { orders, loading: ordersLoading } = useSelector(
     (state) => state.orders,
@@ -115,7 +115,7 @@ const AdminOverviewPage = ({ onToast = () => {} }) => {
     return () => {
       mounted = false;
     };
-  }, [orders]);
+  }, [orders, syncVersion]);
 
   const metrics = useMemo(() => {
     const pendingOrders = (orders || []).filter(
