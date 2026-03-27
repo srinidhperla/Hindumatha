@@ -480,6 +480,52 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     await playAlertTone();
   }, [enableAlerts, ensureNotificationsReady, playAlertTone]);
 
+  const showBackgroundOrderNotification = useCallback(
+    async ({
+      title = "New bakery order",
+      body = "A new order needs attention.",
+      tag = "bakery-order-alert",
+    } = {}) => {
+      const permission = await ensureNotificationsReady();
+      if (permission !== "granted") {
+        return false;
+      }
+
+      // Prefer service worker notifications in background/minimized state.
+      if (canUseServiceWorker()) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          await registration.showNotification(title, {
+            body,
+            tag,
+            renotify: true,
+            requireInteraction: true,
+            silent: false,
+            icon: "/favicon.ico",
+            badge: "/favicon.ico",
+            data: { url: "/admin/orders" },
+          });
+          return true;
+        } catch {
+          // Fall back to window Notification below.
+        }
+      }
+
+      try {
+        new Notification(title, {
+          body,
+          tag,
+          requireInteraction: true,
+          silent: false,
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [ensureNotificationsReady],
+  );
+
   useEffect(() => {
     if (!canReceiveAdminAlerts || !alertsEnabled || audioEnabled) {
       return undefined;
@@ -642,13 +688,22 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       playAlertTone();
       startTitleBlink();
 
-      const permission = await ensureNotificationsReady();
-
-      if (permission === "granted" && !pushSubscribed) {
-        new Notification("New bakery order", {
+      // In hidden/minimized tabs, rely on system notifications for audible alert.
+      if (document.hidden) {
+        await showBackgroundOrderNotification({
+          title: "New bakery order",
           body: `${createdOrder?.user?.name || "A customer"} placed a new order. Accept it from admin orders.`,
-          requireInteraction: true,
-          silent: false,
+          tag: `bakery-order-alert-${orderId || "pending"}`,
+        });
+        return;
+      }
+
+      const permission = await ensureNotificationsReady();
+      if (permission === "granted" && !pushSubscribed) {
+        await showBackgroundOrderNotification({
+          title: "New bakery order",
+          body: `${createdOrder?.user?.name || "A customer"} placed a new order. Accept it from admin orders.`,
+          tag: `bakery-order-alert-${orderId || "pending"}`,
         });
       }
     };
@@ -773,6 +828,15 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       alertRepeatIntervalRef.current = window.setInterval(() => {
         playAlertTone();
         startTitleBlink();
+
+        // Browsers may throttle/suspend tab audio in background; keep notifying.
+        if (document.hidden) {
+          showBackgroundOrderNotification({
+            title: "Pending order waiting",
+            body: "A pending order still needs acceptance in admin orders.",
+            tag: "bakery-order-alert-pending-repeat",
+          }).catch(() => null);
+        }
       }, ALERT_REPEAT_MS);
     }
 
@@ -787,6 +851,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     activeAlertOrderIds.length,
     alertsEnabled,
     playAlertTone,
+    showBackgroundOrderNotification,
     startTitleBlink,
     stopTitleBlink,
   ]);
