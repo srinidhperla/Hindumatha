@@ -182,6 +182,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   const [activeAlertOrderIds, setActiveAlertOrderIds] = useState([]);
   const [lastCreatedOrder, setLastCreatedOrder] = useState(null);
   const audioContextRef = useRef(null);
+  const htmlAudioRef = useRef(null);
   const titleBlinkIntervalRef = useRef(null);
   const alertRepeatIntervalRef = useRef(null);
   const originalTitleRef = useRef(
@@ -271,6 +272,40 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     }
   }, [ensureAudioReady]);
 
+  const playHtmlAudioFallback = useCallback(async () => {
+    if (!alertsEnabled) {
+      return false;
+    }
+
+    try {
+      if (!htmlAudioRef.current) {
+        const audio = new Audio(ALERT_AUDIO_FILE_PATH);
+        audio.preload = "auto";
+        audio.loop = false;
+        htmlAudioRef.current = audio;
+      }
+
+      const audio = htmlAudioRef.current;
+      audio.currentTime = 0;
+      const playResult = audio.play();
+      if (playResult && typeof playResult.then === "function") {
+        await playResult;
+      }
+
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        navigator.vibrate([220, 120, 260, 120, 320]);
+      }
+
+      setAudioEnabled(true);
+      return true;
+    } catch {
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        navigator.vibrate([220, 120, 260]);
+      }
+      return false;
+    }
+  }, [alertsEnabled]);
+
   const playAlertTone = useCallback(async () => {
     if (!alertsEnabled) {
       return;
@@ -279,6 +314,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     try {
       const isReady = await ensureAudioReady();
       if (!isReady) {
+        await playHtmlAudioFallback();
         return;
       }
 
@@ -329,8 +365,9 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       }
     } catch {
       setAudioEnabled(false);
+      await playHtmlAudioFallback();
     }
-  }, [alertsEnabled, ensureAudioReady]);
+  }, [alertsEnabled, ensureAudioReady, playHtmlAudioFallback]);
 
   const unlockSound = useCallback(async () => {
     const isReady = await ensureAudioReady();
@@ -613,7 +650,13 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       // Auto-resume audio when tab becomes visible again (handles the most
       // common "sound paused after refresh / tab switch" scenario).
       if (!document.hidden && alertsEnabled && !audioEnabled) {
-        ensureAudioReady().catch(() => null);
+        ensureAudioReady()
+          .then((isReady) => {
+            if (!isReady) {
+              playHtmlAudioFallback().catch(() => null);
+            }
+          })
+          .catch(() => null);
       }
     };
 
@@ -628,6 +671,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     alertsEnabled,
     audioEnabled,
     ensureAudioReady,
+    playHtmlAudioFallback,
     startTitleBlink,
     stopTitleBlink,
   ]);
