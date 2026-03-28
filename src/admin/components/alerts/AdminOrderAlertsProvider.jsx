@@ -292,14 +292,20 @@ export const AdminOrderAlertsProvider = ({ children }) => {
         await playResult;
       }
 
-      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.vibrate === "function"
+      ) {
         navigator.vibrate([220, 120, 260, 120, 320]);
       }
 
       setAudioEnabled(true);
       return true;
     } catch {
-      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.vibrate === "function"
+      ) {
         navigator.vibrate([220, 120, 260]);
       }
       return false;
@@ -415,6 +421,48 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     return response.json();
   }, [token]);
 
+  const fetchAlertPreferences = useCallback(async () => {
+    if (!token) {
+      throw new Error("Missing auth token");
+    }
+
+    const response = await fetch(`${API_URL}/site/alerts/preferences`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch alert preferences");
+    }
+
+    return response.json();
+  }, [token]);
+
+  const saveAlertPreferences = useCallback(
+    async (enabled) => {
+      if (!token) {
+        throw new Error("Missing auth token");
+      }
+
+      const response = await fetch(`${API_URL}/site/alerts/preferences`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ alertsEnabled: Boolean(enabled) }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save alert preferences");
+      }
+
+      return response.json();
+    },
+    [token],
+  );
+
   const subscribeForPushAlerts = useCallback(async () => {
     if (!canReceiveAdminAlerts) {
       return { skipped: true, reason: "admin-route-required" };
@@ -494,13 +542,23 @@ export const AdminOrderAlertsProvider = ({ children }) => {
 
   const enableAlerts = useCallback(async () => {
     setAlertsEnabled(true);
-    localStorage.setItem(ALERTS_ENABLED_STORAGE_KEY, "true");
+    if (canUseLocalStorage()) {
+      localStorage.setItem(ALERTS_ENABLED_STORAGE_KEY, "true");
+    }
+
+    await saveAlertPreferences(true).catch(() => null);
+
     await Promise.allSettled([
       ensureNotificationsReady({ request: true }),
       ensureAudioReady(),
     ]);
     await subscribeForPushAlerts().catch(() => null);
-  }, [ensureAudioReady, ensureNotificationsReady, subscribeForPushAlerts]);
+  }, [
+    ensureAudioReady,
+    ensureNotificationsReady,
+    saveAlertPreferences,
+    subscribeForPushAlerts,
+  ]);
 
   const runManualAlertTest = useCallback(async () => {
     await enableAlerts();
@@ -611,6 +669,43 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     canReceiveAdminAlerts,
     soundArmed,
   ]);
+
+  useEffect(() => {
+    if (!canReceiveAdminAlerts || !token) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    fetchAlertPreferences()
+      .then((preferences) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const enabled = preferences?.alertsEnabled !== false;
+        setAlertsEnabled(enabled);
+        if (canUseLocalStorage()) {
+          localStorage.setItem(
+            ALERTS_ENABLED_STORAGE_KEY,
+            enabled ? "true" : "false",
+          );
+        }
+      })
+      .catch(() => {
+        if (!isMounted || !canUseLocalStorage()) {
+          return;
+        }
+
+        const localValue =
+          localStorage.getItem(ALERTS_ENABLED_STORAGE_KEY) === "true";
+        setAlertsEnabled(localValue);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [canReceiveAdminAlerts, fetchAlertPreferences, token]);
 
   useEffect(() => {
     if (!canReceiveAdminAlerts || !canUseServiceWorker()) {

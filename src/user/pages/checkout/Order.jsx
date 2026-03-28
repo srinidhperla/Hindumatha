@@ -3,17 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchProducts } from "@/features/products/productSlice";
 import { normalizeCouponCode } from "@/utils/orderPricing";
-import OrderReviewStep from "@/user/components/order/OrderReviewStep";
 import OrderDeliveryStep from "@/user/components/order/OrderDeliveryStep";
 import OrderAddressStep from "@/user/components/order/OrderAddressStep";
-import OrderSummary from "@/user/components/order/OrderSummary";
 import { scrollToPageTop } from "./orderPageUtils";
 import { useCheckoutAddressState } from "./useCheckoutAddressState";
 import { useCheckoutDerivedData } from "./useCheckoutDerivedData";
 import { useCheckoutSubmit } from "./useCheckoutSubmit";
-import CheckoutStepper from "./CheckoutStepper";
 import CheckoutEmptyState from "./CheckoutEmptyState";
-import CheckoutSuccessState from "./CheckoutSuccessState";
 
 const Order = () => {
   const dispatch = useDispatch();
@@ -25,8 +21,6 @@ const Order = () => {
   const coupons = useSelector((state) => state.site.coupons);
   const deliverySettings = useSelector((state) => state.site.deliverySettings);
 
-  const [step, setStep] = useState(1);
-  const [orderSuccess, setOrderSuccess] = useState(false);
   const [scheduledDeliveryDate, setScheduledDeliveryDate] = useState("");
   const [formData, setFormData] = useState({
     deliveryMode: "",
@@ -84,23 +78,14 @@ const Order = () => {
     savedAddresses: addressState.savedAddresses,
     selectedAddressId: addressState.selectedAddressId,
     freeDeliveryProgress: derived.freeDeliveryProgress,
-    setOrderSuccess,
+    availableCoupons: derived.availableCoupons,
+    loading,
   });
 
   useEffect(() => {
     scrollToPageTop();
     dispatch(fetchProducts());
   }, [dispatch]);
-
-  useEffect(() => {
-    scrollToPageTop();
-  }, [step]);
-
-  useEffect(() => {
-    if (orderSuccess) {
-      scrollToPageTop();
-    }
-  }, [orderSuccess]);
 
   useEffect(() => {
     if (formData.deliveryMode !== "scheduled") {
@@ -228,112 +213,95 @@ const Order = () => {
     return <CheckoutEmptyState />;
   }
 
-  if (orderSuccess) {
-    return (
-      <CheckoutSuccessState
-        totalAmount={derived.pricing.totalAmount}
-        onBackHome={() => navigate("/")}
-      />
-    );
-  }
-
   return (
     <div className="commerce-page commerce-page--checkout">
-      <div className="commerce-shell">
+      <div className="commerce-shell max-w-5xl">
         <div className="mb-10 text-center">
-          <p className="commerce-kicker">Checkout</p>
+          <p className="commerce-kicker">Delivery Details</p>
           <h1 className="commerce-title">
-            Place one order for your whole cart
+            Address, delivery, and payment setup
           </h1>
           <p className="commerce-copy">
-            Review your products, confirm delivery, and finish checkout like a
-            standard store flow.
+            Final item review, coupon, and full bill summary are on the next
+            page.
           </p>
         </div>
 
-        <CheckoutStepper step={step} />
-
         <form onSubmit={handleSubmit}>
-          <div className="commerce-grid">
-            <div className="commerce-section">
-              {step === 1 && (
-                <OrderReviewStep
-                  checkoutItems={derived.checkoutItems}
-                  invalidItems={derived.invalidItems}
+          <div className="commerce-section">
+            <div className="space-y-8">
+              <div className="rounded-3xl border border-primary-200 bg-white shadow-sm">
+                <OrderDeliveryStep
+                  formData={formData}
+                  normalizedDeliverySettings={
+                    derived.normalizedDeliverySettings
+                  }
+                  minimumScheduleDate={derived.minimumScheduleDate}
+                  scheduledDate={derived.scheduledDate}
+                  scheduledSlotStart={derived.scheduledSlotStart}
+                  availableScheduledSlots={derived.availableScheduledSlots}
+                  scheduleAvailabilityReason={
+                    derived.scheduleAvailabilityReason
+                  }
+                  nowAvailabilityReason={derived.nowAvailabilityReason}
+                  pauseUntilLabel={derived.pauseUntilLabel}
+                  pricing={derived.pricing}
+                  availableCoupons={derived.availableCoupons}
+                  onChange={handleChange}
+                  onBack={() => {}}
                 />
-              )}
+              </div>
 
-              {step === 2 && (
-                <>
-                  <OrderDeliveryStep
-                    formData={formData}
-                    normalizedDeliverySettings={
-                      derived.normalizedDeliverySettings
-                    }
-                    minimumScheduleDate={derived.minimumScheduleDate}
-                    scheduledDate={derived.scheduledDate}
-                    scheduledSlotStart={derived.scheduledSlotStart}
-                    availableScheduledSlots={derived.availableScheduledSlots}
-                    scheduleAvailabilityReason={
-                      derived.scheduleAvailabilityReason
-                    }
-                    nowAvailabilityReason={derived.nowAvailabilityReason}
-                    pauseUntilLabel={derived.pauseUntilLabel}
-                    pricing={derived.pricing}
-                    availableCoupons={derived.availableCoupons}
-                    onChange={handleChange}
-                    onBack={() => setStep(1)}
-                  />
+              <div className="rounded-3xl border border-primary-200 bg-white shadow-sm">
+                <OrderAddressStep
+                  savedAddresses={addressState.savedAddresses}
+                  addressMode={addressState.addressMode}
+                  editingAddressId={addressState.editingAddressId}
+                  selectedAddressId={addressState.selectedAddressId}
+                  addressLabel={addressState.addressLabel}
+                  isAddressVerified={derived.isAddressVerified}
+                  distanceFromStoreKm={derived.distanceFromStoreKm}
+                  isAddressServiceable={derived.isAddressServiceable}
+                  maxDeliveryRadiusKm={derived.maxDeliveryRadiusKm}
+                  storeLocation={
+                    derived.normalizedDeliverySettings.storeLocation
+                  }
+                  addressLatitude={addressState.addressMeta.latitude}
+                  addressLongitude={addressState.addressMeta.longitude}
+                  hasConfiguredStoreLocation={
+                    derived.hasConfiguredStoreLocation
+                  }
+                  loading={loading}
+                  error={error}
+                  onSavedAddressSelect={addressState.handleSavedAddressSelect}
+                  onStartNewAddress={addressState.handleStartNewAddress}
+                  onEditSavedAddress={addressState.handleEditSavedAddress}
+                  onDeleteSavedAddress={addressState.handleDeleteSavedAddress}
+                  onSaveAddress={handleSaveAddress}
+                  onCancelAddressModal={() => {
+                    addressState.setAddressMode("saved");
+                    addressState.setEditingAddressId("");
+                  }}
+                  onBack={() => {}}
+                  hideBackAction
+                />
+              </div>
 
-                  <OrderAddressStep
-                    savedAddresses={addressState.savedAddresses}
-                    addressMode={addressState.addressMode}
-                    editingAddressId={addressState.editingAddressId}
-                    selectedAddressId={addressState.selectedAddressId}
-                    addressLabel={addressState.addressLabel}
-                    isAddressVerified={derived.isAddressVerified}
-                    distanceFromStoreKm={derived.distanceFromStoreKm}
-                    isAddressServiceable={derived.isAddressServiceable}
-                    maxDeliveryRadiusKm={derived.maxDeliveryRadiusKm}
-                    storeLocation={
-                      derived.normalizedDeliverySettings.storeLocation
-                    }
-                    addressLatitude={addressState.addressMeta.latitude}
-                    addressLongitude={addressState.addressMeta.longitude}
-                    hasConfiguredStoreLocation={
-                      derived.hasConfiguredStoreLocation
-                    }
-                    loading={loading}
-                    error={error}
-                    onSavedAddressSelect={addressState.handleSavedAddressSelect}
-                    onStartNewAddress={addressState.handleStartNewAddress}
-                    onEditSavedAddress={addressState.handleEditSavedAddress}
-                    onDeleteSavedAddress={addressState.handleDeleteSavedAddress}
-                    onSaveAddress={handleSaveAddress}
-                    onCancelAddressModal={() => {
-                      addressState.setAddressMode("saved");
-                      addressState.setEditingAddressId("");
-                    }}
-                    onBack={() => setStep(1)}
-                  />
-                </>
-              )}
+              <div className="border-t border-primary-200 px-6 pb-6 pt-4 sm:px-8">
+                <button
+                  type="submit"
+                  disabled={
+                    loading ||
+                    (derived.invalidItems?.length ?? 0) > 0 ||
+                    !derived.isAddressVerified ||
+                    !derived.isAddressServiceable
+                  }
+                  className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Continue to Final Review
+                </button>
+              </div>
             </div>
-
-            <OrderSummary
-              checkoutItems={derived.checkoutItems}
-              totalUnits={derived.totalUnits}
-              pricing={derived.pricing}
-              freeDeliveryProgress={derived.freeDeliveryProgress}
-              step={step}
-              invalidItems={derived.invalidItems}
-              onNext={() => setStep(2)}
-              onBack={() => setStep(1)}
-              loading={loading}
-              isAddressVerified={derived.isAddressVerified}
-              isAddressServiceable={derived.isAddressServiceable}
-              paymentMethod={formData.paymentMethod}
-            />
           </div>
         </form>
       </div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { formatINR } from "@/utils/currency";
 
 const getSafeUnitPrice = (item) =>
   Number(
@@ -22,6 +23,7 @@ const OrderSummary = ({
   isAddressServiceable,
   paymentMethod,
   freeDeliveryProgress,
+  embedded = false,
 }) => {
   const [showMoreProducts, setShowMoreProducts] = useState(false);
 
@@ -67,19 +69,17 @@ const OrderSummary = ({
               {`Qty: ${item.quantity}`}
             </span>
             <span className="commerce-chip commerce-chip--success">
-              {`Price: Rs.${getSafeUnitPrice(item).toLocaleString("en-IN")}`}
+              {`Price: ${formatINR(getSafeUnitPrice(item))}`}
             </span>
           </div>
         </div>
-        <p className="commerce-summary-price">
-          ₹{item.lineTotal.toLocaleString("en-IN")}
-        </p>
+        <p className="commerce-summary-price">{formatINR(item.lineTotal)}</p>
       </div>
     </div>
   );
 
   return (
-    <aside className="commerce-sidebar">
+    <aside className={embedded ? "commerce-summary-panel" : "commerce-sidebar"}>
       <p className="commerce-sidebar-kicker">Order Summary</p>
       <h2 className="commerce-sidebar-title">Your checkout</h2>
 
@@ -132,7 +132,7 @@ const OrderSummary = ({
         <div className="commerce-sidebar-row">
           <span>Subtotal</span>
           <span className="font-semibold text-primary-900">
-            ₹{pricing.subtotal.toLocaleString("en-IN")}
+            {formatINR(pricing.subtotal)}
           </span>
         </div>
         <div className="commerce-sidebar-row">
@@ -144,7 +144,7 @@ const OrderSummary = ({
           <span className="font-semibold text-primary-900">
             {pricing.deliveryFee === 0
               ? "Free Delivery"
-              : `₹${pricing.deliveryFee.toLocaleString("en-IN")}`}
+              : formatINR(pricing.deliveryFee)}
           </span>
         </div>
         {pricing.deliveryFee > 0 &&
@@ -152,24 +152,21 @@ const OrderSummary = ({
           freeDeliveryProgress?.remainingAmount > 0 && (
             <div className="commerce-sidebar-row text-xs text-primary-700">
               <span className="font-semibold text-primary-800">
-                Add ₹
-                {Number(freeDeliveryProgress.remainingAmount).toLocaleString(
-                  "en-IN",
-                )}{" "}
-                more for free delivery
+                Add {formatINR(freeDeliveryProgress.remainingAmount)} more for
+                free delivery
               </span>
             </div>
           )}
         <div className="commerce-sidebar-row">
           <span>Discount</span>
           <span className="font-semibold text-emerald-700">
-            -₹{pricing.discountAmount.toLocaleString("en-IN")}
+            -{formatINR(pricing.discountAmount)}
           </span>
         </div>
         <div className="commerce-sidebar-total">
           <span className="commerce-sidebar-total-label">Total</span>
           <span className="commerce-sidebar-total-value">
-            ₹{pricing.totalAmount.toLocaleString("en-IN")}
+            {formatINR(pricing.totalAmount)}
           </span>
         </div>
       </div>

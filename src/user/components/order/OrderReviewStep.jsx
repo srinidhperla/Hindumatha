@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { formatINR } from "@/utils/currency";
 
 const getSafeUnitPrice = (item) =>
   Number(
@@ -50,7 +51,7 @@ const OrderReviewStep = ({ checkoutItems }) => (
                   {`Qty: ${item.quantity}`}
                 </span>
                 <span className="commerce-chip commerce-chip--success">
-                  {`Price: Rs.${getSafeUnitPrice(item).toLocaleString("en-IN")}`}
+                  {`Price: ${formatINR(getSafeUnitPrice(item))}`}
                 </span>
               </div>
             </div>

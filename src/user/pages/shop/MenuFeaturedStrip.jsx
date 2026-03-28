@@ -1,4 +1,5 @@
 import React from "react";
+import { formatINR } from "@/utils/currency";
 
 const MenuFeaturedStrip = ({ featuredProducts, openImagePreview }) => {
   if (featuredProducts.length === 0) {
@@ -31,10 +32,7 @@ const MenuFeaturedStrip = ({ featuredProducts, openImagePreview }) => {
                 {product.categoryLabel}
               </span>
               <h3>{product.name}</h3>
-              <p>
-                Starts at Rs.
-                {Number(product.price || 0).toLocaleString("en-IN")}
-              </p>
+              <p>Starts at {formatINR(product.price)}</p>
             </div>
           </button>
         ))}

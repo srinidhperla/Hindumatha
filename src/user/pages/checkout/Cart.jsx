@@ -12,13 +12,6 @@ import {
 import { fetchProducts } from "@/features/products/productSlice";
 import { showToast } from "@/features/uiSlice";
 import {
-  calculateOrderPricing,
-  DEFAULT_COUPONS,
-  normalizeCouponCode,
-} from "@/utils/orderPricing";
-import { normalizeDeliverySettings } from "@/utils/deliverySettings";
-import {
-  formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
   getPortionTypeMeta,
@@ -27,10 +20,8 @@ import {
   normalizeFlavorOptions,
 } from "@/utils/productOptions";
 import SeoMeta from "@/shared/seo/SeoMeta";
+import { formatINR } from "@/utils/currency";
 import CartItemCard from "./CartItemCard";
-import CartSummarySidebar from "./CartSummarySidebar";
-
-const DEFAULT_COUPON_INPUT = "";
 
 const getResolvedCartItem = (item) => {
   const hasExplicitFlavors = normalizeFlavorOptions(item.product).length > 0;
@@ -94,10 +85,7 @@ const Cart = () => {
   const { items, priceSyncNoticeVisible, priceSyncUpdatedItemsCount } =
     useSelector((state) => state.cart);
   const { products } = useSelector((state) => state.products);
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
-  const coupons = useSelector((state) => state.site.coupons);
-  const deliverySettings = useSelector((state) => state.site.deliverySettings);
-  const [couponInput, setCouponInput] = React.useState(DEFAULT_COUPON_INPUT);
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const [showMoreAddons, setShowMoreAddons] = useState(false);
 
   useEffect(() => {
@@ -110,26 +98,8 @@ const Cart = () => {
   );
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = cartItems.reduce((sum, item) => sum + item.lineTotal, 0);
   const unavailableCount = cartItems.filter((item) => !item.canOrder).length;
-  const availableCoupons = (coupons?.length ? coupons : DEFAULT_COUPONS).filter(
-    (coupon) => coupon.isActive !== false,
-  );
-  const normalizedDeliverySettings = useMemo(
-    () => normalizeDeliverySettings(deliverySettings),
-    [deliverySettings],
-  );
-  const freeDeliveryMinAmount =
-    Number(normalizedDeliverySettings?.freeDeliveryMinAmount) || 0;
-  const remainingForFreeDelivery = Math.max(
-    0,
-    freeDeliveryMinAmount - subtotal,
-  );
-  const pricing = calculateOrderPricing({
-    subtotal,
-    couponCode: couponInput,
-    coupons: availableCoupons,
-  });
+  const subtotal = cartItems.reduce((sum, item) => sum + item.lineTotal, 0);
   const availableAddons = useMemo(
     () =>
       products
@@ -182,9 +152,7 @@ const Cart = () => {
   const handleProceed = () => {
     window.scrollTo({ top: 0, behavior: "auto" });
     navigate(isAuthenticated ? "/order" : "/login", {
-      state: {
-        couponCode: normalizeCouponCode(couponInput),
-      },
+      state: {},
     });
   };
 
@@ -224,16 +192,14 @@ const Cart = () => {
         description="Review your cake selections, apply coupons, and proceed to secure checkout at Hindumatha's Cake World."
         path="/cart"
       />
-      <div className="commerce-shell">
+      <div className="commerce-shell max-w-5xl">
         <div className="commerce-header">
           <div>
             <p className="commerce-kicker">Shopping Cart</p>
-            <h1 className="commerce-title">
-              Review your order like a proper checkout
-            </h1>
+            <h1 className="commerce-title">Ready to checkout?</h1>
             <p className="commerce-copy max-w-2xl">
-              Update flavors, options, and quantities here. When everything
-              looks right, place one order for the whole cart.
+              Update items, add extras, apply coupon, and continue to delivery
+              details.
             </p>
           </div>
           <button
@@ -265,39 +231,179 @@ const Cart = () => {
           </div>
         )}
 
-        <div className="commerce-grid">
-          <div className="commerce-list">
-            {cartItems.map((item) => (
-              <CartItemCard
-                key={item.id}
-                item={item}
-                dispatch={dispatch}
-                updateCartItemOptions={updateCartItemOptions}
-                updateCartQuantity={updateCartQuantity}
-                removeFromCart={removeFromCart}
-                showToast={showToast}
-              />
-            ))}
-          </div>
+        <section className="commerce-section">
+          <div className="commerce-section-body space-y-8">
+            <div className="rounded-3xl border border-primary-200 bg-primary-50/60 p-4 sm:p-5">
+              <p className="text-sm font-semibold text-primary-900">
+                Cart items ({totalItems})
+              </p>
+              <p className="mt-1 text-xs text-primary-600">
+                Edit quantity, flavor, cake type, and size before checkout.
+              </p>
+              <div className="mt-4 commerce-list">
+                {cartItems.map((item) => (
+                  <CartItemCard
+                    key={item.id}
+                    item={item}
+                    dispatch={dispatch}
+                    updateCartItemOptions={updateCartItemOptions}
+                    updateCartQuantity={updateCartQuantity}
+                    removeFromCart={removeFromCart}
+                    showToast={showToast}
+                  />
+                ))}
+              </div>
+            </div>
 
-          <CartSummarySidebar
-            availableAddons={availableAddons}
-            inlineAddons={inlineAddons}
-            remainingAddons={remainingAddons}
-            showMoreAddons={showMoreAddons}
-            setShowMoreAddons={setShowMoreAddons}
-            handleAddAddon={handleAddAddon}
-            totalItems={totalItems}
-            cartItemsCount={cartItems.length}
-            pricing={pricing}
-            remainingForFreeDelivery={remainingForFreeDelivery}
-            couponInput={couponInput}
-            setCouponInput={setCouponInput}
-            unavailableCount={unavailableCount}
-            isAuthenticated={isAuthenticated}
-            handleProceed={handleProceed}
-          />
-        </div>
+            {availableAddons.length > 0 && (
+              <div className="rounded-3xl border border-primary-200 bg-white p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary-500">
+                      Quick Add-ons
+                    </p>
+                    <p className="mt-1 text-sm text-primary-700">
+                      Add small extras in one tap.
+                    </p>
+                  </div>
+                  {remainingAddons.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreAddons(true)}
+                      className="rounded-xl border border-primary-300 bg-white px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-cream-100"
+                    >
+                      {`View more (${remainingAddons.length})`}
+                    </button>
+                  )}
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {inlineAddons.map((addon) => (
+                    <div
+                      key={addon._id}
+                      className="flex items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50 p-3"
+                    >
+                      <img
+                        src={addon.images?.[0] || addon.image}
+                        alt={addon.name}
+                        className="h-12 w-12 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-primary-900">
+                          {addon.name}
+                        </p>
+                        <p className="text-xs text-primary-600">
+                          {formatINR(addon.price)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddAddon(addon)}
+                        className="rounded-xl border border-primary-300 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-cream-100"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {showMoreAddons && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4">
+                <div className="w-full max-w-xl rounded-2xl border border-primary-200 bg-white p-4 shadow-2xl sm:p-6">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-base font-bold uppercase tracking-wide text-primary-900 sm:text-lg">
+                      More add-on products
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreAddons(false)}
+                      className="rounded-lg border border-primary-300 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-cream-100"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+                    {remainingAddons.map((addon) => (
+                      <div
+                        key={addon._id}
+                        className="flex items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50 p-3"
+                      >
+                        <img
+                          src={addon.images?.[0] || addon.image}
+                          alt={addon.name}
+                          className="h-12 w-12 rounded-xl object-cover"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-primary-900">
+                            {addon.name}
+                          </p>
+                          <p className="text-xs text-primary-600">
+                            {formatINR(addon.price)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddAddon(addon)}
+                          className="rounded-xl border border-primary-300 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-cream-100"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-3xl border border-primary-200 bg-white p-4 sm:p-5">
+              <p className="text-sm font-semibold text-primary-900">
+                Quick cart overview
+              </p>
+              <p className="mt-1 text-sm text-primary-600">
+                {cartItems.length} product line{cartItems.length > 1 ? "s" : ""}{" "}
+                · {totalItems} total unit{totalItems > 1 ? "s" : ""}
+              </p>
+              <p className="mt-3 text-xl font-black text-primary-800">
+                Current subtotal: {formatINR(subtotal)}
+              </p>
+              <p className="mt-1 text-xs text-primary-600">
+                Full bill, coupon apply, and final review are shown on the next
+                page.
+              </p>
+
+              {unavailableCount > 0 && (
+                <div className="commerce-alert commerce-alert--danger mt-4">
+                  {unavailableCount} item
+                  {unavailableCount > 1 ? "s are" : " is"} not ready for
+                  checkout. Update or remove them first.
+                </div>
+              )}
+
+              {!isAuthenticated && (
+                <div className="commerce-alert commerce-alert--warning mt-4">
+                  Sign in before placing the order.
+                </div>
+              )}
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <Link to="/menu" className="btn-secondary w-full text-center">
+                  Continue Shopping
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleProceed}
+                  disabled={unavailableCount > 0}
+                  className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isAuthenticated
+                    ? "Proceed to Checkout"
+                    : "Login to Checkout"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );

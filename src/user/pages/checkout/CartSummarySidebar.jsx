@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { formatINR } from "@/utils/currency";
 
 const AddonRow = ({ addon, onAdd }) => (
   <div className="flex items-center gap-2 rounded-xl border border-primary-100 bg-cream-100 p-2">
@@ -12,9 +13,7 @@ const AddonRow = ({ addon, onAdd }) => (
       <p className="truncate text-sm font-semibold text-primary-900">
         {addon.name}
       </p>
-      <p className="text-xs text-primary-600">
-        Rs.{Number(addon.price || 0).toLocaleString("en-IN")}
-      </p>
+      <p className="text-xs text-primary-600">{formatINR(addon.price)}</p>
     </div>
     <button
       type="button"
@@ -42,8 +41,9 @@ const CartSummarySidebar = ({
   unavailableCount,
   isAuthenticated,
   handleProceed,
+  embedded = false,
 }) => (
-  <aside className="commerce-sidebar">
+  <aside className={embedded ? "commerce-summary-panel" : "commerce-sidebar"}>
     <p className="commerce-sidebar-kicker">Summary</p>
     <h2 className="commerce-sidebar-title">Checkout preview</h2>
 
@@ -108,7 +108,7 @@ const CartSummarySidebar = ({
       <div className="commerce-sidebar-row">
         <span>Discount</span>
         <span className="font-semibold text-emerald-700">
-          -Rs.{pricing.discountAmount.toLocaleString("en-IN")}
+          -{formatINR(pricing.discountAmount)}
         </span>
       </div>
       <div className="commerce-sidebar-row">
@@ -120,13 +120,13 @@ const CartSummarySidebar = ({
         <span className="font-semibold text-primary-800">
           {remainingForFreeDelivery === 0
             ? "Unlocked"
-            : `Add ?${remainingForFreeDelivery.toLocaleString("en-IN")} more for free delivery`}
+            : `Add ${formatINR(remainingForFreeDelivery)} more for free delivery`}
         </span>
       </div>
       <div className="commerce-sidebar-total">
         <span className="commerce-sidebar-total-label">Grand total</span>
         <span className="commerce-sidebar-total-value">
-          Rs.{pricing.totalAmount.toLocaleString("en-IN")}
+          {formatINR(pricing.totalAmount)}
         </span>
       </div>
     </div>
@@ -155,7 +155,8 @@ const CartSummarySidebar = ({
         </div>
       ) : pricing.appliedCoupon ? (
         <div className="commerce-alert commerce-alert--success mt-0">
-          ? {pricing.appliedCoupon.code}: {pricing.appliedCoupon.description}
+          Applied {pricing.appliedCoupon.code}:{" "}
+          {pricing.appliedCoupon.description}
         </div>
       ) : null}
     </div>

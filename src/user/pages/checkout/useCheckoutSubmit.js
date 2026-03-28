@@ -1,5 +1,3 @@
-import { clearCart } from "@/features/cart/cartSlice";
-import { createOrder } from "@/features/orders/orderSlice";
 import { updateProfile } from "@/features/auth/authSlice";
 import { showToast } from "@/features/uiSlice";
 import { normalizeCouponCode } from "@/utils/orderPricing";
@@ -9,6 +7,7 @@ import {
   scrollToPageTop,
   scrollToValidationTarget,
 } from "./orderPageUtils";
+import { useRef } from "react";
 
 export const useCheckoutSubmit = ({
   dispatch,
@@ -35,10 +34,17 @@ export const useCheckoutSubmit = ({
   savedAddresses,
   selectedAddressId,
   freeDeliveryProgress,
-  setOrderSuccess,
+  availableCoupons,
+  loading,
 }) => {
+  const submitLockRef = useRef(false);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitLockRef.current || loading) {
+      return;
+    }
+
     if (
       !checkoutItems.length ||
       invalidItems.length > 0 ||
@@ -147,9 +153,14 @@ export const useCheckoutSubmit = ({
     }
 
     try {
+      submitLockRef.current = true;
+
       const normalizedStreet = formData.address.trim();
       const normalizedCity = formData.city.trim();
       const normalizedPincode = formData.pincode.trim();
+      const clientOrderRequestId =
+        formData.clientOrderRequestId ||
+        `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
       const resolvedFormattedAddress = String(
         addressMeta.formattedAddress ||
           addressQuery ||
@@ -287,6 +298,7 @@ export const useCheckoutSubmit = ({
             : null,
         paymentMethod: formData.paymentMethod,
         couponCode: normalizeCouponCode(formData.couponCode),
+        clientOrderRequestId,
         specialInstructions: [
           formData.specialInstructions,
           formData.name ? `Contact name: ${formData.name}` : "",
@@ -304,43 +316,29 @@ export const useCheckoutSubmit = ({
         }),
       ).unwrap();
 
-      if (formData.paymentMethod !== "cash") {
-        const pendingCheckout = {
-          orderData: checkoutPayload,
-          pricing,
-          freeDeliveryProgress,
-          customer: {
-            name: formData.name,
-            email: user?.email || "",
-            phone: formData.phone,
-          },
-        };
-        sessionStorage.setItem(
-          CHECKOUT_STORAGE_KEY,
-          JSON.stringify(pendingCheckout),
-        );
-        scrollToPageTop();
-        navigate("/payment", { state: pendingCheckout });
-        return;
-      }
-
-      const result = await dispatch(createOrder(checkoutPayload)).unwrap();
-      dispatch(clearCart());
-      dispatch(
-        showToast({ message: "Order placed successfully.", type: "success" }),
+      const pendingCheckout = {
+        orderData: checkoutPayload,
+        pricing,
+        freeDeliveryProgress,
+        availableCoupons,
+        customer: {
+          name: formData.name,
+          email: user?.email || "",
+          phone: formData.phone,
+        },
+      };
+      sessionStorage.setItem(
+        CHECKOUT_STORAGE_KEY,
+        JSON.stringify(pendingCheckout),
       );
-      // FIX 3: Redirect to order-confirmed page after successful order
-      const orderId = result?._id;
-      if (orderId) {
-        scrollToPageTop();
-        navigate(`/order-confirmed/${orderId}`);
-      } else {
-        setOrderSuccess(true);
-      }
+      scrollToPageTop();
+      navigate("/payment", { state: pendingCheckout });
     } catch (submitError) {
       const errorMessage =
         submitError?.error || submitError?.message || "Failed to create order";
       dispatch(showToast({ message: errorMessage, type: "error" }));
+    } finally {
+      submitLockRef.current = false;
     }
   };
 

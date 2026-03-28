@@ -2319,6 +2319,10 @@
     @apply text-sm font-bold text-primary-600;
   }
 
+  .commerce-summary-panel {
+    @apply mt-8 border-t border-primary-200 pt-7;
+  }
+
   .commerce-success-card {
     @apply w-full max-w-lg rounded-[2rem] bg-white p-8 text-center shadow-warm;
   }

@@ -19,6 +19,7 @@ const OrderAddressStep = ({
   onSaveAddress,
   onCancelAddressModal,
   onBack,
+  hideBackAction = false,
 }) => {
   const isAddressModalOpen = addressMode === "new" || addressMode === "edit";
 
@@ -159,11 +160,13 @@ const OrderAddressStep = ({
         <div className="commerce-alert commerce-alert--danger">{error}</div>
       )}
 
-      <div className="commerce-inline-actions">
-        <button type="button" onClick={onBack} className="btn-secondary">
-          ← Back to Review
-        </button>
-      </div>
+      {!hideBackAction && (
+        <div className="commerce-inline-actions">
+          <button type="button" onClick={onBack} className="btn-secondary">
+            ← Back to Review
+          </button>
+        </div>
+      )}
 
       <AddressPickerModal
         isOpen={isAddressModalOpen}

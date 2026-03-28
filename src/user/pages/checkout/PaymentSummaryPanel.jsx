@@ -1,14 +1,29 @@
 import React from "react";
+import { formatINR } from "@/utils/currency";
 
-const PaymentSummaryPanel = ({ pricing, freeDeliveryProgress }) => (
-  <aside className="commerce-sidebar">
+const PaymentSummaryPanel = ({
+  pricing,
+  freeDeliveryProgress,
+  itemCount = 0,
+  totalUnits = 0,
+  embedded = false,
+}) => (
+  <aside className={embedded ? "commerce-summary-panel" : "commerce-sidebar"}>
     <p className="commerce-sidebar-kicker">Summary</p>
     <h2 className="commerce-sidebar-title">Amount to pay</h2>
     <div className="commerce-sidebar-list">
       <div className="commerce-sidebar-row">
+        <span>Total units</span>
+        <span className="font-semibold text-primary-800">{totalUnits}</span>
+      </div>
+      <div className="commerce-sidebar-row">
+        <span>Product lines</span>
+        <span className="font-semibold text-primary-800">{itemCount}</span>
+      </div>
+      <div className="commerce-sidebar-row">
         <span>Subtotal</span>
         <span className="font-semibold text-primary-800">
-          Rs.{pricing.subtotal.toLocaleString("en-IN")}
+          {formatINR(pricing.subtotal)}
         </span>
       </div>
       <div className="commerce-sidebar-row">
@@ -18,7 +33,7 @@ const PaymentSummaryPanel = ({ pricing, freeDeliveryProgress }) => (
         <span className="font-semibold text-primary-800">
           {pricing.deliveryFee === 0
             ? "Free Delivery"
-            : `Rs.${pricing.deliveryFee.toLocaleString("en-IN")}`}
+            : formatINR(pricing.deliveryFee)}
         </span>
       </div>
       {pricing.deliveryFee > 0 &&
@@ -26,24 +41,21 @@ const PaymentSummaryPanel = ({ pricing, freeDeliveryProgress }) => (
         freeDeliveryProgress?.remainingAmount > 0 && (
           <div className="commerce-sidebar-row text-xs text-primary-700">
             <span className="font-semibold text-primary-800">
-              Add ?
-              {Number(freeDeliveryProgress.remainingAmount).toLocaleString(
-                "en-IN",
-              )}{" "}
-              more for free delivery
+              Add {formatINR(freeDeliveryProgress.remainingAmount)} more for
+              free delivery
             </span>
           </div>
         )}
       <div className="commerce-sidebar-row">
         <span>Discount</span>
         <span className="font-semibold text-emerald-700">
-          -Rs.{pricing.discountAmount.toLocaleString("en-IN")}
+          -{formatINR(pricing.discountAmount)}
         </span>
       </div>
       <div className="commerce-sidebar-total">
         <span className="commerce-sidebar-total-label">Total</span>
         <span className="commerce-sidebar-total-value">
-          Rs.{pricing.totalAmount.toLocaleString("en-IN")}
+          {formatINR(pricing.totalAmount)}
         </span>
       </div>
     </div>

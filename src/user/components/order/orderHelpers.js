@@ -85,8 +85,35 @@ export const getResolvedCheckoutItem = (item) => {
 };
 
 export const normalizeUserSavedAddresses = (user) => {
+  const normalizeCoordinates = (address = {}) => {
+    const latitude = toCoordinate(address?.latitude, -90, 90);
+    const longitude = toCoordinate(address?.longitude, -180, 180);
+
+    if (latitude === null || longitude === null) {
+      return { latitude, longitude };
+    }
+
+    // Some legacy records were persisted with swapped lat/lng.
+    const looksSwapped = Math.abs(latitude) > 45 && Math.abs(longitude) <= 45;
+    if (!looksSwapped) {
+      return { latitude, longitude };
+    }
+
+    const swappedLatitude = toCoordinate(longitude, -90, 90);
+    const swappedLongitude = toCoordinate(latitude, -180, 180);
+    if (swappedLatitude === null || swappedLongitude === null) {
+      return { latitude, longitude };
+    }
+
+    return {
+      latitude: swappedLatitude,
+      longitude: swappedLongitude,
+    };
+  };
+
   const saved = Array.isArray(user?.savedAddresses)
     ? user.savedAddresses.map((address, index) => ({
+        ...normalizeCoordinates(address),
         id: address?._id || `saved-${index}`,
         label: address?.label || "Saved address",
         street: address?.street || "",
@@ -96,8 +123,6 @@ export const normalizeUserSavedAddresses = (user) => {
         phone: address?.phone || "",
         landmark: address?.landmark || "",
         placeId: address?.placeId || "",
-        latitude: toCoordinate(address?.latitude, -90, 90),
-        longitude: toCoordinate(address?.longitude, -180, 180),
         formattedAddress: address?.formattedAddress || "",
         isDefault: address?.isDefault === true,
       }))

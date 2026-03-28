@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { isEggTypeAvailable } from "@/utils/productOptions";
+import { formatINR } from "@/utils/currency";
 
 const MenuCategorySections = ({
   categorySections,
@@ -56,7 +57,7 @@ const MenuCategorySections = ({
                     {product.name}
                   </button>
                   <p className="menu-product-price">
-                    ?{Number(product.price || 0).toLocaleString("en-IN")}
+                    {formatINR(product.price)}
                   </p>
                 </div>
                 <p className="menu-product-desc">{product.description}</p>
@@ -87,7 +88,7 @@ const MenuCategorySections = ({
                   </span>
                   {(product.hasExplicitFlavors ||
                     product.orderableFlavors.length > 1) && (
-                    <span className="menu-meta-separator">�</span>
+                    <span className="menu-meta-separator">|</span>
                   )}
                   <span className="menu-product-meta-text">
                     {product.orderableWeights.length}{" "}
