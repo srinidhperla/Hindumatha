@@ -6,6 +6,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
 } from "react-icons/fi";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const formatCategoryLabel = (value = "") =>
   value
@@ -107,8 +108,11 @@ const FeaturedProducts = ({ products }) => {
                 <Link to={`/menu?product=${product._id}`} className="block">
                   <div className="relative overflow-hidden">
                     <img
-                      src={product.image}
+                      src={optimizeProductImageUrl(product.image)}
                       alt={product.name}
+                      width={600}
+                      height={420}
+                      loading="lazy"
                       className="w-full h-44 sm:h-52 object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute top-3 right-3">

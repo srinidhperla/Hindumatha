@@ -25,6 +25,9 @@ const MenuFeaturedStrip = ({ featuredProducts, openImagePreview }) => {
             <img
               src={product.primaryImage}
               alt={product.name}
+              width={320}
+              height={220}
+              loading="lazy"
               className="menu-featured-image"
             />
             <div className="menu-featured-body">

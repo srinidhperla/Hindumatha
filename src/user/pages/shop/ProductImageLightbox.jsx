@@ -22,6 +22,9 @@ const ProductImageLightbox = ({ isOpen, image, alt, onClose }) => {
       <img
         src={image}
         alt={alt}
+        width={1200}
+        height={1200}
+        loading="eager"
         className="product-lightbox-image"
         onClick={(event) => event.stopPropagation()}
       />

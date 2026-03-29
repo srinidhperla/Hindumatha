@@ -21,6 +21,7 @@ import {
 } from "@/utils/productOptions";
 import SeoMeta from "@/shared/seo/SeoMeta";
 import { formatINR } from "@/utils/currency";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import CartItemCard from "./CartItemCard";
 
 const getResolvedCartItem = (item) => {
@@ -283,8 +284,11 @@ const Cart = () => {
                       className="flex items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50 p-3"
                     >
                       <img
-                        src={addon.images?.[0] || addon.image}
+                        src={optimizeProductImageUrl(addon.images?.[0] || addon.image)}
                         alt={addon.name}
+                        width={48}
+                        height={48}
+                        loading="lazy"
                         className="h-12 w-12 rounded-xl object-cover"
                       />
                       <div className="min-w-0 flex-1">
@@ -330,8 +334,11 @@ const Cart = () => {
                         className="flex items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50 p-3"
                       >
                         <img
-                          src={addon.images?.[0] || addon.image}
+                          src={optimizeProductImageUrl(addon.images?.[0] || addon.image)}
                           alt={addon.name}
+                          width={48}
+                          height={48}
+                          loading="lazy"
                           className="h-12 w-12 rounded-xl object-cover"
                         />
                         <div className="min-w-0 flex-1">

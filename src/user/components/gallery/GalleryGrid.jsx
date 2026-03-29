@@ -1,4 +1,5 @@
 import React from "react";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const GalleryGrid = ({
   categories,
@@ -36,8 +37,11 @@ const GalleryGrid = ({
         >
           <div className="aspect-square overflow-hidden">
             <img
-              src={item.imageUrl}
+              src={optimizeProductImageUrl(item.imageUrl)}
               alt={item.title}
+              width={720}
+              height={720}
+              loading={index < 4 ? "eager" : "lazy"}
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           </div>

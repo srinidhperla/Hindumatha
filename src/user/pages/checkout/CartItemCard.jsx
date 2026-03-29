@@ -1,5 +1,6 @@
 import React from "react";
 import { formatCategoryLabel } from "@/utils/productOptions";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const CartItemCard = ({
   item,
@@ -12,8 +13,11 @@ const CartItemCard = ({
   <article className="commerce-card">
     <div className="commerce-card-body">
       <img
-        src={item.product.image}
+        src={optimizeProductImageUrl(item.product.image)}
         alt={item.product.name}
+        width={720}
+        height={480}
+        loading="lazy"
         className="commerce-image"
       />
 

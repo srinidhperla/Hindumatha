@@ -29,6 +29,7 @@ import {
   loadRazorpayScript,
   scrollToPageTop,
 } from "./paymentHelpers";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const resolveCouponPreviewPricing = ({
   couponCode,
@@ -494,8 +495,11 @@ const Payment = () => {
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary-100 bg-cream-100">
                         {getPaymentItemImage(item) ? (
                           <img
-                            src={getPaymentItemImage(item)}
+                            src={optimizeProductImageUrl(getPaymentItemImage(item))}
                             alt={getPaymentItemName(item, index)}
+                            width={48}
+                            height={48}
+                            loading="lazy"
                             className="h-full w-full object-cover"
                           />
                         ) : (

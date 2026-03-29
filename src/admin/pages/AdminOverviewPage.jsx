@@ -10,6 +10,7 @@ import { ActionButton } from "@/shared/ui/Primitives";
 import { fetchOrderAnalytics } from "@/services/orderAPI";
 import { updateOrderStatus } from "@/features/orders/orderSlice";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import { getOrderSummary, ORDER_STATUS_OPTIONS } from "./adminShared";
 
 const getTodayKey = () =>
@@ -356,8 +357,11 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
                 >
                   <div className="flex items-center space-x-3">
                     <img
-                      src={product.image}
+                      src={optimizeProductImageUrl(product.image)}
                       alt={product.name}
+                      width={48}
+                      height={48}
+                      loading="lazy"
                       className="h-12 w-12 rounded-xl object-cover"
                     />
                     <div>

@@ -39,6 +39,9 @@ const MenuCategorySections = ({
                   <img
                     src={product.primaryImage}
                     alt={product.name}
+                    width={320}
+                    height={320}
+                    loading={productIndex < 2 ? "eager" : "lazy"}
                     className="menu-product-image"
                   />
                 </button>

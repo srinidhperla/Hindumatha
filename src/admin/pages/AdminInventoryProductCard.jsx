@@ -3,6 +3,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { StatusChip, Toggle } from "@/shared/ui/Primitives";
 import { formatCategoryLabel } from "@/utils/productOptions";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const AdminInventoryProductCard = ({
   product,
@@ -180,8 +181,11 @@ const AdminInventoryProductCard = ({
             {"\u2261"}
           </button>
           <img
-            src={product.images?.[0] || product.image}
+            src={optimizeProductImageUrl(product.images?.[0] || product.image)}
             alt={product.name}
+            width={80}
+            height={80}
+            loading="lazy"
             className="h-14 w-14 flex-shrink-0 rounded-xl object-cover ring-1 ring-slate-200 sm:h-20 sm:w-20 sm:rounded-2xl"
             onError={(event) => {
               event.target.onerror = null;

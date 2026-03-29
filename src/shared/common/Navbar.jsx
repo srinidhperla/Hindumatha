@@ -11,6 +11,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { logout } from "@/features/auth/authSlice";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import NavbarMegaMenu from "./NavbarMegaMenu";
 import NavbarMobileMenu from "./NavbarMobileMenu";
 
@@ -61,7 +62,7 @@ const Navbar = () => {
       id: product._id,
       name: product.name,
       price: product.price,
-      image: product.image || product.images?.[0],
+      image: optimizeProductImageUrl(product.image || product.images?.[0]),
     }));
   }, [products]);
 

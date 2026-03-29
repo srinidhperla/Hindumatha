@@ -62,7 +62,7 @@ const HeroSection = ({
   const jumpToSlide = (index) => setActiveSlide(index);
 
   return (
-    <section className="relative min-h-[620px] overflow-hidden sm:min-h-[640px] lg:h-screen">
+    <section className="relative h-[620px] overflow-hidden sm:h-[640px] lg:h-[100svh]">
       {heroSlides.map((slide, index) => (
         <div
           key={slide.image}
@@ -73,6 +73,10 @@ const HeroSection = ({
           <img
             src={slide.image}
             alt={slide.alt}
+            width={1600}
+            height={900}
+            loading={index === 0 ? "eager" : "lazy"}
+            fetchPriority={index === 0 ? "high" : "auto"}
             className={`h-full w-full object-cover transition-transform duration-[8000ms] ${
               index === activeSlide ? "scale-100" : "scale-105"
             }`}
@@ -183,8 +187,10 @@ const HeroSection = ({
             key={slide.image}
             type="button"
             onClick={() => jumpToSlide(index)}
-            className={`h-1.5 rounded-full transition-all ${
-              index === activeSlide ? "w-7 bg-[#c9a84c]" : "w-1.5 bg-white/40"
+            className={`h-1.5 w-7 origin-left rounded-full transition-transform duration-300 ${
+              index === activeSlide
+                ? "scale-x-100 bg-[#c9a84c]"
+                : "scale-x-[0.22] bg-white/40"
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />
@@ -216,6 +222,9 @@ const HeroSection = ({
             <img
               src={category.image}
               alt={category.label}
+              width={28}
+              height={28}
+              loading="lazy"
               className="h-7 w-7 rounded-full border border-[#c9a84c66] object-cover"
             />
             <span className="whitespace-nowrap text-xs font-semibold text-white/85">
@@ -227,19 +236,30 @@ const HeroSection = ({
 
       <style>{`
         .home-typed-caret {
-          border-right: 2px solid #c9a84c;
-          padding-right: 2px;
+          position: relative;
+          display: inline-block;
+          padding-right: 5px;
+        }
+
+        .home-typed-caret::after {
+          content: "";
+          position: absolute;
+          right: 0;
+          top: 12%;
+          width: 2px;
+          height: 76%;
+          background: #c9a84c;
           animation: homeCaretBlink 0.9s step-end infinite;
         }
 
         @keyframes homeCaretBlink {
           0%,
           49% {
-            border-right-color: #c9a84c;
+            opacity: 1;
           }
           50%,
           100% {
-            border-right-color: transparent;
+            opacity: 0;
           }
         }
       `}</style>

@@ -87,6 +87,9 @@ const AddOnFormModal = ({
           <img
             src={formData.imagePreview}
             alt="Addon preview"
+            width={720}
+            height={440}
+            loading="lazy"
             className="h-44 w-full rounded-xl object-cover"
           />
         </div>

@@ -1,5 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import {
+  optimizeProductImageUrl,
+  toCloudinaryFetchUrl,
+} from "@/utils/imageOptimization";
+
+const promoImage = toCloudinaryFetchUrl(
+  "https://hindumatha.me/images/gallery/cake1.jpg",
+);
 
 const NavbarMegaMenu = ({
   megaOpenKey,
@@ -33,8 +41,11 @@ const NavbarMegaMenu = ({
               className="overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white"
             >
               <img
-                src={card.image}
+                src={optimizeProductImageUrl(card.image)}
                 alt={card.name}
+                width={320}
+                height={160}
+                loading="lazy"
                 className="h-20 w-full object-cover"
               />
               <div className="px-2 py-2">
@@ -49,8 +60,11 @@ const NavbarMegaMenu = ({
 
         <div className="overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.35)] bg-[#120c02] p-3 text-white">
           <img
-            src="https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=500&auto=format&fit=crop&q=80"
+            src={promoImage}
             alt="Featured promo"
+            width={500}
+            height={280}
+            loading="lazy"
             className="h-28 w-full rounded-xl object-cover"
           />
           <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[#e8d08a]">

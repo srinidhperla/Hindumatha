@@ -5,6 +5,7 @@ import GalleryGrid from "@/user/components/gallery/GalleryGrid";
 import GalleryLightbox from "@/user/components/gallery/GalleryLightbox";
 import GalleryCta from "@/user/components/gallery/GalleryCta";
 import SeoMeta from "@/shared/seo/SeoMeta";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const Gallery = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -22,7 +23,7 @@ const Gallery = () => {
         .filter((product) => product.isAddon !== true)
         .map((product) => ({
           _id: `product-${product._id}`,
-          imageUrl: product.images?.[0] || product.image,
+          imageUrl: optimizeProductImageUrl(product.images?.[0] || product.image),
           title: product.name,
           category: "Featured",
           likes: 0,

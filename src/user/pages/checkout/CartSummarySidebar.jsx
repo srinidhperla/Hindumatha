@@ -1,12 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatINR } from "@/utils/currency";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const AddonRow = ({ addon, onAdd }) => (
   <div className="flex items-center gap-2 rounded-xl border border-primary-100 bg-cream-100 p-2">
     <img
-      src={addon.images?.[0] || addon.image}
+      src={optimizeProductImageUrl(addon.images?.[0] || addon.image)}
       alt={addon.name}
+      width={48}
+      height={48}
+      loading="lazy"
       className="h-12 w-12 rounded-lg object-cover"
     />
     <div className="min-w-0 flex-1">

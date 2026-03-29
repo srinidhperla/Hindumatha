@@ -10,6 +10,7 @@ import {
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
 } from "@/utils/productOptions";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
   if (!products.length) {
@@ -32,8 +33,11 @@ const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
             className="group overflow-hidden flex flex-col admin-motion hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(18,12,2,0.16)]"
           >
             <img
-              src={product.images?.[0] || product.image}
+              src={optimizeProductImageUrl(product.images?.[0] || product.image)}
               alt={product.name}
+              width={640}
+              height={420}
+              loading="lazy"
               className="h-36 sm:h-48 w-full object-cover admin-motion-transform group-hover:scale-[1.04]"
             />
             <div className="flex flex-1 flex-col p-3 sm:p-5">

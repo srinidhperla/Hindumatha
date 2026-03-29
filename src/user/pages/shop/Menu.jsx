@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "@/features/cart/cartSlice";
 import { fetchProducts } from "@/features/products/productSlice";
 import { showToast } from "@/features/uiSlice";
+import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
@@ -79,7 +80,11 @@ const Menu = () => {
       return products
         .map((product) => ({
         ...product,
-        primaryImage: product.images?.[0] || product.image,
+        primaryImage: optimizeProductImageUrl(product.images?.[0] || product.image),
+        image: optimizeProductImageUrl(product.image),
+        images: Array.isArray(product.images)
+          ? product.images.map((image) => optimizeProductImageUrl(image))
+          : product.images,
         categoryLabel: formatCategoryLabel(product.category),
         portionTypeMeta: getPortionTypeMeta(product.portionType),
         availableFlavors: getAvailableFlavorOptions(product),

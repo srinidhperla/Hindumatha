@@ -118,6 +118,9 @@ const AboutSection = ({
             <img
               src="/images/gallery/cake3.jpg"
               alt="About Hindumatha's Cake World"
+              width={1200}
+              height={800}
+              loading="lazy"
               className="w-full h-[280px] sm:h-[400px] lg:h-[500px] object-cover"
             />
             {/* Overlay stats card */}

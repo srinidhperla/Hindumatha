@@ -33,6 +33,9 @@ const ProductImagesSection = ({
             <img
               src={item.preview}
               alt={`${formData.name || "Product"} ${index + 1}`}
+              width={320}
+              height={240}
+              loading="lazy"
               className="h-28 sm:h-36 w-full object-cover"
             />
             <div className="flex items-center gap-1 border-t border-gold-200/60 p-1.5 sm:p-2">

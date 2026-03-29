@@ -9,6 +9,7 @@ import {
   renameCategoryAPI,
   deleteCategoryAPI,
 } from "@/services/productAPI";
+import { normalizeProductImageFields } from "@/utils/imageOptimization";
 
 const getErrorPayload = (error, fallbackMessage) =>
   error.response?.data || { message: fallbackMessage };
@@ -159,7 +160,9 @@ const productSlice = createSlice({
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.loaded = true;
-        state.products = action.payload;
+        state.products = Array.isArray(action.payload)
+          ? action.payload.map((product) => normalizeProductImageFields(product))
+          : [];
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
@@ -167,14 +170,14 @@ const productSlice = createSlice({
         state.error = action.payload?.message || "Failed to fetch products";
       })
       .addCase(createProduct.fulfilled, (state, action) => {
-        state.products.push(action.payload);
+        state.products.push(normalizeProductImageFields(action.payload));
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
         const index = state.products.findIndex(
           (p) => p._id === action.payload._id,
         );
         if (index !== -1) {
-          state.products[index] = action.payload;
+          state.products[index] = normalizeProductImageFields(action.payload);
         }
       })
       .addCase(updateProductInventory.fulfilled, (state, action) => {
@@ -183,12 +186,14 @@ const productSlice = createSlice({
         );
 
         if (index !== -1) {
-          state.products[index] = action.payload;
+          state.products[index] = normalizeProductImageFields(action.payload);
         }
       })
       .addCase(updateProductDisplayOrder.fulfilled, (state, action) => {
         const updatedProducts = Array.isArray(action.payload?.products)
-          ? action.payload.products
+          ? action.payload.products.map((product) =>
+              normalizeProductImageFields(product),
+            )
           : [];
         const updatedMap = new Map(
           updatedProducts.map((product) => [product._id, product]),
