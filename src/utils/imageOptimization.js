@@ -2,6 +2,7 @@ const DEFAULT_CLOUDINARY_TRANSFORMS = "f_auto,q_auto,w_800";
 
 const CLOUDINARY_HOST_REGEX = /^https?:\/\/res\.cloudinary\.com\//i;
 const CLOUDINARY_UPLOAD_PATH = "/image/upload/";
+const LOCAL_GALLERY_PATH_PREFIX = "/images/gallery/";
 
 export const optimizeCloudinaryUploadUrl = (
   imageUrl,
@@ -43,8 +44,43 @@ export const optimizeCloudinaryUploadUrl = (
   }
 };
 
-export const optimizeProductImageUrl = (imageUrl) =>
-  optimizeCloudinaryUploadUrl(imageUrl, DEFAULT_CLOUDINARY_TRANSFORMS);
+const isLocalGalleryPath = (value = "") =>
+  String(value).toLowerCase().startsWith(LOCAL_GALLERY_PATH_PREFIX);
+
+export const normalizeGalleryImageUrl = (imageUrl) => {
+  const source = String(imageUrl || "").trim();
+  if (!source) {
+    return "";
+  }
+
+  if (source.startsWith(LOCAL_GALLERY_PATH_PREFIX)) {
+    return source.split(/[?#]/, 1)[0];
+  }
+
+  if (source.toLowerCase().startsWith("images/gallery/")) {
+    return `/${source}`.split(/[?#]/, 1)[0];
+  }
+
+  try {
+    const parsed = new URL(source);
+    if (isLocalGalleryPath(parsed.pathname)) {
+      return parsed.pathname;
+    }
+  } catch {
+    return source;
+  }
+
+  return source;
+};
+
+export const optimizeProductImageUrl = (imageUrl) => {
+  const normalized = normalizeGalleryImageUrl(imageUrl);
+  if (!normalized || isLocalGalleryPath(normalized)) {
+    return normalized;
+  }
+
+  return optimizeCloudinaryUploadUrl(normalized, DEFAULT_CLOUDINARY_TRANSFORMS);
+};
 
 export const normalizeProductImageFields = (product = {}) => {
   const normalizedImages = Array.isArray(product.images)
@@ -64,9 +100,20 @@ export const normalizeProductImageFields = (product = {}) => {
 };
 
 export const toCloudinaryFetchUrl = (sourceUrl) => {
-  const normalizedSource = String(sourceUrl || "").trim();
+  const normalizedSource = normalizeGalleryImageUrl(sourceUrl);
   if (!normalizedSource) {
     return "";
+  }
+
+  if (isLocalGalleryPath(normalizedSource)) {
+    return normalizedSource;
+  }
+
+  if (CLOUDINARY_HOST_REGEX.test(normalizedSource)) {
+    return optimizeCloudinaryUploadUrl(
+      normalizedSource,
+      DEFAULT_CLOUDINARY_TRANSFORMS,
+    );
   }
 
   const cloudName = String(import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "demo")

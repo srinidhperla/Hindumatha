@@ -1,15 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { FiArrowUp, FiMessageCircle } from "react-icons/fi";
-import HeroSection from "@/user/components/home/HeroSection";
-import FeaturedProducts from "@/user/components/home/FeaturedProducts";
 import SeoMeta from "@/shared/seo/SeoMeta";
-import {
-  WhyChooseUs,
-  AboutSection,
-  TestimonialsSection,
-  CTASection,
-} from "@/user/components/home/HomeSections";
+
+const HeroSection = lazy(() => import("@/user/components/home/HeroSection"));
+const FeaturedProducts = lazy(
+  () => import("@/user/components/home/FeaturedProducts"),
+);
+const WhyChooseUs = lazy(() =>
+  import("@/user/components/home/HomeSections").then((module) => ({
+    default: module.WhyChooseUs,
+  })),
+);
+const AboutSection = lazy(() =>
+  import("@/user/components/home/HomeSections").then((module) => ({
+    default: module.AboutSection,
+  })),
+);
+const TestimonialsSection = lazy(() =>
+  import("@/user/components/home/HomeSections").then((module) => ({
+    default: module.TestimonialsSection,
+  })),
+);
+const CTASection = lazy(() =>
+  import("@/user/components/home/HomeSections").then((module) => ({
+    default: module.CTASection,
+  })),
+);
 
 const Home = () => {
   const { businessInfo, deliverySettings, socialLinks } = useSelector(
@@ -17,6 +34,7 @@ const Home = () => {
   );
   const { products } = useSelector((state) => state.products);
   const [showTopButton, setShowTopButton] = useState(false);
+  const [showDeferredSections, setShowDeferredSections] = useState(false);
   const storefrontProducts = products.filter(
     (product) => product.isAddon !== true,
   );
@@ -32,6 +50,35 @@ const Home = () => {
     const onScroll = () => setShowTopButton(window.scrollY > 420);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const enableDeferredSections = () => {
+      if (!cancelled) {
+        setShowDeferredSections(true);
+      }
+    };
+
+    if (
+      typeof window !== "undefined" &&
+      typeof window.requestIdleCallback === "function"
+    ) {
+      const idleId = window.requestIdleCallback(enableDeferredSections, {
+        timeout: 1500,
+      });
+
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(enableDeferredSections, 700);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const whatsappLink =
@@ -81,22 +128,40 @@ const Home = () => {
         path="/"
         jsonLd={structuredData}
       />
-      <HeroSection
-        businessInfo={businessInfo}
-        establishedYear={establishedYear}
-        categoryCount={categoryCount}
-        deliverySettings={deliverySettings}
-      />
-      <FeaturedProducts products={featuredProducts} />
-      <WhyChooseUs />
-      <AboutSection
-        businessInfo={businessInfo}
-        products={storefrontProducts}
-        categoryCount={categoryCount}
-        yearsExperience={yearsExperience}
-      />
-      <TestimonialsSection />
-      <CTASection />
+      <Suspense
+        fallback={<div className="h-[620px] sm:h-[640px] lg:h-[100svh]" />}
+      >
+        <HeroSection
+          businessInfo={businessInfo}
+          establishedYear={establishedYear}
+          categoryCount={categoryCount}
+          deliverySettings={deliverySettings}
+        />
+      </Suspense>
+
+      <Suspense
+        fallback={
+          <div className="mx-auto max-w-7xl px-5 py-12 text-sm text-[#6a5130] sm:px-6 lg:px-8">
+            Loading featured products...
+          </div>
+        }
+      >
+        <FeaturedProducts products={featuredProducts} />
+      </Suspense>
+
+      {showDeferredSections ? (
+        <Suspense fallback={null}>
+          <WhyChooseUs />
+          <AboutSection
+            businessInfo={businessInfo}
+            products={storefrontProducts}
+            categoryCount={categoryCount}
+            yearsExperience={yearsExperience}
+          />
+          <TestimonialsSection />
+          <CTASection />
+        </Suspense>
+      ) : null}
 
       <a
         href={whatsappLink}

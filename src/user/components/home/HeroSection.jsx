@@ -101,8 +101,8 @@ const HeroSection = ({
             Pure Gold Love
           </h1>
 
-          <p className="animate-fadeInUp anim-delay-2 mt-3 min-h-8 text-lg italic text-white/75 sm:text-2xl">
-            We bake <span className="home-typed-caret">{typedText}</span>
+          <p className="home-typed-line animate-fadeInUp anim-delay-2 mt-3 min-h-8 italic text-white/75">
+            We bake <span className="home-typed-caret">{typedText || " "}</span>
           </p>
 
           <div className="animate-fadeInUp anim-delay-3 mt-6 flex max-w-[520px] items-center gap-2 rounded-[28px] border border-[#c9a84c4d] bg-white/95 px-3 py-2 shadow-2xl backdrop-blur sm:rounded-[40px] sm:px-5">
@@ -169,7 +169,7 @@ const HeroSection = ({
         <div className="animate-fadeInUp anim-delay-2 rounded-2xl border border-white/20 bg-white/15 px-4 py-3 text-white backdrop-blur">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c9a84c33] text-[#e8d08a]">
-              ✦
+              *
             </span>
             <div>
               <p className="text-xs font-bold text-[#e8d08a]">Today's Offer</p>
@@ -235,21 +235,35 @@ const HeroSection = ({
       </div>
 
       <style>{`
+        .home-typed-line {
+          font-size: 1.125rem;
+          line-height: 1.75rem;
+        }
+
+        @media (min-width: 640px) {
+          .home-typed-line {
+            font-size: 1.5rem;
+            line-height: 2rem;
+          }
+        }
+
         .home-typed-caret {
-          position: relative;
-          display: inline-block;
-          padding-right: 5px;
+          display: inline-flex;
+          align-items: center;
+          min-width: 16ch;
+          will-change: opacity;
         }
 
         .home-typed-caret::after {
           content: "";
-          position: absolute;
-          right: 0;
-          top: 12%;
+          display: inline-block;
+          margin-left: 0.2em;
           width: 2px;
-          height: 76%;
+          height: 1em;
           background: #c9a84c;
-          animation: homeCaretBlink 0.9s step-end infinite;
+          opacity: 1;
+          will-change: opacity;
+          animation: homeCaretBlink 0.9s linear infinite;
         }
 
         @keyframes homeCaretBlink {
@@ -268,3 +282,4 @@ const HeroSection = ({
 };
 
 export default HeroSection;
+

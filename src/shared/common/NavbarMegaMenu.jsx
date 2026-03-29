@@ -1,13 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  optimizeProductImageUrl,
-  toCloudinaryFetchUrl,
-} from "@/utils/imageOptimization";
 
-const promoImage = toCloudinaryFetchUrl(
-  "https://hindumatha.me/images/gallery/cake1.jpg",
-);
+const promoImage =
+  "https://images.unsplash.com/photo-1535141192574-5d4897c12636?auto=format&fit=crop&w=1000&q=80";
+
+const categoryFallbackIcons = [
+  "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=crop&w=640&q=80",
+  "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=640&q=80",
+  "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=640&q=80",
+  "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=640&q=80",
+  "https://images.unsplash.com/photo-1464306076886-da185f6a9d05?auto=format&fit=crop&w=640&q=80",
+];
 
 const NavbarMegaMenu = ({
   megaOpenKey,
@@ -34,14 +37,14 @@ const NavbarMegaMenu = ({
         </div>
 
         <div className="grid grid-cols-5 gap-3">
-          {megaCards.map((card) => (
+          {megaCards.map((card, index) => (
             <Link
               to={`/menu?product=${card.id}`}
               key={card.id}
               className="overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white"
             >
               <img
-                src={optimizeProductImageUrl(card.image)}
+                src={categoryFallbackIcons[index % categoryFallbackIcons.length]}
                 alt={card.name}
                 width={320}
                 height={160}
