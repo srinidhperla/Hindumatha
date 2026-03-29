@@ -5,7 +5,7 @@ const defaultSiteContent = {
     storeName: "Hindumatha's Cake World",
     establishedYear: 1976,
     email: "info@hindumathascakes.com",
-    phone: "+91 98765 43210",
+    phone: "+91 9490459499",
     address: "123 Main Street, Vizianagaram, Andhra Pradesh",
     intro: "Crafting unforgettable cakes for every celebration since 2010.",
   },
@@ -38,7 +38,7 @@ const defaultSiteContent = {
   socialLinks: {
     instagram: "https://instagram.com/yourbakery",
     facebook: "https://facebook.com/yourbakery",
-    whatsapp: "https://wa.me/919876543210",
+    whatsapp: "https://wa.me/9194904594990",
   },
   coupons: [
     {

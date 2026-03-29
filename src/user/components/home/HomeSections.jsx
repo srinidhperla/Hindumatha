@@ -96,7 +96,6 @@ const AboutSection = ({
   products,
   categoryCount,
   yearsExperience,
-  averageRating,
 }) => (
   <section className="relative overflow-hidden bg-[linear-gradient(180deg,#f8f1e0_0%,#fffaf0_55%,#f3e7cc_100%)] py-14 sm:py-20 lg:py-28">
     {/* Subtle background pattern */}
@@ -173,10 +172,10 @@ const AboutSection = ({
             </div>
             <div className="rounded-xl border border-[#c9a84c40] bg-white/70 p-3 text-center shadow-[0_8px_20px_rgba(18,12,2,0.09)] backdrop-blur-sm sm:p-4">
               <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-berry-500 to-berry-600 bg-clip-text text-transparent">
-                {averageRating ? `${averageRating}★` : "5★"}
+                {yearsExperience}+
               </div>
               <div className="mt-1 text-[10px] font-medium text-[#6a5130] sm:text-xs">
-                Rating
+                Years
               </div>
             </div>
           </div>

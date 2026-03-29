@@ -91,7 +91,8 @@ const MenuCategorySections = ({
                     <span className="menu-meta-separator">|</span>
                   )}
                   <span className="menu-product-meta-text">
-                    {product.orderableWeights.length}{" "}
+                    {(product.menuWeightVariantCount ??
+                      product.orderableWeights.length)}{" "}
                     {product.portionTypeMeta.heading.toLowerCase()}
                   </span>
                 </div>

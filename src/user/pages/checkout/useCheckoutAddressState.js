@@ -42,6 +42,7 @@ export const useCheckoutAddressState = ({
   const [addressMode, setAddressMode] = useState("saved");
   const [editingAddressId, setEditingAddressId] = useState("");
   const [selectedAddressId, setSelectedAddressId] = useState("");
+  const [pendingSelectedAddressId, setPendingSelectedAddressId] = useState("");
   const [saveAddressForNextTime, setSaveAddressForNextTime] = useState(false);
   const [addressLabel, setAddressLabel] = useState("Home");
   const [addressMeta, setAddressMeta] = useState({
@@ -67,6 +68,7 @@ export const useCheckoutAddressState = ({
 
     setAddressMode("saved");
     setSelectedAddressId(defaultAddress.id);
+    setPendingSelectedAddressId("");
     setFormData((prev) => ({
       ...prev,
       phone: defaultAddress.phone || prev.phone || user?.phone || "",
@@ -174,11 +176,13 @@ export const useCheckoutAddressState = ({
     setAddressMode("saved");
     setEditingAddressId("");
     setSelectedAddressId(address.id);
+    setPendingSelectedAddressId("");
     applySelectedAddress(address);
     setSaveAddressForNextTime(false);
   };
 
   const handleStartNewAddress = () => {
+    setPendingSelectedAddressId(selectedAddressId || "");
     setAddressMode("new");
     setEditingAddressId("");
     setSelectedAddressId("");
@@ -198,6 +202,7 @@ export const useCheckoutAddressState = ({
   };
 
   const handleEditSavedAddress = (address) => {
+    setPendingSelectedAddressId(selectedAddressId || address.id || "");
     setAddressMode("edit");
     setEditingAddressId(address.id);
     setSelectedAddressId("");
@@ -205,6 +210,29 @@ export const useCheckoutAddressState = ({
     setAddressLabel(address.label || "Home");
     setAddressQuery(address.formattedAddress || "");
     setSaveAddressForNextTime(true);
+  };
+
+  const handleAddressModalClose = (reason = "cancel") => {
+    setAddressMode("saved");
+    setEditingAddressId("");
+
+    if (reason === "saved") {
+      return;
+    }
+
+    const fallbackId = pendingSelectedAddressId || selectedAddressId;
+    const fallbackAddress =
+      savedAddresses.find((entry) => entry.id === fallbackId) ||
+      savedAddresses.find((entry) => entry.isDefault) ||
+      savedAddresses[0];
+
+    if (fallbackAddress) {
+      setSelectedAddressId(fallbackAddress.id);
+      applySelectedAddress(fallbackAddress);
+      setSaveAddressForNextTime(false);
+    }
+
+    setPendingSelectedAddressId("");
   };
 
   const handleDeleteSavedAddress = async (addressId) => {
@@ -288,5 +316,6 @@ export const useCheckoutAddressState = ({
     handleStartNewAddress,
     handleEditSavedAddress,
     handleDeleteSavedAddress,
+    handleAddressModalClose,
   };
 };

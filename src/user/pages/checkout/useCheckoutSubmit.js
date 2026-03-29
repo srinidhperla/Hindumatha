@@ -9,6 +9,84 @@ import {
 } from "./orderPageUtils";
 import { useRef } from "react";
 
+const toText = (value) => String(value ?? "").trim();
+
+const formatEggTypeLabel = (eggType = "") => {
+  if (String(eggType).toLowerCase() === "eggless") {
+    return "Eggless";
+  }
+  if (String(eggType).toLowerCase() === "egg") {
+    return "Egg";
+  }
+  return toText(eggType);
+};
+
+const dedupeOptionEntries = (entries = []) => {
+  const seen = new Set();
+  return entries.filter((entry) => {
+    const label = toText(entry?.label);
+    const value = toText(entry?.value);
+    if (!label || !value) {
+      return false;
+    }
+
+    const key = `${label.toLowerCase()}::${value.toLowerCase()}`;
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
+
+const buildCheckoutItemSelectedOptions = (item) => {
+  const entries = [];
+  const push = (label, value) => {
+    const normalizedLabel = toText(label);
+    const normalizedValue = toText(value);
+    if (normalizedLabel && normalizedValue) {
+      entries.push({
+        label: normalizedLabel,
+        value: normalizedValue,
+      });
+    }
+  };
+
+  if (Array.isArray(item?.selectedOptions)) {
+    item.selectedOptions.forEach((entry) => {
+      push(entry?.label || entry?.name || entry?.key, entry?.value ?? entry?.choice);
+    });
+  } else if (item?.selectedOptions && typeof item.selectedOptions === "object") {
+    Object.entries(item.selectedOptions).forEach(([key, value]) => {
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        push(value.label || key, value.value ?? value.choice ?? value.selected);
+      } else {
+        push(key, value);
+      }
+    });
+  }
+
+  const portionLabel = toText(
+    item?.portionTypeMeta?.singular || item?.portionTypeMeta?.heading || "Size",
+  );
+  push(portionLabel, item?.selectedWeight);
+  push("Size", item?.selectedWeight);
+  push("Weight", item?.selectedWeight);
+  push("Flavor", item?.selectedFlavor);
+  push("Cake Type", formatEggTypeLabel(item?.selectedEggType));
+  push("Occasion", item?.occasion);
+  push("Message on Cake", item?.customMessage || item?.message);
+
+  if (Array.isArray(item?.customizations)) {
+    item.customizations.forEach((customization) => {
+      push(customization?.name || "Customization", customization?.choice);
+    });
+  }
+
+  return dedupeOptionEntries(entries);
+};
+
 export const useCheckoutSubmit = ({
   dispatch,
   navigate,
@@ -271,14 +349,33 @@ export const useCheckoutSubmit = ({
       }
 
       const checkoutPayload = {
-        items: checkoutItems.map((item) => ({
-          product: item.product._id,
-          quantity: Number(item.quantity),
-          size: item.selectedWeight,
-          flavor: item.selectedFlavor,
-          eggType: item.selectedEggType || "",
-          price: item.unitPrice,
-        })),
+        items: checkoutItems.map((item) => {
+          const selectedOptions = buildCheckoutItemSelectedOptions(item);
+          const optionSummary = selectedOptions
+            .map((entry) => `${entry.label}: ${entry.value}`)
+            .join(" | ");
+
+          return {
+            product: item.product._id,
+            productName: toText(item.product?.name || ""),
+            productImage: toText(
+              item.product?.images?.[0] || item.product?.image || "",
+            ),
+            quantity: Number(item.quantity),
+            size: item.selectedWeight,
+            weight: item.selectedWeight,
+            flavor: item.selectedFlavor,
+            cakeType: item.selectedEggType || "",
+            customMessage: toText(item.customMessage || item.message || ""),
+            occasion: toText(item.occasion || ""),
+            selectedOptions,
+            optionSummary,
+            customizations: Array.isArray(item.customizations)
+              ? item.customizations
+              : [],
+            price: item.unitPrice,
+          };
+        }),
         deliveryAddress: {
           street: normalizedStreet,
           city: normalizedCity,

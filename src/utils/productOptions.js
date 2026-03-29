@@ -187,6 +187,15 @@ export const getAvailableWeightOptions = (
         return val !== false && val !== null;
       });
     }
+
+    // If any typed rows exist for this flavor but this specific cake type row
+    // is missing, treat it as "all ON" for this cake type by default.
+    const hasAnyTypedFlavorRows = ["egg", "eggless"].some((type) =>
+      Boolean(resolveTypedRow(source, `${type}::${flavorName}`)),
+    );
+    if (hasAnyTypedFlavorRows) {
+      return weightOptions;
+    }
   }
 
   const matrix = normalizeFlavorWeightAvailability(product);
@@ -228,6 +237,42 @@ export const getOrderableWeights = (product) => {
   return weights.filter((weight) =>
     flavors.some((f) => matrix?.[f.name]?.[weight.label] === true),
   );
+};
+
+export const getMenuWeightVariantCount = (product) => {
+  const flavors = getAvailableFlavorOptions(product);
+  const flavorNames =
+    flavors.length > 0 ? flavors.map((option) => option.name) : [""];
+  const activeCakeTypes = [];
+
+  if (product?.isEgg !== false && isEggTypeAvailable(product, "egg")) {
+    activeCakeTypes.push("egg");
+  }
+
+  if (product?.isEggless === true && isEggTypeAvailable(product, "eggless")) {
+    activeCakeTypes.push("eggless");
+  }
+
+  const visibleWeightLabels = new Set();
+
+  flavorNames.forEach((flavorName) => {
+    if (activeCakeTypes.length > 0) {
+      activeCakeTypes.forEach((cakeType) => {
+        getAvailableWeightOptions(product, flavorName, cakeType).forEach(
+          (option) => {
+            visibleWeightLabels.add(option.label);
+          },
+        );
+      });
+      return;
+    }
+
+    getAvailableWeightOptions(product, flavorName).forEach((option) => {
+      visibleWeightLabels.add(option.label);
+    });
+  });
+
+  return visibleWeightLabels.size;
 };
 
 export const isProductPurchasable = (product) => {

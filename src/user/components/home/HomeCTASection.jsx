@@ -33,7 +33,7 @@ const HomeCTASection = () => (
             Contact Us
           </Link>
           <a
-            href="tel:+919876543210"
+            href="tel:+9194904594990"
             className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c9a84c66] bg-[#120c02ba] px-7 py-3.5 font-semibold text-[#f4dfac] backdrop-blur-sm transition-all duration-300 hover:bg-[#120c02] active:scale-[0.97] sm:px-8 sm:py-4"
           >
             <FiPhone className="w-5 h-5" />

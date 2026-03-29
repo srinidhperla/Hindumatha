@@ -1,13 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   fetchAllProducts,
-  fetchOneProduct,
   createNewProduct,
   updateExistingProduct,
   patchProductInventory,
   putProductDisplayOrder,
   deleteExistingProduct,
-  postProductReview,
   renameCategoryAPI,
   deleteCategoryAPI,
 } from "@/services/productAPI";
@@ -35,17 +33,6 @@ export const fetchProducts = createAsyncThunk(
       }
       return !products.loading && !products.loaded;
     },
-  },
-);
-
-export const fetchProductById = createAsyncThunk(
-  "products/fetchProductById",
-  async (id, { rejectWithValue }) => {
-    try {
-      return await fetchOneProduct(id);
-    } catch (error) {
-      return rejectWithValue(getErrorPayload(error, "Failed to fetch product"));
-    }
   },
 );
 
@@ -102,17 +89,6 @@ export const deleteProduct = createAsyncThunk(
   },
 );
 
-export const addProductReview = createAsyncThunk(
-  "products/addProductReview",
-  async ({ id, reviewData }, { rejectWithValue }) => {
-    try {
-      return await postProductReview(id, reviewData);
-    } catch (error) {
-      return rejectWithValue(getErrorPayload(error, "Failed to add review"));
-    }
-  },
-);
-
 export const renameCategory = createAsyncThunk(
   "products/renameCategory",
   async ({ oldName, newName }, { rejectWithValue, dispatch }) => {
@@ -158,7 +134,6 @@ export const updateProductDisplayOrder = createAsyncThunk(
 
 const initialState = {
   products: [],
-  product: null,
   loading: false,
   loaded: false,
   error: null,
@@ -191,18 +166,6 @@ const productSlice = createSlice({
         state.loaded = true;
         state.error = action.payload?.message || "Failed to fetch products";
       })
-      .addCase(fetchProductById.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchProductById.fulfilled, (state, action) => {
-        state.loading = false;
-        state.product = action.payload;
-      })
-      .addCase(fetchProductById.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Failed to fetch product";
-      })
       .addCase(createProduct.fulfilled, (state, action) => {
         state.products.push(action.payload);
       })
@@ -213,9 +176,6 @@ const productSlice = createSlice({
         if (index !== -1) {
           state.products[index] = action.payload;
         }
-        if (state.product?._id === action.payload._id) {
-          state.product = action.payload;
-        }
       })
       .addCase(updateProductInventory.fulfilled, (state, action) => {
         const index = state.products.findIndex(
@@ -224,10 +184,6 @@ const productSlice = createSlice({
 
         if (index !== -1) {
           state.products[index] = action.payload;
-        }
-
-        if (state.product?._id === action.payload._id) {
-          state.product = action.payload;
         }
       })
       .addCase(updateProductDisplayOrder.fulfilled, (state, action) => {
@@ -244,17 +200,6 @@ const productSlice = createSlice({
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.products = state.products.filter((p) => p._id !== action.payload);
-      })
-      .addCase(addProductReview.fulfilled, (state, action) => {
-        state.product = action.payload;
-
-        const index = state.products.findIndex(
-          (product) => product._id === action.payload._id,
-        );
-
-        if (index !== -1) {
-          state.products[index] = action.payload;
-        }
       });
   },
 });

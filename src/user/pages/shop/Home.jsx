@@ -11,23 +11,6 @@ import {
   CTASection,
 } from "@/user/components/home/HomeSections";
 
-const getAverageRating = (products = []) => {
-  const ratedProducts = products.filter(
-    (product) => product.isAddon !== true && Number(product.rating) > 0,
-  );
-
-  if (!ratedProducts.length) {
-    return null;
-  }
-
-  const totalRating = ratedProducts.reduce(
-    (sum, product) => sum + Number(product.rating || 0),
-    0,
-  );
-
-  return (totalRating / ratedProducts.length).toFixed(1);
-};
-
 const Home = () => {
   const { businessInfo, deliverySettings, socialLinks } = useSelector(
     (state) => state.site,
@@ -41,7 +24,6 @@ const Home = () => {
   const currentYear = new Date().getFullYear();
   const establishedYear = Number(businessInfo.establishedYear) || 1976;
   const yearsExperience = Math.max(1, currentYear - establishedYear);
-  const averageRating = getAverageRating(storefrontProducts);
   const categoryCount = new Set(
     storefrontProducts.map((product) => product.category).filter(Boolean),
   ).size;
@@ -53,7 +35,7 @@ const Home = () => {
   }, []);
 
   const whatsappLink =
-    businessInfo?.socialLinks?.whatsapp || "https://wa.me/919876543210";
+    businessInfo?.socialLinks?.whatsapp || "https://wa.me/9194904594990";
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -67,7 +49,7 @@ const Home = () => {
       addressRegion: "Andhra Pradesh",
       addressCountry: "IN",
     },
-    telephone: "+91 98765 43210",
+    telephone: "+91 9490459499",
     email: "info@hindumathascakes.com",
     openingHoursSpecification: [
       {
@@ -102,7 +84,6 @@ const Home = () => {
       <HeroSection
         businessInfo={businessInfo}
         establishedYear={establishedYear}
-        averageRating={averageRating}
         categoryCount={categoryCount}
         deliverySettings={deliverySettings}
       />
@@ -113,7 +94,6 @@ const Home = () => {
         products={storefrontProducts}
         categoryCount={categoryCount}
         yearsExperience={yearsExperience}
-        averageRating={averageRating}
       />
       <TestimonialsSection />
       <CTASection />

@@ -62,7 +62,7 @@ const ContactFormCard = ({ formData, status, onChange, onSubmit }) => (
             onChange={onChange}
             required
             className="w-full rounded-xl border border-[#c9a84c55] bg-white/90 px-4 py-3 text-[#2a1f0e] transition-colors focus:border-[#8b6914] focus:ring-2 focus:ring-[#c9a84c66]"
-            placeholder="+91 98765 43210"
+            placeholder="+91 9490459499"
           />
         </div>
         <div>

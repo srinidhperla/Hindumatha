@@ -1,5 +1,10 @@
 import React from "react";
-import { getOrderItems, ORDER_STATUS_OPTIONS } from "../../pages/adminShared";
+import {
+  getOrderItemName,
+  getOrderItemOptionEntries,
+  getOrderItems,
+  ORDER_STATUS_OPTIONS,
+} from "../../pages/adminShared";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
 import { downloadInvoicePDF } from "@/services/invoiceService";
 import { buildGoogleMapsSearchUrl, formatAddressText } from "@/utils/mapsLinks";
@@ -60,6 +65,9 @@ const formatEstimatedDelivery = (order) => {
 
   return ESTIMATED_DELIVERY_LABELS[value] || value;
 };
+
+const formatINR = (value) =>
+  `Rs.${Number(value || 0).toLocaleString("en-IN")}`;
 
 const buildDeliveryShareText = (order) => {
   const address = order?.deliveryAddress || {};
@@ -212,29 +220,46 @@ const OrderDetailsModal = ({
             <h3 className="text-sm font-semibold text-primary-900">Items</h3>
           </div>
           <div className="divide-y divide-white/45">
-            {getOrderItems(order).map((item, index) => (
-              <div
-                key={`${order._id}-${item.product?._id || index}`}
-                className="flex items-center justify-between px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-primary-900">
-                    {item.product?.name || "Custom Cake"}
-                  </p>
-                  <p className="text-sm text-primary-700">
-                    Qty: {item.quantity || 0}
-                    {item.size ? ` | ${item.size}` : ""}
-                    {item.flavor ? ` | ${item.flavor}` : ""}
-                  </p>
+            {getOrderItems(order).map((item, index) => {
+              const optionEntries = getOrderItemOptionEntries(item);
+              return (
+                <div
+                  key={`${order._id}-${item.product?._id || index}`}
+                  className="px-4 py-3"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-primary-900">
+                        {getOrderItemName(item)}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-primary-700">
+                        Qty: {Number(item.quantity || 0)}
+                      </p>
+                      <p className="mt-1 text-xs text-primary-700">
+                        Price per item: {formatINR(item.price)}
+                      </p>
+                      {optionEntries.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {optionEntries.map((entry) => (
+                            <span
+                              key={`${order._id}-${index}-${entry.label}-${entry.value}`}
+                              className="rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-primary-700"
+                            >
+                              {entry.label}: {entry.value}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-primary-900">
+                      {formatINR(
+                        Number(item.price || 0) * Number(item.quantity || 0),
+                      )}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm font-semibold text-primary-900">
-                  Rs.
-                  {((item.price || 0) * (item.quantity || 0)).toLocaleString(
-                    "en-IN",
-                  )}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

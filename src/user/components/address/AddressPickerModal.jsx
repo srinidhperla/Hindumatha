@@ -12,7 +12,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
 
   const handleSaveAddress = (addressData) => {
     onSave(addressData);
-    onClose();
+    onClose?.("saved");
   };
 
   const picker = useAddressPicker({
@@ -93,7 +93,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
         <div className="flex items-center gap-3 border-b border-gold-200/60 bg-white/80 px-4 py-3 backdrop-blur sm:px-5">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => onClose?.("cancel")}
             className="rounded-full p-1.5 text-primary-600 transition hover:bg-caramel-100"
             aria-label="Close"
           >

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiArrowRight, FiSearch, FiStar, FiTruck } from "react-icons/fi";
+import { FiArrowRight, FiSearch, FiTruck } from "react-icons/fi";
 import {
   categoryStrip,
   heroSlides,
@@ -10,7 +10,6 @@ import {
 
 const HeroSection = ({
   businessInfo,
-  averageRating,
   categoryCount,
   deliverySettings,
 }) => {
@@ -141,14 +140,12 @@ const HeroSection = ({
       <div className="absolute right-5 top-1/2 z-20 hidden -translate-y-1/2 flex-col gap-3 lg:flex">
         <div className="animate-fadeInUp rounded-2xl border border-white/20 bg-white/15 px-4 py-3 text-white backdrop-blur">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c9a84c33]">
-              <FiStar className="h-5 w-5 text-[#e8d08a]" />
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c9a84c33] text-[#e8d08a]">
+              *
             </span>
             <div>
-              <p className="text-xs font-bold">
-                {averageRating || "4.9"} Rating
-              </p>
-              <p className="text-[10px] text-white/70">1000+ Reviews</p>
+              <p className="text-xs font-bold">Freshly Baked Daily</p>
+              <p className="text-[10px] text-white/70">Made to order</p>
             </div>
           </div>
         </div>

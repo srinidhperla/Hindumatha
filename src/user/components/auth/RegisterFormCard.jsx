@@ -116,7 +116,7 @@ const RegisterFormCard = ({
               required
               value={formData.phone}
               onChange={onChange}
-              placeholder="+91 98765 43210"
+              placeholder="94965XXXXX"
               className="w-full rounded-xl border border-primary-200 bg-white py-3 pl-10 pr-4 text-sm text-primary-800 placeholder-primary-400 transition focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>

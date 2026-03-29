@@ -126,6 +126,39 @@ const getFreeDeliveryProgress = (subtotal, normalizedDeliverySettings) => {
   };
 };
 
+const CakePlaceholderIcon = ({ className = "" }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    className={className}
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 10h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8Z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M7 10V8a5 5 0 1 1 10 0v2"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M8 14h.01M12 14h.01M16 14h.01"
+    />
+  </svg>
+);
+
+const getPaymentItemName = (item, index) =>
+  String(item?.productName || item?.name || "").trim() || `Item ${index + 1}`;
+
+const getPaymentItemImage = (item) =>
+  String(item?.productImage || item?.image || "").trim();
+
 const Payment = () => {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -457,28 +490,45 @@ const Payment = () => {
                   className="commerce-summary-item"
                 >
                   <div className="commerce-summary-top">
-                    <div>
-                      <p className="commerce-summary-name">Item {index + 1}</p>
-                      <div className="commerce-meta-chips mt-2">
-                        <span className="commerce-chip commerce-chip--muted">
-                          {`Option: ${item.size}`}
-                        </span>
-                        {item.eggType && (
-                          <span className="commerce-chip commerce-chip--muted">
-                            {`Cake Type: ${item.eggType === "egg" ? "Egg" : "Eggless"}`}
-                          </span>
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary-100 bg-cream-100">
+                        {getPaymentItemImage(item) ? (
+                          <img
+                            src={getPaymentItemImage(item)}
+                            alt={getPaymentItemName(item, index)}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <CakePlaceholderIcon className="h-6 w-6 text-primary-500" />
                         )}
-                        {item.flavor && (
+                      </div>
+                      <div>
+                        <p className="commerce-summary-name">
+                          {getPaymentItemName(item, index)}
+                        </p>
+                        <div className="commerce-meta-chips mt-2">
+                          {item.size && (
+                            <span className="commerce-chip commerce-chip--muted">
+                              {`Option: ${item.size}`}
+                            </span>
+                          )}
+                          {(item.cakeType || item.eggType) && (
+                            <span className="commerce-chip commerce-chip--muted">
+                              {`Cake Type: ${(item.cakeType || item.eggType) === "egg" ? "Egg" : "Eggless"}`}
+                            </span>
+                          )}
+                          {item.flavor && (
+                            <span className="commerce-chip commerce-chip--muted">
+                              {`Flavor: ${item.flavor}`}
+                            </span>
+                          )}
                           <span className="commerce-chip commerce-chip--muted">
-                            {`Flavor: ${item.flavor}`}
+                            {`Qty: ${item.quantity}`}
                           </span>
-                        )}
-                        <span className="commerce-chip commerce-chip--muted">
-                          {`Qty: ${item.quantity}`}
-                        </span>
-                        <span className="commerce-chip commerce-chip--success">
-                          {`Price: ${formatINR(getSafePaymentUnitPrice(item))}`}
-                        </span>
+                          <span className="commerce-chip commerce-chip--success">
+                            {`Price: ${formatINR(getSafePaymentUnitPrice(item))}`}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <p className="commerce-summary-price">

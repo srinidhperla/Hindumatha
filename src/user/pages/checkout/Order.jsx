@@ -204,7 +204,9 @@ const Order = () => {
       addressState.setAddressMode("saved");
       addressState.setEditingAddressId("");
       addressState.setSaveAddressForNextTime(false);
+      addressState.handleAddressModalClose("saved");
     } catch {
+      addressState.handleAddressModalClose("cancel");
       // Shared helper emits error toast.
     }
   };
@@ -278,10 +280,7 @@ const Order = () => {
                   onEditSavedAddress={addressState.handleEditSavedAddress}
                   onDeleteSavedAddress={addressState.handleDeleteSavedAddress}
                   onSaveAddress={handleSaveAddress}
-                  onCancelAddressModal={() => {
-                    addressState.setAddressMode("saved");
-                    addressState.setEditingAddressId("");
-                  }}
+                  onCancelAddressModal={addressState.handleAddressModalClose}
                   onBack={() => {}}
                   hideBackAction
                 />

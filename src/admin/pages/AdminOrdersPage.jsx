@@ -11,7 +11,15 @@ import OrderDetailsModal from "../components/modals/OrderDetailsModal";
 import AdminOrderActionModal from "../components/modals/AdminOrderActionModal";
 import { ActionButton, StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
 import AdminOrderAlertToolbar from "@/admin/components/orders/AdminOrderAlertToolbar";
-import { getErrorMessage, ORDER_STATUS_OPTIONS, getOrderItemCount, getOrderSummary } from "./adminShared";
+import {
+  getErrorMessage,
+  ORDER_STATUS_OPTIONS,
+  getOrderItemCount,
+  getOrderItemName,
+  getOrderItemShortSummary,
+  getOrderItems,
+  getOrderSummary,
+} from "./adminShared";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
 import {
   getPaymentMethodLabel,
@@ -90,6 +98,7 @@ const getProgressEditOptions = () => ORDER_STATUS_OPTIONS;
 const SORTABLE_COLUMNS = {
   order: "order",
   customer: "customer",
+  items: "items",
   status: "status",
   paymentStatus: "paymentStatus",
   paymentMethod: "paymentMethod",
@@ -105,6 +114,8 @@ const getSortValue = (order, field) => {
       return getOrderDisplayCode(order);
     case SORTABLE_COLUMNS.customer:
       return order?.user?.name || "";
+    case SORTABLE_COLUMNS.items:
+      return getOrderSummary(order);
     case SORTABLE_COLUMNS.status:
       return order?.status || "";
     case SORTABLE_COLUMNS.paymentStatus:
@@ -122,6 +133,27 @@ const getSortValue = (order, field) => {
     default:
       return "";
   }
+};
+
+const getItemsPreviewRows = (order, maxItems = 2) => {
+  const items = getOrderItems(order);
+
+  if (!items.length) {
+    return ["Custom Cake"];
+  }
+
+  const rows = items.slice(0, maxItems).map((item) => {
+    const summary = getOrderItemShortSummary(item, 2);
+    return summary
+      ? `${getOrderItemName(item)} | ${summary}`
+      : getOrderItemName(item);
+  });
+
+  if (items.length > maxItems) {
+    rows.push(`+${items.length - maxItems} more item(s)`);
+  }
+
+  return rows;
 };
 
 const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
@@ -316,12 +348,13 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
 
       <SurfaceCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className="min-w-[1480px] divide-y divide-gold-200/60 text-sm">
+          <table className="min-w-[1680px] divide-y divide-gold-200/60 text-sm">
             <thead className="bg-gold-50/50">
               <tr>
                 {[
                   { key: SORTABLE_COLUMNS.order, label: "Order" },
                   { key: SORTABLE_COLUMNS.customer, label: "Customer" },
+                  { key: SORTABLE_COLUMNS.items, label: "Items" },
                   { key: SORTABLE_COLUMNS.status, label: "Status" },
                   { key: SORTABLE_COLUMNS.paymentStatus, label: "Payment" },
                   { key: SORTABLE_COLUMNS.paymentMethod, label: "Method" },
@@ -392,6 +425,18 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                         order.user?.phone ||
                         "No phone"}
                     </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="space-y-1">
+                      {getItemsPreviewRows(order).map((row, index) => (
+                        <p
+                          key={`${order._id}-item-preview-${index}`}
+                          className="text-xs text-primary-700"
+                        >
+                          {row}
+                        </p>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <StatusChip tone={getStatusTone(order.status)} className="capitalize">
