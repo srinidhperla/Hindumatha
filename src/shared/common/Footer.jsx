@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { FiMapPin, FiPhone, FiMail, FiArrowUpRight } from "react-icons/fi";
@@ -9,8 +9,16 @@ const Footer = () => {
   const { businessInfo, storeHours, socialLinks } = useSelector(
     (state) => state.site,
   );
-  const phoneHref = `tel:${businessInfo.phone.replace(/\s+/g, "")}`;
-  const emailHref = `mailto:${businessInfo.email}`;
+
+  const safeBusinessInfo = businessInfo || {};
+  const safeStoreHours = storeHours || {};
+  const safeSocialLinks = socialLinks || {};
+  const safeStoreName = safeBusinessInfo.storeName || "Hindumatha's Cake World";
+  const safePhone = String(safeBusinessInfo.phone || "").trim();
+  const safeEmail = String(safeBusinessInfo.email || "").trim();
+  const phoneHref = safePhone ? `tel:${safePhone.replace(/\s+/g, "")}` : "#";
+  const emailHref = safeEmail ? `mailto:${safeEmail}` : "#";
+
   const quickLinks = [
     { name: "Home", path: "/" },
     { name: "Menu", path: "/menu" },
@@ -27,28 +35,29 @@ const Footer = () => {
             <div>
               <div className="site-footer-brand">
                 <div className="site-footer-badge">H</div>
-                <p className="site-footer-brand-name">
-                  {businessInfo.storeName}
-                </p>
+                <p className="site-footer-brand-name">{safeStoreName}</p>
               </div>
-              <p className="site-footer-intro">{businessInfo.intro}</p>
+              <p className="site-footer-intro">
+                {safeBusinessInfo.intro ||
+                  "Crafting unforgettable cakes for every celebration."}
+              </p>
               <div className="site-footer-socials">
                 <a
-                  href={socialLinks.facebook}
+                  href={safeSocialLinks.facebook || "#"}
                   className="site-footer-social-link"
                   aria-label="Facebook"
                 >
                   <FaFacebookF className="h-4 w-4" />
                 </a>
                 <a
-                  href={socialLinks.instagram}
+                  href={safeSocialLinks.instagram || "#"}
                   className="site-footer-social-link"
                   aria-label="Instagram"
                 >
                   <FaInstagram className="h-4 w-4" />
                 </a>
                 <a
-                  href={socialLinks.whatsapp}
+                  href={safeSocialLinks.whatsapp || "#"}
                   className="site-footer-social-link"
                   aria-label="WhatsApp"
                 >
@@ -77,19 +86,19 @@ const Footer = () => {
                 <li className="site-footer-contact-item">
                   <FiMapPin className="site-footer-contact-icon" />
                   <span className="whitespace-pre-line">
-                    {businessInfo.address}
+                    {safeBusinessInfo.address || "Vizianagaram, Andhra Pradesh"}
                   </span>
                 </li>
                 <li className="site-footer-contact-item">
                   <FiPhone className="site-footer-contact-icon" />
                   <a href={phoneHref} className="site-footer-contact-link">
-                    {businessInfo.phone}
+                    {safePhone || "Contact unavailable"}
                   </a>
                 </li>
                 <li className="site-footer-contact-item">
                   <FiMail className="site-footer-contact-icon" />
                   <a href={emailHref} className="site-footer-contact-link">
-                    {businessInfo.email}
+                    {safeEmail || "Email unavailable"}
                   </a>
                 </li>
               </ul>
@@ -101,13 +110,13 @@ const Footer = () => {
                 <li className="site-footer-hours-row">
                   <span className="site-footer-hours-label">Weekdays</span>
                   <span className="site-footer-hours-value">
-                    {storeHours.weekdays}
+                    {safeStoreHours.weekdays || "8:00 AM - 9:00 PM"}
                   </span>
                 </li>
                 <li className="site-footer-hours-row">
                   <span className="site-footer-hours-label">Weekends</span>
                   <span className="site-footer-hours-value">
-                    {storeHours.weekends}
+                    {safeStoreHours.weekends || "9:00 AM - 10:00 PM"}
                   </span>
                 </li>
               </ul>
@@ -124,7 +133,7 @@ const Footer = () => {
         <div className="site-footer-shell">
           <div className="site-footer-bottom-row">
             <p className="site-footer-link">
-              © {currentYear} {businessInfo.storeName}. All rights reserved.
+              © {currentYear} {safeStoreName}. All rights reserved.
             </p>
             <div className="site-footer-sub-links">
               <a href="#" className="site-footer-link">

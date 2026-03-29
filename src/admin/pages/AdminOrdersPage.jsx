@@ -14,6 +14,7 @@ import AdminOrderAlertToolbar from "@/admin/components/orders/AdminOrderAlertToo
 import {
   getErrorMessage,
   ORDER_STATUS_OPTIONS,
+  getOrderSummary,
   getOrderItemName,
   getOrderItemShortSummary,
   getOrderItems,
