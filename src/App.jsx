@@ -7,6 +7,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { io } from "socket.io-client";
 import Navbar from "@/shared/common/Navbar";
 import Footer from "@/shared/common/Footer";
 import { AdminOrderAlertsProvider } from "@/admin/components/alerts/AdminOrderAlertsProvider";
@@ -19,6 +20,27 @@ import { getProfile } from "@/features/auth/authSlice";
 import { fetchSiteContent } from "@/features/site/siteSlice";
 import { fetchProducts } from "@/features/products/productSlice";
 import { syncCartProducts, setCurrentUser } from "@/features/cart/cartSlice";
+import { getSocketServerUrl } from "@/utils/socketUrl";
+
+const SOCKET_URL = getSocketServerUrl();
+const normalizeScope = (scope) =>
+  String(scope || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-");
+const PRODUCT_REFRESH_SCOPES = new Set([
+  "general",
+  "products",
+  "product",
+  "inventory",
+]);
+const SITE_REFRESH_SCOPES = new Set([
+  "general",
+  "settings",
+  "delivery",
+  "delivery-settings",
+  "delivery-timing",
+]);
 
 const Home = lazy(() => import("@/user/pages/shop/Home"));
 const Menu = lazy(() => import("@/user/pages/shop/Menu"));
@@ -119,8 +141,9 @@ function App() {
 
   useEffect(() => {
     // Sync cart to current user whenever user changes
-    dispatch(setCurrentUser(user?.id));
-  }, [dispatch, user?.id]);
+    const cartUserId = user?.id || user?._id || null;
+    dispatch(setCurrentUser(cartUserId));
+  }, [dispatch, user?._id, user?.id]);
 
   useEffect(() => {
     if (!siteLoaded && !siteLoading) {
@@ -139,6 +162,40 @@ function App() {
       dispatch(syncCartProducts(products));
     }
   }, [dispatch, products, productsLoaded]);
+
+  useEffect(() => {
+    if (!SOCKET_URL) {
+      return undefined;
+    }
+
+    const socket = io(SOCKET_URL, {
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+      reconnection: true,
+    });
+
+    const handleSiteSync = (event) => {
+      const normalizedScope = normalizeScope(event?.scope);
+
+      if (
+        !normalizedScope ||
+        PRODUCT_REFRESH_SCOPES.has(normalizedScope)
+      ) {
+        dispatch(fetchProducts({ force: true }));
+      }
+
+      if (!normalizedScope || SITE_REFRESH_SCOPES.has(normalizedScope)) {
+        dispatch(fetchSiteContent());
+      }
+    };
+
+    socket.on("site-data-updated", handleSiteSync);
+
+    return () => {
+      socket.off("site-data-updated", handleSiteSync);
+      socket.disconnect();
+    };
+  }, [dispatch]);
 
   return (
     <AdminOrderAlertsProvider>

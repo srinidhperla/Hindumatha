@@ -9,8 +9,9 @@ import {
 import { SurfaceCard, ActionButton, StatusChip } from "@/shared/ui/Primitives";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
 import { buildGoogleMapsSearchUrl, formatAddressText } from "@/utils/mapsLinks";
+import { getSocketServerUrl } from "@/utils/socketUrl";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const SOCKET_URL = getSocketServerUrl();
 
 const formatAddress = (address = {}) => formatAddressText(address);
 
@@ -49,7 +50,7 @@ const DeliveryDashboard = () => {
       return undefined;
     }
 
-    const socket = io(API_URL, {
+    const socket = io(SOCKET_URL, {
       auth: { token },
       withCredentials: true,
       transports: ["websocket", "polling"],

@@ -13,6 +13,8 @@ export const AdminSettingsDeliverySection = ({
   onCopyDeliveryConfig,
   onDownloadDeliveryConfig,
   onResetToVizianagaram,
+  onSave,
+  saving,
 }) => {
   const hasValidCoordinates =
     isFiniteCoordinate(deliverySettings.storeLocation?.lat) &&
@@ -31,6 +33,9 @@ export const AdminSettingsDeliverySection = ({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <ActionButton type="button" onClick={onSave} disabled={saving}>
+            {saving ? "Saving..." : "Save Delivery Settings"}
+          </ActionButton>
           <ActionButton
             type="button"
             onClick={onUseCurrentStoreLocation}

@@ -5,6 +5,8 @@ const CouponManager = ({
   onCouponChange,
   onAddCoupon,
   onRemoveCoupon,
+  onSave,
+  saving,
 }) => (
   <section className="rounded-2xl border border-gold-200/60 bg-gradient-to-br from-white via-cream-50/75 to-gold-50/60 p-6 shadow-[0_14px_34px_rgba(88,60,10,0.09)] admin-motion hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(88,60,10,0.14)]">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -16,13 +18,23 @@ const CouponManager = ({
           Create offers, set minimum order amounts, and disable old campaigns.
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onAddCoupon}
-        className="inline-flex items-center justify-center rounded-xl border border-gold-200/70 px-4 py-2 text-sm font-semibold text-primary-700 admin-motion hover:-translate-y-0.5 hover:bg-gold-50/80"
-      >
-        Add Coupon
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onAddCoupon}
+          className="inline-flex items-center justify-center rounded-xl border border-gold-200/70 px-4 py-2 text-sm font-semibold text-primary-700 admin-motion hover:-translate-y-0.5 hover:bg-gold-50/80"
+        >
+          Add Coupon
+        </button>
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={saving}
+          className="inline-flex items-center justify-center rounded-xl bg-primary-700 px-4 py-2 text-sm font-semibold text-white admin-motion hover:-translate-y-0.5 hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {saving ? "Saving..." : "Save Coupons"}
+        </button>
+      </div>
     </div>
 
     <div className="mt-6 space-y-4">

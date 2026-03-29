@@ -1,6 +1,5 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { ActionButton } from "@/shared/ui/Primitives";
 import CouponManager from "../components/CouponManager";
 import {
   AlertEmailStatusSection,
@@ -57,7 +56,11 @@ const AdminSettingsPage = ({ onToast, syncVersion = 0 }) => {
     handleCopyDeliveryConfig,
     handleDownloadDeliveryConfig,
     handleResetToVizianagaram,
-    handleSaveSettings,
+    handleSaveBusinessInfo,
+    handleSaveStoreHours,
+    handleSaveSocialLinks,
+    handleSaveDeliverySettings,
+    handleSaveCoupons,
     handleSendTestEmail,
   } = useAdminSettingsActions({
     dispatch,
@@ -85,13 +88,22 @@ const AdminSettingsPage = ({ onToast, syncVersion = 0 }) => {
       <BusinessInfoSection
         businessInfo={businessInfo}
         onChange={handleBusinessChange}
+        onSave={handleSaveBusinessInfo}
+        saving={saving}
       />
 
-      <StoreHoursSection storeHours={storeHours} onChange={handleHoursChange} />
+      <StoreHoursSection
+        storeHours={storeHours}
+        onChange={handleHoursChange}
+        onSave={handleSaveStoreHours}
+        saving={saving}
+      />
 
       <SocialLinksSection
         socialLinks={socialLinks}
         onChange={handleLinksChange}
+        onSave={handleSaveSocialLinks}
+        saving={saving}
       />
 
       <AdminSettingsDeliverySection
@@ -103,6 +115,8 @@ const AdminSettingsPage = ({ onToast, syncVersion = 0 }) => {
         onCopyDeliveryConfig={handleCopyDeliveryConfig}
         onDownloadDeliveryConfig={handleDownloadDeliveryConfig}
         onResetToVizianagaram={handleResetToVizianagaram}
+        onSave={handleSaveDeliverySettings}
+        saving={saving}
       />
 
       <CouponManager
@@ -110,17 +124,9 @@ const AdminSettingsPage = ({ onToast, syncVersion = 0 }) => {
         onCouponChange={handleCouponChange}
         onAddCoupon={handleAddCoupon}
         onRemoveCoupon={handleRemoveCoupon}
+        onSave={handleSaveCoupons}
+        saving={saving}
       />
-
-      <div className="mt-6">
-        <ActionButton
-          type="button"
-          onClick={handleSaveSettings}
-          disabled={saving}
-        >
-          {saving ? "Saving..." : "Save Changes"}
-        </ActionButton>
-      </div>
     </div>
   );
 };

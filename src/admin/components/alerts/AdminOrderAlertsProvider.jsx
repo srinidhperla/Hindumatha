@@ -11,8 +11,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
 import { useLocation } from "react-router-dom";
 import { fetchOrders } from "@/features/orders/orderSlice";
+import { getSocketServerUrl } from "@/utils/socketUrl";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const SOCKET_URL = getSocketServerUrl();
 const ALERT_RING_DURATION_MS = 5500;
 const ALERT_GAP_MS = 1000;
 const ALERT_REPEAT_MS = ALERT_RING_DURATION_MS + ALERT_GAP_MS;
@@ -864,7 +866,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       dispatch(fetchOrders());
     };
 
-    const socket = io(API_URL, {
+    const socket = io(SOCKET_URL, {
       auth: { token },
       withCredentials: true,
       transports: ["websocket", "polling"],

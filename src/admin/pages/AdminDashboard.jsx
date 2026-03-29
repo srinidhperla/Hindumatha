@@ -10,8 +10,21 @@ import {
   fetchPaymentStatus,
   fetchSiteContent,
 } from "@/features/site/siteThunks";
+import { getSocketServerUrl } from "@/utils/socketUrl";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const SOCKET_URL = getSocketServerUrl();
+const normalizeScope = (scope) =>
+  String(scope || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-");
+const SITE_REFRESH_SCOPES = new Set([
+  "general",
+  "settings",
+  "delivery",
+  "delivery-settings",
+  "delivery-timing",
+]);
 
 const AdminAnalyticsPage = lazy(() => import("./AdminAnalyticsPage"));
 const AdminDeliveryTimingPage = lazy(() => import("./AdminDeliveryTimingPage"));
@@ -61,7 +74,7 @@ const AdminDashboard = () => {
       return undefined;
     }
 
-    const socket = io(API_URL, {
+    const socket = io(SOCKET_URL, {
       auth: { token },
       withCredentials: true,
       transports: ["websocket", "polling"],
@@ -69,7 +82,7 @@ const AdminDashboard = () => {
     });
 
     const refreshAdminData = (scope = "") => {
-      const normalizedScope = String(scope || "").toLowerCase();
+      const normalizedScope = normalizeScope(scope);
 
       if (!normalizedScope || normalizedScope === "orders") {
         dispatch(fetchOrders());
@@ -83,7 +96,7 @@ const AdminDashboard = () => {
         dispatch(fetchProducts({ force: true }));
       }
 
-      if (!normalizedScope || normalizedScope === "settings") {
+      if (!normalizedScope || SITE_REFRESH_SCOPES.has(normalizedScope)) {
         dispatch(fetchSiteContent());
         dispatch(fetchAlertStatus());
         dispatch(fetchPaymentStatus());

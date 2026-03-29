@@ -36,9 +36,9 @@ export const useCheckoutDerivedData = ({
   );
   const invalidItems = checkoutItems.filter((item) => !item.canOrder);
 
-  const availableCoupons = (coupons?.length ? coupons : DEFAULT_COUPONS).filter(
-    (coupon) => coupon.isActive !== false,
-  );
+  const availableCoupons = (
+    Array.isArray(coupons) ? coupons : DEFAULT_COUPONS
+  ).filter((coupon) => coupon.isActive !== false);
 
   const normalizedDeliverySettings = useMemo(
     () => normalizeDeliverySettings(deliverySettings),

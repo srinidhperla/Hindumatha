@@ -80,6 +80,67 @@ const createCartIdentity = (
 ) =>
   `${productId}::${selectedFlavor || "none"}::${selectedWeight || "none"}::${selectedEggType || "none"}`;
 
+const resolveCartItemIdentity = (item) => {
+  if (item?.identity) {
+    return item.identity;
+  }
+
+  const productId =
+    item?.product?._id || item?.productId || item?.product || "";
+
+  if (!productId) {
+    return "";
+  }
+
+  return createCartIdentity(
+    productId,
+    item?.selectedFlavor || "",
+    item?.selectedWeight || "",
+    item?.selectedEggType || "",
+  );
+};
+
+const mergeCartItems = (primaryItems = [], secondaryItems = []) => {
+  const mergedItems = [];
+  const identityLookup = new Map();
+
+  const addItem = (item) => {
+    if (!item) {
+      return;
+    }
+
+    const identity = resolveCartItemIdentity(item);
+    const normalizedQuantity = Number(item.quantity || 0) || 1;
+
+    if (!identity) {
+      mergedItems.push({ ...item, quantity: normalizedQuantity });
+      return;
+    }
+
+    const existingIndex = identityLookup.get(identity);
+
+    if (existingIndex === undefined) {
+      mergedItems.push({
+        ...item,
+        identity,
+        quantity: Math.max(1, normalizedQuantity),
+      });
+      identityLookup.set(identity, mergedItems.length - 1);
+      return;
+    }
+
+    const existingItem = mergedItems[existingIndex];
+    existingItem.quantity =
+      Math.max(1, Number(existingItem.quantity || 0)) +
+      Math.max(1, normalizedQuantity);
+  };
+
+  primaryItems.forEach(addItem);
+  secondaryItems.forEach(addItem);
+
+  return mergedItems;
+};
+
 const createUnavailableSnapshot = (existingProduct = {}) => ({
   ...existingProduct,
   isAvailable: false,
@@ -124,11 +185,28 @@ const cartSlice = createSlice({
   },
   reducers: {
     setCurrentUser: (state, action) => {
-      const userId = action.payload;
+      const userId = action.payload || null;
       // If user changed, load their cart
       if (state.currentUserId !== userId) {
+        if (state.currentUserId) {
+          persistCartItems(state.items, state.currentUserId);
+        }
+
         state.currentUserId = userId;
-        state.items = loadCartItems(userId);
+
+        if (userId) {
+          const guestItems = loadCartItems(null);
+          const savedUserItems = loadCartItems(userId);
+          const mergedItems = mergeCartItems(savedUserItems, guestItems);
+          state.items = mergedItems;
+          persistCartItems(mergedItems, userId);
+
+          if (guestItems.length > 0) {
+            persistCartItems([], null);
+          }
+        } else {
+          state.items = loadCartItems(null);
+        }
         state.priceSyncNoticeVisible = false;
         state.priceSyncUpdatedItemsCount = 0;
       }

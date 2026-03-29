@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { clearCart } from "@/features/cart/cartSlice";
@@ -12,7 +12,15 @@ import {
 import { showToast } from "@/features/uiSlice";
 import PaymentSummaryPanel from "./PaymentSummaryPanel";
 import { formatINR } from "@/utils/currency";
-import { DEFAULT_COUPONS, normalizeCouponCode } from "@/utils/orderPricing";
+import {
+  calculateOrderPricing,
+  DEFAULT_COUPONS,
+  normalizeCouponCode,
+} from "@/utils/orderPricing";
+import {
+  haversineDistance,
+  normalizeDeliverySettings,
+} from "@/utils/deliverySettings";
 import {
   CHECKOUT_STORAGE_KEY,
   getDeliverySummaryLabel,
@@ -22,23 +30,27 @@ import {
   scrollToPageTop,
 } from "./paymentHelpers";
 
-const resolveCouponPreviewPricing = ({ couponCode, coupons, basePricing }) => {
-  const subtotal = Number(basePricing?.subtotal || 0);
-  const baseDeliveryFee = Number(basePricing?.deliveryFee || 0);
+const resolveCouponPreviewPricing = ({
+  couponCode,
+  coupons,
+  subtotal,
+  deliveryDistanceKm,
+  deliverySettings,
+}) => {
+  const normalizedSubtotal = Number(subtotal) || 0;
   const normalizedCode = normalizeCouponCode(couponCode);
-  const sourceCoupons =
-    Array.isArray(coupons) && coupons.length ? coupons : DEFAULT_COUPONS;
+  const sourceCoupons = Array.isArray(coupons) ? coupons : DEFAULT_COUPONS;
+  const pricing = calculateOrderPricing({
+    subtotal: normalizedSubtotal,
+    couponCode: normalizedCode,
+    coupons: sourceCoupons,
+    deliveryDistanceKm,
+    deliverySettings,
+  });
 
   if (!normalizedCode) {
     return {
-      pricing: {
-        subtotal,
-        deliveryFee: baseDeliveryFee,
-        discountAmount: 0,
-        totalAmount: subtotal + baseDeliveryFee,
-        appliedCoupon: null,
-        couponError: "",
-      },
+      pricing,
       feedback: "Coupon removed.",
     };
   }
@@ -49,64 +61,68 @@ const resolveCouponPreviewPricing = ({ couponCode, coupons, basePricing }) => {
 
   if (!coupon) {
     return {
-      pricing: {
-        subtotal,
-        deliveryFee: baseDeliveryFee,
-        discountAmount: 0,
-        totalAmount: subtotal + baseDeliveryFee,
-        appliedCoupon: null,
-        couponError: "Invalid coupon code",
-      },
+      pricing,
       feedback: "Invalid coupon code. Please try another one.",
     };
   }
 
-  if (coupon.minSubtotal && subtotal < Number(coupon.minSubtotal)) {
+  if (coupon.minSubtotal && normalizedSubtotal < Number(coupon.minSubtotal)) {
     return {
-      pricing: {
-        subtotal,
-        deliveryFee: baseDeliveryFee,
-        discountAmount: 0,
-        totalAmount: subtotal + baseDeliveryFee,
-        appliedCoupon: null,
-        couponError: `Coupon requires a minimum subtotal of Rs.${coupon.minSubtotal}`,
-      },
-      feedback: `Add ${formatINR(Number(coupon.minSubtotal) - subtotal)} more to use ${normalizedCode}.`,
+      pricing,
+      feedback: `Add ${formatINR(Number(coupon.minSubtotal) - normalizedSubtotal)} more to use ${normalizedCode}.`,
     };
   }
 
-  let discountAmount = 0;
-  let deliveryFee = baseDeliveryFee;
+  return {
+    pricing,
+    feedback: `Coupon ${normalizedCode} applied. You saved ${formatINR(pricing.discountAmount)}.`,
+  };
+};
 
-  if (coupon.type === "percent") {
-    const rawDiscount = Math.round(
-      (subtotal * Number(coupon.value || 0)) / 100,
-    );
-    discountAmount = coupon.maxDiscount
-      ? Math.min(rawDiscount, Number(coupon.maxDiscount || 0))
-      : rawDiscount;
-  } else if (coupon.type === "flat") {
-    discountAmount = Math.min(Number(coupon.value || 0), subtotal);
-  } else if (coupon.type === "delivery") {
-    discountAmount = baseDeliveryFee;
-    deliveryFee = 0;
+const hasPricingChanged = (currentPricing = {}, nextPricing = {}) =>
+  Number(currentPricing?.subtotal || 0) !==
+    Number(nextPricing?.subtotal || 0) ||
+  Number(currentPricing?.deliveryFee || 0) !==
+    Number(nextPricing?.deliveryFee || 0) ||
+  Number(currentPricing?.discountAmount || 0) !==
+    Number(nextPricing?.discountAmount || 0) ||
+  Number(currentPricing?.totalAmount || 0) !==
+    Number(nextPricing?.totalAmount || 0) ||
+  String(currentPricing?.couponError || "") !==
+    String(nextPricing?.couponError || "") ||
+  normalizeCouponCode(currentPricing?.appliedCoupon?.code || "") !==
+    normalizeCouponCode(nextPricing?.appliedCoupon?.code || "");
+
+const hasFreeDeliveryProgressChanged = (currentValue = {}, nextValue = {}) =>
+  Boolean(currentValue?.enabled) !== Boolean(nextValue?.enabled) ||
+  Number(currentValue?.minAmount || 0) !== Number(nextValue?.minAmount || 0) ||
+  Number(currentValue?.remainingAmount || 0) !==
+    Number(nextValue?.remainingAmount || 0);
+
+const getDeliveryDistanceKm = (checkoutData, normalizedDeliverySettings) => {
+  const addressLat = Number(checkoutData?.orderData?.deliveryAddress?.lat);
+  const addressLng = Number(checkoutData?.orderData?.deliveryAddress?.lng);
+  const storeLat = Number(normalizedDeliverySettings?.storeLocation?.lat);
+  const storeLng = Number(normalizedDeliverySettings?.storeLocation?.lng);
+
+  if (
+    !Number.isFinite(addressLat) ||
+    !Number.isFinite(addressLng) ||
+    !Number.isFinite(storeLat) ||
+    !Number.isFinite(storeLng)
+  ) {
+    return 0;
   }
 
-  const totalAmount = Math.max(
-    0,
-    subtotal - (coupon.type === "delivery" ? 0 : discountAmount) + deliveryFee,
-  );
+  return haversineDistance(storeLat, storeLng, addressLat, addressLng);
+};
 
+const getFreeDeliveryProgress = (subtotal, normalizedDeliverySettings) => {
+  const minAmount = Number(normalizedDeliverySettings?.freeDeliveryMinAmount) || 0;
   return {
-    pricing: {
-      subtotal,
-      deliveryFee,
-      discountAmount,
-      totalAmount,
-      appliedCoupon: coupon,
-      couponError: "",
-    },
-    feedback: `Coupon ${normalizedCode} applied. You saved ${formatINR(discountAmount)}.`,
+    enabled: normalizedDeliverySettings?.freeDeliveryEnabled !== false,
+    minAmount,
+    remainingAmount: Math.max(0, minAmount - (Number(subtotal) || 0)),
   };
 };
 
@@ -116,6 +132,19 @@ const Payment = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { loading, error } = useSelector((state) => state.orders);
+  const siteCoupons = useSelector((state) => state.site.coupons);
+  const siteDeliverySettings = useSelector((state) => state.site.deliverySettings);
+  const liveAvailableCoupons = useMemo(
+    () =>
+      (Array.isArray(siteCoupons) ? siteCoupons : DEFAULT_COUPONS).filter(
+        (coupon) => coupon?.isActive !== false,
+      ),
+    [siteCoupons],
+  );
+  const normalizedLiveDeliverySettings = useMemo(
+    () => normalizeDeliverySettings(siteDeliverySettings),
+    [siteDeliverySettings],
+  );
   const [checkoutData, setCheckoutData] = useState(() =>
     getPendingCheckout(location.state),
   );
@@ -133,8 +162,16 @@ const Payment = () => {
   const [couponInput, setCouponInput] = useState("");
   const [couponFeedback, setCouponFeedback] = useState("");
   const [isLaunching, setIsLaunching] = useState(false);
+  const checkoutSubtotal = Number(
+    basePricingSnapshot?.subtotal || checkoutData?.pricing?.subtotal || 0,
+  );
+  const deliveryDistanceKm = useMemo(
+    () => getDeliveryDistanceKm(checkoutData, normalizedLiveDeliverySettings),
+    [checkoutData, normalizedLiveDeliverySettings],
+  );
 
   const deliverySummaryLabel = getDeliverySummaryLabel(checkoutData?.orderData);
+  const appliedCoupon = checkoutData?.pricing?.appliedCoupon || null;
 
   useEffect(() => {
     scrollToPageTop();
@@ -168,12 +205,76 @@ const Payment = () => {
     }
   }, [basePricingSnapshot, checkoutData?.pricing]);
 
+  useEffect(() => {
+    setCheckoutData((currentCheckoutData) => {
+      if (!currentCheckoutData) {
+        return currentCheckoutData;
+      }
+
+      const currentCouponCode = normalizeCouponCode(
+        currentCheckoutData?.orderData?.couponCode || "",
+      );
+      const nextPricing = resolveCouponPreviewPricing({
+        couponCode: currentCouponCode,
+        coupons: liveAvailableCoupons,
+        subtotal: checkoutSubtotal,
+        deliveryDistanceKm,
+        deliverySettings: normalizedLiveDeliverySettings,
+      }).pricing;
+      const nextFreeDeliveryProgress = getFreeDeliveryProgress(
+        checkoutSubtotal,
+        normalizedLiveDeliverySettings,
+      );
+
+      const pricingChanged = hasPricingChanged(
+        currentCheckoutData.pricing,
+        nextPricing,
+      );
+      const couponsChanged =
+        currentCheckoutData.availableCoupons !== liveAvailableCoupons;
+      const freeDeliveryProgressChanged = hasFreeDeliveryProgressChanged(
+        currentCheckoutData.freeDeliveryProgress,
+        nextFreeDeliveryProgress,
+      );
+
+      if (!pricingChanged && !couponsChanged && !freeDeliveryProgressChanged) {
+        return currentCheckoutData;
+      }
+
+      return {
+        ...currentCheckoutData,
+        availableCoupons: liveAvailableCoupons,
+        pricing: pricingChanged ? nextPricing : currentCheckoutData.pricing,
+        freeDeliveryProgress: freeDeliveryProgressChanged
+          ? nextFreeDeliveryProgress
+          : currentCheckoutData.freeDeliveryProgress,
+      };
+    });
+  }, [
+    checkoutSubtotal,
+    deliveryDistanceKm,
+    liveAvailableCoupons,
+    normalizedLiveDeliverySettings,
+  ]);
+
   const applyCoupon = () => {
     const normalized = normalizeCouponCode(couponInput);
+
+    if (
+      appliedCoupon &&
+      normalized &&
+      normalized !== normalizeCouponCode(appliedCoupon.code || "")
+    ) {
+      setCouponFeedback("Remove the applied coupon to use a different one.");
+      return;
+    }
+
     const { pricing: nextPricing, feedback } = resolveCouponPreviewPricing({
       couponCode: normalized,
-      coupons: checkoutData?.availableCoupons,
-      basePricing: basePricingSnapshot,
+      coupons: liveAvailableCoupons,
+      subtotal: checkoutSubtotal,
+      deliveryDistanceKm,
+      deliverySettings: normalizedLiveDeliverySettings,
     });
 
     setCheckoutData((prev) => ({
@@ -184,6 +285,27 @@ const Payment = () => {
         couponCode: normalized,
       },
     }));
+    setCouponFeedback(feedback);
+  };
+
+  const removeCoupon = () => {
+    const { pricing: nextPricing, feedback } = resolveCouponPreviewPricing({
+      couponCode: "",
+      coupons: liveAvailableCoupons,
+      subtotal: checkoutSubtotal,
+      deliveryDistanceKm,
+      deliverySettings: normalizedLiveDeliverySettings,
+    });
+
+    setCheckoutData((prev) => ({
+      ...prev,
+      pricing: nextPricing,
+      orderData: {
+        ...(prev?.orderData || {}),
+        couponCode: "",
+      },
+    }));
+    setCouponInput("");
     setCouponFeedback(feedback);
   };
 
@@ -383,25 +505,47 @@ const Payment = () => {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
                 Coupon
               </p>
-              <div className="mt-3 flex gap-2">
-                <input
-                  type="text"
-                  value={couponInput}
-                  onChange={(event) => {
-                    setCouponInput(event.target.value.toUpperCase());
-                    setCouponFeedback("");
-                  }}
-                  placeholder="Enter coupon code"
-                  className="commerce-input flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={applyCoupon}
-                  className="commerce-apply-button"
-                >
-                  Apply
-                </button>
-              </div>
+              {appliedCoupon ? (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white px-3 py-2">
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-800">
+                      Applied {appliedCoupon.code}
+                    </p>
+                    {appliedCoupon.description && (
+                      <p className="text-xs text-emerald-700">
+                        {appliedCoupon.description}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(event) => {
+                      setCouponInput(event.target.value.toUpperCase());
+                      setCouponFeedback("");
+                    }}
+                    placeholder="Enter coupon code"
+                    className="commerce-input flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyCoupon}
+                    className="commerce-apply-button"
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
               {couponFeedback && (
                 <p className="mt-2 text-xs font-medium text-primary-700">
                   {couponFeedback}

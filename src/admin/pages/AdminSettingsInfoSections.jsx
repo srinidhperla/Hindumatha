@@ -1,12 +1,22 @@
 import React from "react";
-import { SurfaceCard } from "@/shared/ui/Primitives";
+import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 
-export const BusinessInfoSection = ({ businessInfo, onChange }) => {
+export const BusinessInfoSection = ({
+  businessInfo,
+  onChange,
+  onSave,
+  saving,
+}) => {
   return (
     <SurfaceCard className="p-6">
-      <h2 className="mb-4 text-lg font-semibold text-primary-900">
-        Business Information
-      </h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-primary-900">
+          Business Information
+        </h2>
+        <ActionButton type="button" onClick={onSave} disabled={saving}>
+          {saving ? "Saving..." : "Save Business Info"}
+        </ActionButton>
+      </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-primary-700">
@@ -83,12 +93,24 @@ export const BusinessInfoSection = ({ businessInfo, onChange }) => {
   );
 };
 
-export const StoreHoursSection = ({ storeHours, onChange }) => {
+export const StoreHoursSection = ({
+  storeHours,
+  onChange,
+  onSave,
+  saving,
+}) => {
   return (
     <SurfaceCard className="p-6">
-      <h2 className="mb-4 text-lg font-semibold text-primary-900">
-        Store Hours
-      </h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-primary-900">Store Hours</h2>
+        <ActionButton
+          type="button"
+          onClick={onSave}
+          disabled={saving}
+        >
+          {saving ? "Saving..." : "Save Store Hours"}
+        </ActionButton>
+      </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-primary-700">
@@ -117,12 +139,20 @@ export const StoreHoursSection = ({ storeHours, onChange }) => {
   );
 };
 
-export const SocialLinksSection = ({ socialLinks, onChange }) => {
+export const SocialLinksSection = ({
+  socialLinks,
+  onChange,
+  onSave,
+  saving,
+}) => {
   return (
     <SurfaceCard className="p-6">
-      <h2 className="mb-4 text-lg font-semibold text-primary-900">
-        Social Links
-      </h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-primary-900">Social Links</h2>
+        <ActionButton type="button" onClick={onSave} disabled={saving}>
+          {saving ? "Saving..." : "Save Social Links"}
+        </ActionButton>
+      </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-primary-700">

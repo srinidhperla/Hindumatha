@@ -21,7 +21,10 @@ const HeroSection = ({
   const [typedText, setTypedText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const deliveryRadiusKm = Number(deliverySettings?.deliveryRadiusKm || 4);
+  const deliveryRadiusKm =
+    Number(deliverySettings?.maxDeliveryRadiusKm) ||
+    Number(deliverySettings?.deliveryRadiusKm) ||
+    4;
 
   useEffect(() => {
     const interval = window.setInterval(() => {

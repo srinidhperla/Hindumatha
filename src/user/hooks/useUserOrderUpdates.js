@@ -2,8 +2,9 @@ import { useEffect } from "react";
 import { io } from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
 import { upsertIncomingOrder } from "@/features/orders/orderSlice";
+import { getSocketServerUrl } from "@/utils/socketUrl";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const SOCKET_URL = getSocketServerUrl();
 
 const useUserOrderUpdates = () => {
   const dispatch = useDispatch();
@@ -15,7 +16,7 @@ const useUserOrderUpdates = () => {
       return undefined;
     }
 
-    const socket = io(API_URL, {
+    const socket = io(SOCKET_URL, {
       auth: { token },
       withCredentials: true,
       transports: ["websocket", "polling"],

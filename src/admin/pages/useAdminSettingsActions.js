@@ -159,21 +159,44 @@ export const useAdminSettingsActions = ({
     onToast("Store location reset to Vizianagaram default.");
   };
 
-  const handleSaveSettings = async () => {
-    const sanitizedCoupons = coupons
-      .map((coupon) => normalizeCouponPayload(coupon))
-      .filter((coupon) => coupon.code);
-
-    const duplicateCodes = sanitizedCoupons.filter(
-      (coupon, index, list) =>
-        list.findIndex((entry) => entry.code === coupon.code) !== index,
-    );
-
-    if (duplicateCodes.length > 0) {
-      onToast("Coupon codes must be unique.", "error");
-      return;
+  const saveSettingsPatch = async ({
+    payload,
+    successMessage,
+    failureMessage,
+  }) => {
+    try {
+      await dispatch(updateSiteSettings(payload)).unwrap();
+      onToast(successMessage);
+    } catch (error) {
+      onToast(getErrorMessage(error, failureMessage), "error");
     }
+  };
 
+  const handleSaveBusinessInfo = async () => {
+    await saveSettingsPatch({
+      payload: { businessInfo },
+      successMessage: "Business information saved.",
+      failureMessage: "Failed to save business information.",
+    });
+  };
+
+  const handleSaveStoreHours = async () => {
+    await saveSettingsPatch({
+      payload: { storeHours },
+      successMessage: "Store hours saved.",
+      failureMessage: "Failed to save store hours.",
+    });
+  };
+
+  const handleSaveSocialLinks = async () => {
+    await saveSettingsPatch({
+      payload: { socialLinks },
+      successMessage: "Social links saved.",
+      failureMessage: "Failed to save social links.",
+    });
+  };
+
+  const handleSaveDeliverySettings = async () => {
     const radius = Number(deliverySettings.maxDeliveryRadiusKm);
     const storeLat = Number(deliverySettings.storeLocation?.lat);
     const storeLng = Number(deliverySettings.storeLocation?.lng);
@@ -193,30 +216,42 @@ export const useAdminSettingsActions = ({
       return;
     }
 
-    try {
-      await dispatch(
-        updateSiteSettings({
-          businessInfo,
-          storeHours,
-          socialLinks,
-          deliverySettings: {
-            ...deliverySettings,
-            maxDeliveryRadiusKm: radius,
-            storeLocation: {
-              lat: storeLat,
-              lng: storeLng,
-            },
+    await saveSettingsPatch({
+      payload: {
+        deliverySettings: {
+          ...deliverySettings,
+          maxDeliveryRadiusKm: radius,
+          storeLocation: {
+            lat: storeLat,
+            lng: storeLng,
           },
-          coupons: sanitizedCoupons,
-        }),
-      ).unwrap();
-      onToast("Store settings saved successfully.");
-    } catch (error) {
-      onToast(
-        getErrorMessage(error, "Failed to save store settings."),
-        "error",
-      );
+        },
+      },
+      successMessage: "Delivery settings saved.",
+      failureMessage: "Failed to save delivery settings.",
+    });
+  };
+
+  const handleSaveCoupons = async () => {
+    const sanitizedCoupons = coupons
+      .map((coupon) => normalizeCouponPayload(coupon))
+      .filter((coupon) => coupon.code);
+
+    const duplicateCodes = sanitizedCoupons.filter(
+      (coupon, index, list) =>
+        list.findIndex((entry) => entry.code === coupon.code) !== index,
+    );
+
+    if (duplicateCodes.length > 0) {
+      onToast("Coupon codes must be unique.", "error");
+      return;
     }
+
+    await saveSettingsPatch({
+      payload: { coupons: sanitizedCoupons },
+      successMessage: "Coupons saved.",
+      failureMessage: "Failed to save coupons.",
+    });
   };
 
   const handleSendTestEmail = async () => {
@@ -239,7 +274,11 @@ export const useAdminSettingsActions = ({
     handleCopyDeliveryConfig,
     handleDownloadDeliveryConfig,
     handleResetToVizianagaram,
-    handleSaveSettings,
+    handleSaveBusinessInfo,
+    handleSaveStoreHours,
+    handleSaveSocialLinks,
+    handleSaveDeliverySettings,
+    handleSaveCoupons,
     handleSendTestEmail,
   };
 };
