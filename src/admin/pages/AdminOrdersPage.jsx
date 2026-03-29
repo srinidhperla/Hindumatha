@@ -14,11 +14,10 @@ import AdminOrderAlertToolbar from "@/admin/components/orders/AdminOrderAlertToo
 import {
   getErrorMessage,
   ORDER_STATUS_OPTIONS,
-  getOrderItemCount,
   getOrderItemName,
   getOrderItemShortSummary,
   getOrderItems,
-  getOrderSummary,
+  getOrderSpecialInstructions,
 } from "./adminShared";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
 import {
@@ -102,6 +101,7 @@ const SORTABLE_COLUMNS = {
   status: "status",
   paymentStatus: "paymentStatus",
   paymentMethod: "paymentMethod",
+  specialInstructions: "specialInstructions",
   totalAmount: "totalAmount",
   requestedDelivery: "requestedDelivery",
   estimatedDelivery: "estimatedDelivery",
@@ -122,6 +122,8 @@ const getSortValue = (order, field) => {
       return order?.paymentStatus || "";
     case SORTABLE_COLUMNS.paymentMethod:
       return getPaymentMethodLabel(order?.paymentMethod || "");
+    case SORTABLE_COLUMNS.specialInstructions:
+      return getOrderSpecialInstructions(order);
     case SORTABLE_COLUMNS.totalAmount:
       return Number(order?.totalAmount || 0);
     case SORTABLE_COLUMNS.requestedDelivery:
@@ -143,7 +145,7 @@ const getItemsPreviewRows = (order, maxItems = 2) => {
   }
 
   const rows = items.slice(0, maxItems).map((item) => {
-    const summary = getOrderItemShortSummary(item, 2);
+    const summary = getOrderItemShortSummary(item, 3);
     return summary
       ? `${getOrderItemName(item)} | ${summary}`
       : getOrderItemName(item);
@@ -348,13 +350,17 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
 
       <SurfaceCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className="min-w-[1680px] divide-y divide-gold-200/60 text-sm">
+          <table className="min-w-[1880px] divide-y divide-gold-200/60 text-sm">
             <thead className="bg-gold-50/50">
               <tr>
                 {[
                   { key: SORTABLE_COLUMNS.order, label: "Order" },
                   { key: SORTABLE_COLUMNS.customer, label: "Customer" },
                   { key: SORTABLE_COLUMNS.items, label: "Items" },
+                  {
+                    key: SORTABLE_COLUMNS.specialInstructions,
+                    label: "Special Instructions",
+                  },
                   { key: SORTABLE_COLUMNS.status, label: "Status" },
                   { key: SORTABLE_COLUMNS.paymentStatus, label: "Payment" },
                   { key: SORTABLE_COLUMNS.paymentMethod, label: "Method" },
@@ -398,6 +404,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
             order.status !== "pending" &&
             order.status !== "cancelled" &&
             order.status !== "delivered";
+          const specialInstructions = getOrderSpecialInstructions(order);
           const isProgressEditable = canEditProgressStatus(order.status);
 
           return (
@@ -405,12 +412,6 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                   <td className="px-4 py-3">
                     <p className="font-semibold text-primary-900">
                       {getOrderDisplayCode(order)}
-                    </p>
-                    <p className="text-xs text-primary-600">
-                      {getOrderSummary(order)}
-                    </p>
-                    <p className="text-xs text-primary-500">
-                      Qty: {getOrderItemCount(order)}
                     </p>
                   </td>
                   <td className="px-4 py-3">
@@ -437,6 +438,15 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                         </p>
                       ))}
                     </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    {specialInstructions ? (
+                      <p className="max-w-[260px] text-xs text-primary-700">
+                        {specialInstructions}
+                      </p>
+                    ) : (
+                      <span className="text-xs text-primary-500">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <StatusChip tone={getStatusTone(order.status)} className="capitalize">

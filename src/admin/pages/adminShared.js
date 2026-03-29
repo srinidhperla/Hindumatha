@@ -26,6 +26,17 @@ export const getOrderItems = (order) =>
   Array.isArray(order?.items) ? order.items : [];
 
 const toText = (value) => String(value ?? "").trim();
+const toCompactKey = (value = "") =>
+  String(value).replace(/[^a-z0-9]/gi, "").toLowerCase();
+
+const HIDDEN_OPTION_KEYS = new Set(["size"]);
+const OPTION_DISPLAY_PRIORITY = {
+  weight: 1,
+  caketype: 2,
+  flavor: 3,
+  occasion: 4,
+  messageoncake: 5,
+};
 
 const toEggTypeLabel = (eggType = "") => {
   if (String(eggType).toLowerCase() === "eggless") {
@@ -38,7 +49,7 @@ const toEggTypeLabel = (eggType = "") => {
 };
 
 const keyToLabel = (key = "") => {
-  const compact = String(key).replace(/[^a-z0-9]/gi, "").toLowerCase();
+  const compact = toCompactKey(key);
   const mapped = {
     eggtype: "Cake Type",
     caketype: "Cake Type",
@@ -104,15 +115,23 @@ const normalizeOptionEntries = (selectedOptions) => {
 };
 
 const dedupeOptionEntries = (entries = []) => {
-  const seen = new Set();
-  return entries.filter((entry) => {
-    const label = toText(entry?.label);
-    const value = toText(entry?.value);
-    if (!label || !value) {
-      return false;
-    }
+  const filteredEntries = entries
+    .map((entry, index) => ({
+      index,
+      label: toText(entry?.label),
+      value: toText(entry?.value),
+    }))
+    .filter((entry) => {
+      if (!entry.label || !entry.value) {
+        return false;
+      }
 
-    const key = `${label.toLowerCase()}::${value.toLowerCase()}`;
+      return !HIDDEN_OPTION_KEYS.has(toCompactKey(entry.label));
+    });
+
+  const seen = new Set();
+  const dedupedEntries = filteredEntries.filter((entry) => {
+    const key = `${entry.label.toLowerCase()}::${entry.value.toLowerCase()}`;
     if (seen.has(key)) {
       return false;
     }
@@ -120,6 +139,22 @@ const dedupeOptionEntries = (entries = []) => {
     seen.add(key);
     return true;
   });
+
+  return dedupedEntries
+    .sort((left, right) => {
+      const leftPriority =
+        OPTION_DISPLAY_PRIORITY[toCompactKey(left.label)] || Number.MAX_SAFE_INTEGER;
+      const rightPriority =
+        OPTION_DISPLAY_PRIORITY[toCompactKey(right.label)] ||
+        Number.MAX_SAFE_INTEGER;
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      return left.index - right.index;
+    })
+    .map(({ label, value }) => ({ label, value }));
 };
 
 export const getOrderItemName = (item) =>
@@ -138,7 +173,6 @@ export const getOrderItemOptionEntries = (item) => {
     }
   };
 
-  push("Size", item?.size);
   push("Weight", item?.weight || item?.size);
   push("Flavor", item?.flavor);
   push("Cake Type", toEggTypeLabel(item?.cakeType || item?.eggType));
@@ -158,26 +192,49 @@ export const getOrderItemOptionEntries = (item) => {
 };
 
 export const getOrderItemShortSummary = (item, maxEntries = 3) => {
-  const explicitSummary = toText(item?.optionSummary);
-  if (explicitSummary) {
-    return explicitSummary
-      .split("|")
-      .map((part) => toText(part))
-      .filter(Boolean)
+  const entries = getOrderItemOptionEntries(item);
+  if (entries.length > 0) {
+    return entries
       .slice(0, maxEntries)
+      .map((entry) => `${entry.label}: ${entry.value}`)
       .join(" | ");
   }
 
-  return getOrderItemOptionEntries(item)
-    .slice(0, maxEntries)
-    .map((entry) => `${entry.label}: ${entry.value}`)
-    .join(" | ");
+  const explicitSummary = toText(item?.optionSummary);
+  if (explicitSummary) {
+    return explicitSummary;
+  }
+
+  return "";
 };
 
-export const getOrderItemFullSummary = (item) =>
-  getOrderItemOptionEntries(item)
-    .map((entry) => `${entry.label}: ${entry.value}`)
+export const getOrderItemFullSummary = (item) => {
+  const entries = getOrderItemOptionEntries(item);
+  if (entries.length > 0) {
+    return entries.map((entry) => `${entry.label}: ${entry.value}`).join(" | ");
+  }
+
+  return toText(item?.optionSummary);
+};
+
+export const getOrderSpecialInstructions = (order) => {
+  const raw = toText(order?.specialInstructions);
+  if (!raw) {
+    return "";
+  }
+
+  const parts = raw
+    .split("|")
+    .map((part) => toText(part))
+    .filter(Boolean);
+
+  return parts
+    .filter(
+      (part) =>
+        !/^contact\s*name\s*:/i.test(part) && !/^phone\s*:/i.test(part),
+    )
     .join(" | ");
+};
 
 export const getOrderItemCount = (order) =>
   getOrderItems(order).reduce((total, item) => total + (item.quantity || 0), 0);

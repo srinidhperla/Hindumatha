@@ -3,6 +3,7 @@ import {
   getOrderItemName,
   getOrderItemOptionEntries,
   getOrderItems,
+  getOrderSpecialInstructions,
   ORDER_STATUS_OPTIONS,
 } from "../../pages/adminShared";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
@@ -71,6 +72,7 @@ const formatINR = (value) =>
 
 const buildDeliveryShareText = (order) => {
   const address = order?.deliveryAddress || {};
+  const specialInstructions = getOrderSpecialInstructions(order);
   const lines = [
     `Order: ${getOrderDisplayCode(order)}`,
     `Customer: ${order?.user?.name || "Guest Customer"}`,
@@ -79,6 +81,10 @@ const buildDeliveryShareText = (order) => {
     `Customer asked for: ${formatRequestedDelivery(order)}`,
     `Estimated delivery: ${formatEstimatedDelivery(order)}`,
   ];
+
+  if (specialInstructions) {
+    lines.push(`Special Instructions: ${specialInstructions}`);
+  }
 
   const mapsLink = buildGoogleMapsSearchUrl(address);
   if (mapsLink) {
@@ -120,6 +126,9 @@ const OrderDetailsModal = ({
     order.status !== "pending" &&
     order.status !== "cancelled" &&
     order.status !== "delivered";
+  const specialInstructions = getOrderSpecialInstructions(order);
+  const deliveryFee = Number(order.deliveryFee || 0);
+  const discountAmount = Number(order.discountAmount || 0);
   const canEditProgressStatus = ["confirmed", "preparing", "ready"].includes(
     String(order.status || ""),
   );
@@ -215,6 +224,17 @@ const OrderDetailsModal = ({
           </div>
         </div>
 
+        {specialInstructions && (
+          <div className="mt-5 rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
+            <h3 className="text-sm font-semibold text-primary-900">
+              Special Instructions
+            </h3>
+            <p className="mt-2 text-sm text-primary-800">
+              {specialInstructions}
+            </p>
+          </div>
+        )}
+
         <div className="mt-5 rounded-2xl border border-white/45 bg-white/35 backdrop-blur-xl">
           <div className="border-b border-white/45 px-4 py-3">
             <h3 className="text-sm font-semibold text-primary-900">Items</h3>
@@ -295,6 +315,27 @@ const OrderDetailsModal = ({
                 </p>
               </div>
             )}
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/55 bg-white/55 px-4 py-2">
+              <p className="text-xs uppercase tracking-wide text-primary-700">
+                Delivery
+              </p>
+              <p className="text-base font-semibold text-primary-900">
+                {formatINR(deliveryFee)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/55 bg-white/55 px-4 py-2">
+              <p className="text-xs uppercase tracking-wide text-primary-700">
+                Discount
+              </p>
+              <p className="text-base font-semibold text-emerald-700">
+                {discountAmount > 0
+                  ? `-${formatINR(discountAmount)}`
+                  : formatINR(0)}
+              </p>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
