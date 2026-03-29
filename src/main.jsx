@@ -7,7 +7,27 @@ import store from "./store";
 import App from "./App";
 import "./styles/global/index.css";
 
-if ("serviceWorker" in navigator) {
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault();
+
+    const reloadGuardKey = "vite-preload-reload-attempted";
+    const hasReloaded = sessionStorage.getItem(reloadGuardKey) === "true";
+
+    if (hasReloaded) {
+      return;
+    }
+
+    sessionStorage.setItem(reloadGuardKey, "true");
+    window.location.reload();
+  });
+}
+
+if (
+  "serviceWorker" in navigator &&
+  typeof window !== "undefined" &&
+  window.location.pathname.startsWith("/admin")
+) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/admin-alert-sw.js").catch(() => null);
   });

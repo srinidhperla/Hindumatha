@@ -49,6 +49,18 @@ const canUseLocalStorage = () => {
   }
 };
 
+const readLocalStorageFlag = (key) => {
+  if (!canUseLocalStorage()) {
+    return false;
+  }
+
+  try {
+    return localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+};
+
 const getFirebaseConfig = () => ({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
@@ -157,29 +169,17 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   const isAdminRoute = location.pathname.startsWith("/admin");
   const canReceiveAdminAlerts = isAdmin && isAdminRoute;
   const [alertsEnabled, setAlertsEnabled] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    return localStorage.getItem(ALERTS_ENABLED_STORAGE_KEY) === "true";
+    return readLocalStorageFlag(ALERTS_ENABLED_STORAGE_KEY);
   });
   const [notificationPermission, setNotificationPermission] = useState(
     canUseNotifications() ? Notification.permission : "unsupported",
   );
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [soundArmed, setSoundArmed] = useState(() => {
-    if (!canUseLocalStorage()) {
-      return false;
-    }
-
-    return localStorage.getItem(SOUND_ARMED_STORAGE_KEY) === "true";
+    return readLocalStorageFlag(SOUND_ARMED_STORAGE_KEY);
   });
   const [pushSubscribed, setPushSubscribed] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    return localStorage.getItem(PUSH_SUBSCRIBED_STORAGE_KEY) === "true";
+    return readLocalStorageFlag(PUSH_SUBSCRIBED_STORAGE_KEY);
   });
   const [activeAlertOrderIds, setActiveAlertOrderIds] = useState([]);
   const [lastCreatedOrder, setLastCreatedOrder] = useState(null);
