@@ -5,12 +5,12 @@ import {
   StatusChip,
   SurfaceCard,
 } from "@/shared/ui/Primitives";
+import { OptimizedImage } from "@/shared/ui";
 import {
   formatCategoryLabel,
   getAvailableFlavorOptions,
   getAvailableWeightOptions,
 } from "@/utils/productOptions";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
   if (!products.length) {
@@ -32,8 +32,8 @@ const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
             key={product._id}
             className="group overflow-hidden flex flex-col admin-motion hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(18,12,2,0.16)]"
           >
-            <img
-              src={optimizeProductImageUrl(product.images?.[0] || product.image)}
+            <OptimizedImage
+              src={product.images?.[0] || product.image}
               alt={product.name}
               width={640}
               height={420}

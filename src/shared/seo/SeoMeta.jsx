@@ -1,6 +1,7 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
+import { optimizeImageUrl } from "@/utils/imageOptimization";
 
 const DEFAULT_BASE_URL = "https://www.hindumathascakes.com";
 const DEFAULT_OG_IMAGE_PATH = CLOUDINARY_GALLERY_IMAGES.cake1;
@@ -38,7 +39,7 @@ const SeoMeta = ({
 }) => {
   const baseUrl = normalizeBaseUrl(import.meta.env.VITE_SITE_URL);
   const canonicalUrl = toAbsoluteUrl(baseUrl, path);
-  const imageUrl = toAbsoluteUrl(baseUrl, image);
+  const imageUrl = toAbsoluteUrl(baseUrl, optimizeImageUrl(image, { width: 1200 }));
 
   return (
     <Helmet>

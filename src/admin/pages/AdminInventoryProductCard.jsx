@@ -2,8 +2,8 @@ import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { StatusChip, Toggle } from "@/shared/ui/Primitives";
+import { OptimizedImage } from "@/shared/ui";
 import { formatCategoryLabel } from "@/utils/productOptions";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const AdminInventoryProductCard = ({
   product,
@@ -182,8 +182,8 @@ const AdminInventoryProductCard = ({
           >
             {"\u2261"}
           </button>
-          <img
-            src={optimizeProductImageUrl(product.images?.[0] || product.image)}
+          <OptimizedImage
+            src={product.images?.[0] || product.image}
             alt={product.name}
             width={80}
             height={80}

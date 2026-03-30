@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { OptimizedImage } from "@/shared/ui";
 
 const promoImage =
   "https://images.unsplash.com/photo-1535141192574-5d4897c12636?auto=format&fit=crop&w=900&q=70";
@@ -43,7 +44,7 @@ const NavbarMegaMenu = ({
               key={card.id}
               className="overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white"
             >
-              <img
+              <OptimizedImage
                 src={
                   categoryFallbackIcons[index % categoryFallbackIcons.length]
                 }
@@ -64,7 +65,7 @@ const NavbarMegaMenu = ({
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.35)] bg-[#120c02] p-3 text-white">
-          <img
+          <OptimizedImage
             src={promoImage}
             alt="Featured promo"
             width={500}

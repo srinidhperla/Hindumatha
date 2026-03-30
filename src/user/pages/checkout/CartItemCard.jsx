@@ -1,6 +1,6 @@
 import React from "react";
+import { OptimizedImage } from "@/shared/ui";
 import { formatCategoryLabel } from "@/utils/productOptions";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const CartItemCard = ({
   item,
@@ -12,8 +12,8 @@ const CartItemCard = ({
 }) => (
   <article className="commerce-card">
     <div className="commerce-card-body">
-      <img
-        src={optimizeProductImageUrl(item.product.image)}
+      <OptimizedImage
+        src={item.product.image}
         alt={item.product.name}
         width={720}
         height={480}

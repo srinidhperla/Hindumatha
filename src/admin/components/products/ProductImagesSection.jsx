@@ -1,4 +1,5 @@
 import React from "react";
+import { OptimizedImage } from "@/shared/ui";
 import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 
 const ProductImagesSection = ({
@@ -30,7 +31,7 @@ const ProductImagesSection = ({
             key={item.id}
             className="overflow-hidden rounded-2xl border border-gold-200/60 bg-white/80"
           >
-            <img
+            <OptimizedImage
               src={item.preview}
               alt={`${formData.name || "Product"} ${index + 1}`}
               width={320}

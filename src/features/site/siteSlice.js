@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { normalizeDeliverySettings } from "@/utils/deliverySettings";
+import { normalizeSiteImageFields } from "@/utils/imageOptimization";
 import defaultSiteContent from "./defaultSiteContent";
 import {
   addGalleryItem,
@@ -35,17 +36,24 @@ const siteSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchSiteContent.fulfilled, (state, action) => {
+        const normalizedSiteContent = normalizeSiteImageFields(
+          action.payload || {},
+        );
         state.loading = false;
         state.loaded = true;
-        state.businessInfo = action.payload.businessInfo || state.businessInfo;
-        state.storeHours = action.payload.storeHours || state.storeHours;
+        state.businessInfo =
+          normalizedSiteContent.businessInfo || state.businessInfo;
+        state.storeHours = normalizedSiteContent.storeHours || state.storeHours;
         state.deliverySettings = normalizeDeliverySettings(
-          action.payload.deliverySettings || state.deliverySettings,
+          normalizedSiteContent.deliverySettings || state.deliverySettings,
         );
-        state.socialLinks = action.payload.socialLinks || state.socialLinks;
-        state.coupons = action.payload.coupons || state.coupons;
-        state.categoryOrder = action.payload.categoryOrder || state.categoryOrder;
-        state.galleryItems = action.payload.galleryItems || state.galleryItems;
+        state.socialLinks =
+          normalizedSiteContent.socialLinks || state.socialLinks;
+        state.coupons = normalizedSiteContent.coupons || state.coupons;
+        state.categoryOrder =
+          normalizedSiteContent.categoryOrder || state.categoryOrder;
+        state.galleryItems =
+          normalizedSiteContent.galleryItems || state.galleryItems;
       })
       .addCase(fetchAlertStatus.fulfilled, (state, action) => {
         state.alertStatus = action.payload || state.alertStatus;
@@ -106,7 +114,11 @@ const siteSlice = createSlice({
       })
       .addCase(addGalleryItem.fulfilled, (state, action) => {
         state.saving = false;
-        state.galleryItems.unshift(action.payload);
+        state.galleryItems.unshift(
+          normalizeSiteImageFields({
+            galleryItems: [action.payload],
+          }).galleryItems[0],
+        );
       })
       .addCase(addGalleryItem.rejected, (state, action) => {
         state.saving = false;

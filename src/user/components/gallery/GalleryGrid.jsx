@@ -1,5 +1,5 @@
 import React from "react";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
+import { OptimizedImage } from "@/shared/ui";
 
 const GalleryGrid = ({
   categories,
@@ -36,8 +36,8 @@ const GalleryGrid = ({
           style={{ animationDelay: `${index * 100}ms` }}
         >
           <div className="aspect-square overflow-hidden">
-            <img
-              src={optimizeProductImageUrl(item.imageUrl)}
+            <OptimizedImage
+              src={item.imageUrl}
               alt={item.title}
               width={720}
               height={720}

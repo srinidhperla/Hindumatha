@@ -7,6 +7,7 @@ import {
   FiCheckCircle,
   FiArrowRight,
 } from "react-icons/fi";
+import { OptimizedImage } from "@/shared/ui";
 import HomeCTASection from "./HomeCTASection";
 import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
@@ -116,12 +117,14 @@ const AboutSection = ({
         {/* Image Side */}
         <div className="relative animate-fadeInUp">
           <div className="relative rounded-2xl overflow-hidden shadow-warm">
-            <img
+            <OptimizedImage
               src={CLOUDINARY_GALLERY_IMAGES.cake3}
               alt="About Hindumatha's Cake World"
               width={1200}
               height={800}
               loading="lazy"
+              responsiveWidths={[480, 800, 1200]}
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="w-full h-[280px] sm:h-[400px] lg:h-[500px] object-cover"
             />
             {/* Overlay stats card */}

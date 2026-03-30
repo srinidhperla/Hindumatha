@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { OptimizedImage } from "@/shared/ui";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
@@ -141,7 +142,7 @@ const HomeCategoryGrid = ({ products = [] }) => {
               to={`/menu?product=${tile.productId}`}
               className="group rounded-2xl border border-[#d9c79d] bg-white/85 p-2.5 shadow-[0_10px_20px_rgba(18,12,2,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_14px_26px_rgba(18,12,2,0.12)]"
             >
-              <img
+              <OptimizedImage
                 src={tile.image}
                 alt={tile.label}
                 width={240}

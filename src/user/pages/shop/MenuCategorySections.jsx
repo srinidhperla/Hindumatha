@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { OptimizedImage } from "@/shared/ui";
 import { isEggTypeAvailable } from "@/utils/productOptions";
 import { formatINR } from "@/utils/currency";
 
@@ -36,7 +37,7 @@ const MenuCategorySections = ({
                   onClick={() => openImagePreview(product)}
                   className="block h-full w-full"
                 >
-                  <img
+                  <OptimizedImage
                     src={product.primaryImage}
                     alt={product.name}
                     width={320}

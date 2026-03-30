@@ -20,6 +20,7 @@ import {
   normalizeFlavorOptions,
 } from "@/utils/productOptions";
 import SeoMeta from "@/shared/seo/SeoMeta";
+import { OptimizedImage } from "@/shared/ui";
 import { formatINR } from "@/utils/currency";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import CartItemCard from "./CartItemCard";
@@ -283,8 +284,8 @@ const Cart = () => {
                       key={addon._id}
                       className="flex items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50 p-3"
                     >
-                      <img
-                        src={optimizeProductImageUrl(addon.images?.[0] || addon.image)}
+                      <OptimizedImage
+                        src={addon.images?.[0] || addon.image}
                         alt={addon.name}
                         width={48}
                         height={48}
@@ -333,8 +334,8 @@ const Cart = () => {
                         key={addon._id}
                         className="flex items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50 p-3"
                       >
-                        <img
-                          src={optimizeProductImageUrl(addon.images?.[0] || addon.image)}
+                        <OptimizedImage
+                          src={addon.images?.[0] || addon.image}
                           alt={addon.name}
                           width={48}
                           height={48}

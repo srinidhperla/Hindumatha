@@ -6,7 +6,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
 } from "react-icons/fi";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
+import { OptimizedImage } from "@/shared/ui";
 
 const formatCategoryLabel = (value = "") =>
   value
@@ -107,8 +107,8 @@ const FeaturedProducts = ({ products }) => {
               >
                 <Link to={`/menu?product=${product._id}`} className="block">
                   <div className="relative overflow-hidden">
-                    <img
-                      src={optimizeProductImageUrl(product.image)}
+                    <OptimizedImage
+                      src={product.image}
                       alt={product.name}
                       width={600}
                       height={420}

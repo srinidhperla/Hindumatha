@@ -270,7 +270,9 @@ const Menu = () => {
 
   const openImagePreview = (product) => {
     setImagePreview({
-      src: product.primaryImage,
+      src: optimizeProductImageUrl(product.images?.[0] || product.image, {
+        width: 1400,
+      }),
       name: product.name,
     });
   };

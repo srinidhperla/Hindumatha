@@ -1,5 +1,6 @@
 import React from "react";
 import Modal from "@/shared/ui/Modal";
+import { OptimizedImage } from "@/shared/ui";
 import { ActionButton, StatusChip } from "@/shared/ui/Primitives";
 
 const inputClassName =
@@ -84,7 +85,7 @@ const AddOnFormModal = ({
 
       {formData.imagePreview && (
         <div className="overflow-hidden rounded-2xl border border-gold-200/70 bg-white/80 p-2">
-          <img
+          <OptimizedImage
             src={formData.imagePreview}
             alt="Addon preview"
             width={720}

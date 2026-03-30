@@ -1,4 +1,5 @@
 import React from "react";
+import { OptimizedImage } from "@/shared/ui";
 
 const ProductImageLightbox = ({ isOpen, image, alt, onClose }) => {
   if (!isOpen) {
@@ -19,12 +20,13 @@ const ProductImageLightbox = ({ isOpen, image, alt, onClose }) => {
       >
         Close
       </button>
-      <img
+      <OptimizedImage
         src={image}
         alt={alt}
         width={1200}
         height={1200}
         loading="eager"
+        maxWidth={1400}
         className="product-lightbox-image"
         onClick={(event) => event.stopPropagation()}
       />

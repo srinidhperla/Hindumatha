@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
+import { OptimizedImage } from "@/shared/ui";
 
 const GalleryLightbox = ({ item, onClose }) => {
   if (!item) {
@@ -36,12 +36,13 @@ const GalleryLightbox = ({ item, onClose }) => {
         </button>
         <div className="grid md:grid-cols-2">
           <div className="aspect-square md:h-[500px] md:aspect-auto">
-            <img
-              src={optimizeProductImageUrl(item.imageUrl)}
+            <OptimizedImage
+              src={item.imageUrl}
               alt={item.title}
               width={900}
               height={900}
               loading="eager"
+              maxWidth={1400}
               className="h-full w-full object-cover"
             />
           </div>

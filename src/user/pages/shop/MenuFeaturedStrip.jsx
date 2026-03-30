@@ -1,4 +1,5 @@
 import React from "react";
+import { OptimizedImage } from "@/shared/ui";
 import { formatINR } from "@/utils/currency";
 
 const MenuFeaturedStrip = ({ featuredProducts, openImagePreview }) => {
@@ -22,7 +23,7 @@ const MenuFeaturedStrip = ({ featuredProducts, openImagePreview }) => {
             onClick={() => openImagePreview(product)}
             className="menu-featured-card"
           >
-            <img
+            <OptimizedImage
               src={product.primaryImage}
               alt={product.name}
               width={320}

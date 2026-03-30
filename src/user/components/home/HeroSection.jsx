@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowRight, FiSearch, FiTruck } from "react-icons/fi";
+import { OptimizedImage } from "@/shared/ui";
 import { formatCategoryLabel } from "@/utils/productOptions";
 import { heroSlides } from "@/user/components/home/heroContent";
 
@@ -8,8 +9,6 @@ const HERO_IMAGE_SIZES =
   "(max-width: 768px) 800px, (max-width: 1200px) 1200px, 1600px";
 
 const HERO_IMAGE_WIDTHS = [800, 1200, 1600];
-
-const CLOUDINARY_UPLOAD_MARKER = "/image/upload/";
 const FALLBACK_TYPED_WORDS = [
   "Birthday Cakes",
   "Wedding Tiers",
@@ -49,81 +48,6 @@ const pickRandomValues = (values, count) => {
   }
 
   return shuffled.slice(0, count);
-};
-
-const isCloudinaryUploadImage = (imageUrl) =>
-  /https?:\/\/res\.cloudinary\.com\/.+\/image\/upload\//i.test(
-    String(imageUrl || "")
-  );
-
-const buildCloudinaryWidthUrl = (imageUrl, width) => {
-  try {
-    const parsedUrl = new URL(String(imageUrl || "").trim());
-    const markerIndex = parsedUrl.pathname.indexOf(CLOUDINARY_UPLOAD_MARKER);
-
-    if (markerIndex === -1) {
-      return parsedUrl.toString();
-    }
-
-    const prefixPath = parsedUrl.pathname.slice(
-      0,
-      markerIndex + CLOUDINARY_UPLOAD_MARKER.length
-    );
-    const uploadSuffix = parsedUrl.pathname
-      .slice(markerIndex + CLOUDINARY_UPLOAD_MARKER.length)
-      .split("/")
-      .filter(Boolean);
-
-    const hasTransformSegment =
-      uploadSuffix.length > 1 && !/^v\d+$/i.test(uploadSuffix[0]);
-    const preservedSuffix = hasTransformSegment
-      ? uploadSuffix.slice(1)
-      : uploadSuffix;
-
-    parsedUrl.pathname = `${prefixPath}f_auto,q_auto,w_${width}/${preservedSuffix.join(
-      "/"
-    )}`;
-    return parsedUrl.toString();
-  } catch {
-    return String(imageUrl || "").trim();
-  }
-};
-
-const buildResponsiveHeroImage = (imageUrl) => {
-  const source = String(imageUrl || "").trim();
-  if (!source) {
-    return { src: "", srcSet: "" };
-  }
-
-  if (isCloudinaryUploadImage(source)) {
-    const srcSet = HERO_IMAGE_WIDTHS.map(
-      (width) => `${buildCloudinaryWidthUrl(source, width)} ${width}w`
-    ).join(", ");
-
-    return {
-      src: buildCloudinaryWidthUrl(source, HERO_IMAGE_WIDTHS[0]),
-      srcSet,
-    };
-  }
-
-  try {
-    const baseUrl = new URL(source);
-    const createWidthUrl = (width) => {
-      const nextUrl = new URL(baseUrl.toString());
-      nextUrl.searchParams.set("w", String(width));
-      nextUrl.searchParams.set("q", "80");
-      return nextUrl.toString();
-    };
-
-    return {
-      src: createWidthUrl(800),
-      srcSet: HERO_IMAGE_WIDTHS.map(
-        (width) => `${createWidthUrl(width)} ${width}w`
-      ).join(", "),
-    };
-  } catch {
-    return { src: source, srcSet: "" };
-  }
 };
 
 const HeroSection = ({
@@ -239,7 +163,6 @@ const HeroSection = ({
   return (
     <section className="relative h-[540px] overflow-hidden sm:h-[600px] lg:h-[86svh]">
       {heroSlides.map((slide, index) => {
-        const responsiveImage = buildResponsiveHeroImage(slide.image);
         return (
         <div
           key={slide.image}
@@ -247,13 +170,14 @@ const HeroSection = ({
             index === activeSlide ? "opacity-100" : "opacity-0"
           }`}
         >
-          <img
-            src={responsiveImage.src}
-            srcSet={responsiveImage.srcSet}
-            sizes={HERO_IMAGE_SIZES}
+          <OptimizedImage
+            src={slide.image}
             alt={slide.alt}
             width={1600}
             height={900}
+            maxWidth={1600}
+            responsiveWidths={HERO_IMAGE_WIDTHS}
+            sizes={HERO_IMAGE_SIZES}
             loading={index === 0 ? "eager" : "lazy"}
             fetchPriority={index === 0 ? "high" : "auto"}
             className={`h-full w-full object-cover transition-transform duration-[8000ms] ${

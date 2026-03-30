@@ -6,11 +6,11 @@ import {
   EmptyState,
 } from "@/admin/components/ui/AdminUi";
 import AdminOrderActionModal from "@/admin/components/modals/AdminOrderActionModal";
+import { OptimizedImage } from "@/shared/ui";
 import { ActionButton } from "@/shared/ui/Primitives";
 import { fetchOrderAnalytics } from "@/services/orderAPI";
 import { updateOrderStatus } from "@/features/orders/orderSlice";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import { getOrderSummary, ORDER_STATUS_OPTIONS } from "./adminShared";
 
 const getTodayKey = () =>
@@ -356,8 +356,8 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
                   className="flex items-center justify-between rounded-xl border border-[rgba(201,168,76,0.22)] bg-white/85 p-3 admin-motion hover:-translate-y-0.5 hover:border-[rgba(201,168,76,0.4)] hover:bg-white"
                 >
                   <div className="flex items-center space-x-3">
-                    <img
-                      src={optimizeProductImageUrl(product.image)}
+                    <OptimizedImage
+                      src={product.image}
                       alt={product.name}
                       width={48}
                       height={48}

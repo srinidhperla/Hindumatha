@@ -1,12 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { OptimizedImage } from "@/shared/ui";
 import { formatINR } from "@/utils/currency";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 
 const AddonRow = ({ addon, onAdd }) => (
   <div className="flex items-center gap-2 rounded-xl border border-primary-100 bg-cream-100 p-2">
-    <img
-      src={optimizeProductImageUrl(addon.images?.[0] || addon.image)}
+    <OptimizedImage
+      src={addon.images?.[0] || addon.image}
       alt={addon.name}
       width={48}
       height={48}
