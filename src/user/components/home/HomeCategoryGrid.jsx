@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
+import { isProductPurchasable } from "@/utils/productOptions";
 
 const pickRandomItem = (items = []) => {
   if (!Array.isArray(items) || items.length === 0) {
@@ -17,10 +18,26 @@ const getProductImagePool = (product) => {
     .filter(Boolean);
 };
 
+const GRID_COLUMNS = 6;
+const MAX_GRID_TILES = 24;
+
+const shuffleItems = (items = []) => {
+  const shuffledItems = [...items];
+  for (let index = shuffledItems.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffledItems[index], shuffledItems[randomIndex]] = [
+      shuffledItems[randomIndex],
+      shuffledItems[index],
+    ];
+  }
+  return shuffledItems;
+};
+
 const HomeCategoryGrid = ({ products = [] }) => {
   const tiles = useMemo(() => {
     const liveProducts = (Array.isArray(products) ? products : []).filter(
-      (product) => product?.isAddon !== true && product?.isAvailable !== false,
+      (product) =>
+        product?.isAddon !== true && isProductPurchasable(product),
     );
 
     const productTiles = liveProducts
@@ -37,18 +54,12 @@ const HomeCategoryGrid = ({ products = [] }) => {
       })
       .filter(Boolean);
 
-    const shuffledTiles = [...productTiles];
-    for (let index = shuffledTiles.length - 1; index > 0; index -= 1) {
-      const randomIndex = Math.floor(Math.random() * (index + 1));
-      [shuffledTiles[index], shuffledTiles[randomIndex]] = [
-        shuffledTiles[randomIndex],
-        shuffledTiles[index],
-      ];
-    }
+    const shuffledTiles = shuffleItems(productTiles);
 
-    const cappedTiles = shuffledTiles.slice(0, 24);
-    if (cappedTiles.length >= 6) {
-      const fullRowsCount = Math.floor(cappedTiles.length / 6) * 6;
+    const cappedTiles = shuffledTiles.slice(0, MAX_GRID_TILES);
+    if (cappedTiles.length >= GRID_COLUMNS) {
+      const fullRowsCount =
+        Math.floor(cappedTiles.length / GRID_COLUMNS) * GRID_COLUMNS;
       return cappedTiles.slice(0, fullRowsCount);
     }
 
