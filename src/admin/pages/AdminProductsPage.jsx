@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  fetchProducts,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -49,6 +50,10 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
     imageFile: null,
     imagePreview: "",
   });
+
+  useEffect(() => {
+    dispatch(fetchProducts({ force: true }));
+  }, [dispatch]);
 
   const availableCategories = useMemo(
     () =>
@@ -410,17 +415,10 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
   const handleFlavorWeightAvailabilityChange = (nextMatrix) => {
     setFormData((currentFormData) => {
       const resolvedMatrix = nextMatrix || {};
-      const axes = getVariantAxes(currentFormData);
-      const minimumPrice = getMinimumVariantPrice(
-        currentFormData.variantPrices,
-        resolvedMatrix,
-        axes,
-      );
 
       return {
         ...currentFormData,
         flavorWeightAvailability: resolvedMatrix,
-        price: minimumPrice !== null ? minimumPrice : 0,
       };
     });
   };
@@ -483,17 +481,15 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
       setIsSubmittingProduct(true);
 
       const productData = new FormData();
-      const axes = getVariantAxes(formData);
-      const minimumVariantPrice = getMinimumVariantPrice(
-        formData.variantPrices,
-        formData.flavorWeightAvailability,
-        axes,
-      );
-      const finalBasePrice =
-        minimumVariantPrice !== null ? minimumVariantPrice : 0;
+      const finalBasePrice = Number(formData.price);
       productData.append("name", formData.name.trim());
       productData.append("description", formData.description.trim());
-      productData.append("price", finalBasePrice);
+      productData.append(
+        "price",
+        Number.isFinite(finalBasePrice) && finalBasePrice >= 0
+          ? finalBasePrice
+          : 0,
+      );
       productData.append("category", finalCategory);
       productData.append("isEgg", formData.isEgg);
       productData.append("isEggless", formData.isEggless);
@@ -579,26 +575,11 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
     };
     const isEgg = product.isEgg !== false;
     const isEggless = product.isEggless === true;
-    const axes = getVariantAxes({
-      flavorOptions,
-      weightOptions,
-      isEgg,
-      isEggless,
-    });
-    const minimumVariantPrice = getMinimumVariantPrice(
-      variantPrices,
-      flavorWeightAvailability,
-      axes,
-    );
-
     setEditingProduct(product);
     setFormData({
       name: product.name,
       description: product.description,
-      price:
-        minimumVariantPrice !== null
-          ? minimumVariantPrice
-          : Number(product.price) || 0,
+      price: Number(product.price) || 0,
       portionType: normalizePortionType(product.portionType),
       category: product.category,
       image: product.image,

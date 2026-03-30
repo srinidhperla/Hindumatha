@@ -49,7 +49,8 @@ const ProductBasicsSection = ({
             className={inputClassName}
           />
           <p className="mt-1 text-xs text-primary-600">
-            Auto-calculated from the lowest value in Set Prices.
+            Preserved from the saved product and updated only when you edit a
+            price in Set Prices.
           </p>
         </label>
       </div>

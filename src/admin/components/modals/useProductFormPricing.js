@@ -1,5 +1,9 @@
-import { useEffect } from "react";
 import { formatCategoryLabel } from "@/utils/productOptions";
+import {
+  readRowValue,
+  readVariantPriceValue,
+  resolveTypedRow,
+} from "@/utils/productOptionInternals";
 
 const getTypedKey = (eggType, flavorName) => `${eggType}::${flavorName}`;
 
@@ -22,18 +26,13 @@ export const useProductFormPricing = ({
     formData.category || formData.name || "cake",
   );
 
-  const getDefaultPrice = (weightOption) => {
-    const fallback = Math.round(
-      (Number(formData.price) || 0) * Number(weightOption.multiplier || 1),
-    );
-    return fallback > 0 ? fallback : "";
-  };
-
   const getTypedPrice = (eggType, flavorName, weightOption) => {
     const key = getTypedKey(eggType, flavorName);
-    const row = formData.variantPrices?.[key] || {};
-    const raw = row?.[weightOption.label];
-    const direct = Number(raw);
+    const row = resolveTypedRow(formData.variantPrices, key) || {};
+    const raw = readRowValue(row, weightOption.label);
+    const direct = readVariantPriceValue(raw);
+    const fallbackBasePrice = Number(formData.price);
+    const fallbackMultiplier = Number(weightOption?.multiplier || 1);
 
     if (Number.isFinite(direct) && direct > 0) {
       return direct;
@@ -43,7 +42,16 @@ export const useProductFormPricing = ({
       return "";
     }
 
-    return getDefaultPrice(weightOption);
+    if (
+      Number.isFinite(fallbackBasePrice) &&
+      fallbackBasePrice > 0 &&
+      Number.isFinite(fallbackMultiplier) &&
+      fallbackMultiplier > 0
+    ) {
+      return fallbackBasePrice * fallbackMultiplier;
+    }
+
+    return "";
   };
 
   const isWeightOn = (eggType, flavorName, weightLabel) => {
@@ -85,54 +93,6 @@ export const useProductFormPricing = ({
     };
     onFlavorWeightAvailabilityChange(nextMatrix);
   };
-
-  useEffect(() => {
-    if (!selectedEggTypes.length || !formData.weightOptions.length) {
-      return;
-    }
-
-    const current = formData.variantPrices || {};
-    const nextVariantPrices = { ...current };
-    let changed = false;
-
-    selectedEggTypes.forEach((eggType) => {
-      flavorRows.forEach((flavorName) => {
-        const key = getTypedKey(eggType, flavorName);
-        const currentRow =
-          nextVariantPrices[key] && typeof nextVariantPrices[key] === "object"
-            ? nextVariantPrices[key]
-            : {};
-
-        const nextRow = { ...currentRow };
-        let rowChanged = !(key in nextVariantPrices);
-
-        formData.weightOptions.forEach((weightOption) => {
-          const weightLabel = weightOption.label;
-          const rawValue = currentRow[weightLabel];
-          if (rawValue === undefined) {
-            nextRow[weightLabel] = getDefaultPrice(weightOption);
-            rowChanged = true;
-          }
-        });
-
-        if (rowChanged) {
-          nextVariantPrices[key] = nextRow;
-          changed = true;
-        }
-      });
-    });
-
-    if (changed) {
-      onVariantPricesChange(nextVariantPrices);
-    }
-  }, [
-    formData.price,
-    formData.variantPrices,
-    formData.weightOptions,
-    flavorRows,
-    onVariantPricesChange,
-    selectedEggTypes,
-  ]);
 
   return {
     selectedEggTypes,
