@@ -220,33 +220,40 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     }, 1000);
   }, []);
 
-  const ensureAudioReady = useCallback(async () => {
-    if (!canUseAudio()) {
-      return false;
-    }
-
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContextClass();
-    }
-
-    if (audioContextRef.current.state === "suspended") {
-      await audioContextRef.current.resume();
-    }
-
-    const isReady = audioContextRef.current.state === "running";
-    setAudioEnabled(isReady);
-
-    if (isReady) {
-      setSoundArmed(true);
-      if (canUseLocalStorage()) {
-        localStorage.setItem(SOUND_ARMED_STORAGE_KEY, "true");
+  const ensureAudioReady = useCallback(
+    async ({ allowCreate = false } = {}) => {
+      if (!canUseAudio()) {
+        return false;
       }
-    }
 
-    return isReady;
-  }, []);
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
+
+      if (!audioContextRef.current) {
+        if (!allowCreate) {
+          return false;
+        }
+        audioContextRef.current = new AudioContextClass();
+      }
+
+      if (audioContextRef.current.state === "suspended") {
+        await audioContextRef.current.resume();
+      }
+
+      const isReady = audioContextRef.current.state === "running";
+      setAudioEnabled(isReady);
+
+      if (isReady) {
+        setSoundArmed(true);
+        if (canUseLocalStorage()) {
+          localStorage.setItem(SOUND_ARMED_STORAGE_KEY, "true");
+        }
+      }
+
+      return isReady;
+    },
+    [],
+  );
 
   const attemptSilentAudioUnlock = useCallback(async () => {
     if (!canUseAudio() || !canUseLocalStorage()) {
@@ -268,7 +275,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       }
       probeAudio.pause();
       probeAudio.currentTime = 0;
-      return ensureAudioReady();
+      return ensureAudioReady({ allowCreate: false });
     } catch {
       return false;
     }
@@ -320,7 +327,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     }
 
     try {
-      const isReady = await ensureAudioReady();
+      const isReady = await ensureAudioReady({ allowCreate: false });
       if (!isReady) {
         await playHtmlAudioFallback();
         return;
@@ -378,7 +385,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
   }, [alertsEnabled, ensureAudioReady, playHtmlAudioFallback]);
 
   const unlockSound = useCallback(async () => {
-    const isReady = await ensureAudioReady();
+    const isReady = await ensureAudioReady({ allowCreate: true });
 
     if (isReady) {
       await playAlertTone();
@@ -552,7 +559,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
 
     await Promise.allSettled([
       ensureNotificationsReady({ request: true }),
-      ensureAudioReady(),
+      ensureAudioReady({ allowCreate: true }),
     ]);
     await subscribeForPushAlerts().catch(() => null);
   }, [
@@ -629,20 +636,18 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     }
 
     const unlockAlerts = () => {
-      ensureAudioReady();
+      ensureAudioReady({ allowCreate: true });
       ensureNotificationsReady();
     };
 
     window.addEventListener("pointerdown", unlockAlerts, true);
     window.addEventListener("keydown", unlockAlerts, true);
     window.addEventListener("touchstart", unlockAlerts, true);
-    window.addEventListener("focus", unlockAlerts);
 
     return () => {
       window.removeEventListener("pointerdown", unlockAlerts);
       window.removeEventListener("keydown", unlockAlerts);
       window.removeEventListener("touchstart", unlockAlerts);
-      window.removeEventListener("focus", unlockAlerts);
     };
   }, [
     alertsEnabled,
@@ -747,7 +752,7 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       // Auto-resume audio when tab becomes visible again (handles the most
       // common "sound paused after refresh / tab switch" scenario).
       if (!document.hidden && alertsEnabled && !audioEnabled) {
-        ensureAudioReady()
+        ensureAudioReady({ allowCreate: false })
           .then((isReady) => {
             if (!isReady) {
               playHtmlAudioFallback().catch(() => null);

@@ -695,94 +695,56 @@ export const calculateDistanceMatrix = async ({ origin, destination }) => {
   try {
     await waitForGoogleMapsSdk();
     const maps = getGoogleMaps();
-
-    if (typeof maps?.importLibrary === "function") {
-      try {
-        const { RouteMatrix } = await maps.importLibrary("routes");
-
-        if (RouteMatrix?.computeRouteMatrix) {
-          const { matrix } = await RouteMatrix.computeRouteMatrix({
-            origins: [
-              {
-                location: {
-                  lat: originLat,
-                  lng: originLng,
-                },
-                displayName: "Store",
-              },
-            ],
-            destinations: [
-              {
-                location: {
-                  lat: destinationLat,
-                  lng: destinationLng,
-                },
-                displayName: "Delivery address",
-              },
-            ],
-            travelMode: "DRIVING",
-            units: maps.UnitSystem.METRIC,
-            fields: ["distanceMeters", "durationMillis", "condition"],
-          });
-
-          const item = matrix?.rows?.[0]?.items?.[0];
-          const distanceMeters = Number(item?.distanceMeters);
-          const durationMillis = Number(item?.durationMillis);
-
-          if (
-            item?.condition === "ROUTE_EXISTS" &&
-            Number.isFinite(distanceMeters)
-          ) {
-            return {
-              distanceKm: distanceMeters / 1000,
-              durationSeconds: Number.isFinite(durationMillis)
-                ? durationMillis / 1000
-                : null,
-            };
-          }
-        }
-      } catch {
-        // Fall back to DistanceMatrixService below if Routes isn't enabled yet.
-      }
+    if (typeof maps?.importLibrary !== "function") {
+      throw new Error("Google Routes API is unavailable.");
     }
 
-    const response = await new Promise((resolve, reject) => {
-      const service = new maps.DistanceMatrixService();
-      service.getDistanceMatrix(
-        {
-          origins: [{ lat: originLat, lng: originLng }],
-          destinations: [{ lat: destinationLat, lng: destinationLng }],
-          travelMode: maps.TravelMode.DRIVING,
-          unitSystem: maps.UnitSystem.METRIC,
-        },
-        (result, status) => {
-          if (status === "OK") {
-            resolve(result);
-            return;
-          }
+    const { RouteMatrix } = await maps.importLibrary("routes");
+    if (!RouteMatrix?.computeRouteMatrix) {
+      throw new Error("Google RouteMatrix API is unavailable.");
+    }
 
-          reject(new Error(`Distance matrix failed: ${status}`));
+    const { matrix } = await RouteMatrix.computeRouteMatrix({
+      origins: [
+        {
+          location: {
+            lat: originLat,
+            lng: originLng,
+          },
+          displayName: "Store",
         },
-      );
+      ],
+      destinations: [
+        {
+          location: {
+            lat: destinationLat,
+            lng: destinationLng,
+          },
+          displayName: "Delivery address",
+        },
+      ],
+      travelMode: "DRIVING",
+      units: maps.UnitSystem.METRIC,
+      fields: ["distanceMeters", "durationMillis", "condition"],
     });
 
-    const element = response?.rows?.[0]?.elements?.[0];
-    if (element?.status !== "OK") {
-      throw new Error(`Distance matrix element failed: ${element?.status}`);
+    const item = matrix?.rows?.[0]?.items?.[0];
+    const distanceMeters = Number(item?.distanceMeters);
+    const durationMillis = Number(item?.durationMillis);
+
+    if (
+      item?.condition === "ROUTE_EXISTS" &&
+      Number.isFinite(distanceMeters)
+    ) {
+      return {
+        distanceKm: distanceMeters / 1000,
+        durationSeconds: Number.isFinite(durationMillis)
+          ? durationMillis / 1000
+          : null,
+      };
     }
 
-    const distanceMeters = Number(element?.distance?.value);
-    const durationSeconds = Number(element?.duration?.value);
-    if (!Number.isFinite(distanceMeters)) {
-      throw new Error("Distance matrix returned invalid distance.");
-    }
-
-    return {
-      distanceKm: distanceMeters / 1000,
-      durationSeconds: Number.isFinite(durationSeconds)
-        ? durationSeconds
-        : null,
-    };
+    throw new Error("RouteMatrix could not compute route.");
   } catch {
     return {
       distanceKm: haversineDistance(
