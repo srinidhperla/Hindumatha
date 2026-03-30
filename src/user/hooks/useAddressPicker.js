@@ -22,8 +22,26 @@ import {
 } from "@/user/hooks/useAddressPicker.utils";
 import useAddressPickerActions from "@/user/hooks/useAddressPickerActions";
 
+const getGeolocationPermissionState = async () => {
+  if (
+    typeof navigator === "undefined" ||
+    !navigator.permissions?.query
+  ) {
+    return "";
+  }
+
+  try {
+    const permissionStatus = await navigator.permissions.query({
+      name: "geolocation",
+    });
+    return String(permissionStatus?.state || "").toLowerCase();
+  } catch {
+    return "";
+  }
+};
+
 export const useAddressPickerLegacy = (options = {}) => {
-  const { initialAddress = null, onSave } = options;
+  const { initialAddress = null, onSave, isOpen = false } = options;
   const { user } = useSelector((state) => state.auth);
   const deliverySettings = useSelector((state) => state.site.deliverySettings);
 
@@ -60,6 +78,12 @@ export const useAddressPickerLegacy = (options = {}) => {
   const [mapLoadError, setMapLoadError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [autoDetecting, setAutoDetecting] = useState(false);
+  const [locationPermissionMessage, setLocationPermissionMessage] = useState("");
+
+  const resolveAddressFromCoordinates = useCallback(
+    async (lat, lng) => reverseGeocodeCoordinates(lat, lng),
+    [],
+  );
 
   const isAddressVerified = hasValidCoordinates(
     addressMeta.latitude,
@@ -98,17 +122,18 @@ export const useAddressPickerLegacy = (options = {}) => {
 
   // EDIT mode: fill form from saved address
   useEffect(() => {
-    if (!initialAddress) return;
+    if (!isOpen || !initialAddress) return;
     setFormData(createFormDataFromAddress(initialAddress, user?.phone));
     setAddressMeta(createAddressMetaFromAddress(initialAddress));
     setAddressQuery(initialAddress.formattedAddress || "");
     setAddressPredictions([]);
     setAddressLookupError("");
-  }, [initialAddress, user?.phone]);
+    setLocationPermissionMessage("");
+  }, [initialAddress, isOpen, user?.phone]);
 
   // ADD mode: reset form & auto-detect city/pincode from GPS
   useEffect(() => {
-    if (initialAddress) return;
+    if (!isOpen || initialAddress) return;
 
     // Reset all fields so edit data doesn't leak into add mode
     setFormData(createEmptyFormData(user?.phone));
@@ -116,38 +141,48 @@ export const useAddressPickerLegacy = (options = {}) => {
     setAddressQuery("");
     setAddressPredictions([]);
     setAddressLookupError("");
+    setLocationPermissionMessage("");
 
     // Auto-detect GPS -- fills only city, pincode, and coordinates
-    if (!navigator.geolocation) return;
-    setAutoDetecting(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        try {
-          const resolved = await resolveAddressFromCoordinates(lat, lng);
-          setFormData((prev) => ({
-            ...prev,
-            city: resolved.city || prev.city,
-            pincode: resolved.zipCode || prev.pincode,
-          }));
-          setAddressMeta({
-            placeId: resolved.placeId || "",
-            latitude: lat ?? resolved.latitude,
-            longitude: lng ?? resolved.longitude,
-            formattedAddress: resolved.formattedAddress || "",
-          });
-        } catch {
-          // silently fail auto-detect
-        } finally {
-          setAutoDetecting(false);
-        }
-      },
-      () => setAutoDetecting(false),
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialAddress]);
+    const runSilentAutoDetect = async () => {
+      if (!navigator.geolocation) return;
+
+      const permissionState = await getGeolocationPermissionState();
+      if (permissionState !== "granted") {
+        return;
+      }
+
+      setAutoDetecting(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          try {
+            const resolved = await resolveAddressFromCoordinates(lat, lng);
+            setFormData((prev) => ({
+              ...prev,
+              city: resolved.city || prev.city,
+              pincode: resolved.zipCode || prev.pincode,
+            }));
+            setAddressMeta({
+              placeId: resolved.placeId || "",
+              latitude: lat ?? resolved.latitude,
+              longitude: lng ?? resolved.longitude,
+              formattedAddress: resolved.formattedAddress || "",
+            });
+          } catch {
+            // silently fail auto-detect
+          } finally {
+            setAutoDetecting(false);
+          }
+        },
+        () => setAutoDetecting(false),
+        { enableHighAccuracy: true, timeout: 8000 },
+      );
+    };
+
+    runSilentAutoDetect();
+  }, [initialAddress, isOpen, resolveAddressFromCoordinates, user?.phone]);
 
   const applyResolvedAddress = useCallback((resolved, lat, lng) => {
     setFormData((prev) => ({
@@ -163,14 +198,8 @@ export const useAddressPickerLegacy = (options = {}) => {
       longitude: lng ?? resolved.longitude,
       formattedAddress: resolved.formattedAddress || "",
     });
-    setAddressQuery(resolved.formattedAddress || "");
     setAddressLookupError("");
   }, []);
-
-  const resolveAddressFromCoordinates = useCallback(
-    async (lat, lng) => reverseGeocodeCoordinates(lat, lng),
-    [],
-  );
 
   const {
     handleAddressQueryChange,
@@ -185,6 +214,7 @@ export const useAddressPickerLegacy = (options = {}) => {
     setAddressPredictions,
     setAddressQuery,
     setAddressLookupError,
+    setLocationPermissionMessage,
     setLocationLoading,
     applyResolvedAddress,
     resolveAddressFromCoordinates,
@@ -195,14 +225,15 @@ export const useAddressPickerLegacy = (options = {}) => {
       const fallback = toAddressFromSuggestion(prediction);
       if (fallback) {
         applyResolvedAddress(fallback);
-        setAddressQuery(prediction.description || "");
+        setAddressQuery("");
         setAddressPredictions([]);
+        setLocationPermissionMessage("");
         return;
       }
 
       setAddressLookupError("Unable to resolve selected location.");
     },
-    [applyResolvedAddress],
+    [applyResolvedAddress, setLocationPermissionMessage],
   );
 
   const handleFormChange = useCallback((event) => {
@@ -247,6 +278,7 @@ export const useAddressPickerLegacy = (options = {}) => {
     mapLoadError,
     locationLoading,
     autoDetecting,
+    locationPermissionMessage,
     isAddressVerified,
     distanceFromStoreKm,
     isAddressServiceable,
@@ -263,7 +295,7 @@ export const useAddressPickerLegacy = (options = {}) => {
 };
 
 const useAddressPickerGoogle = (options = {}) => {
-  const { initialAddress = null, onSave } = options;
+  const { initialAddress = null, onSave, isOpen = false } = options;
   const { user } = useSelector((state) => state.auth);
   const deliverySettings = useSelector((state) => state.site.deliverySettings);
 
@@ -299,7 +331,13 @@ const useAddressPickerGoogle = (options = {}) => {
   const [mapLoadError, setMapLoadError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [autoDetecting, setAutoDetecting] = useState(false);
+  const [locationPermissionMessage, setLocationPermissionMessage] = useState("");
   const [distanceFromStoreKm, setDistanceFromStoreKm] = useState(null);
+
+  const resolveAddressFromCoordinates = useCallback(
+    async (lat, lng) => reverseGeocodeCoordinates(lat, lng),
+    [],
+  );
 
   const hasResolvedLookup = Boolean(
     String(
@@ -402,64 +440,74 @@ const useAddressPickerGoogle = (options = {}) => {
   ]);
 
   useEffect(() => {
-    if (!initialAddress) return;
+    if (!isOpen || !initialAddress) return;
     setFormData(createFormDataFromAddress(initialAddress, user?.phone));
     setAddressMeta(createAddressMetaFromAddress(initialAddress));
     setAddressQuery(initialAddress.formattedAddress || "");
     setAddressPredictions([]);
     setAddressLookupError("");
-  }, [initialAddress, user?.phone]);
+    setLocationPermissionMessage("");
+  }, [initialAddress, isOpen, user?.phone]);
 
   useEffect(() => {
-    if (initialAddress) return;
+    if (!isOpen || initialAddress) return;
 
     setFormData(createEmptyFormData(user?.phone));
     setAddressMeta(createEmptyAddressMeta());
     setAddressQuery("");
     setAddressPredictions([]);
     setAddressLookupError("");
+    setLocationPermissionMessage("");
 
-    if (!navigator.geolocation) return;
-    setAutoDetecting(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        try {
-          const resolved = await resolveAddressFromCoordinates(lat, lng);
-          setFormData((prev) => ({
-            ...prev,
-            street: resolved.street || prev.street,
-            city: resolved.city || prev.city,
-            pincode: resolved.zipCode || prev.pincode,
-            landmark: resolved.landmark || prev.landmark,
-          }));
-          setAddressMeta({
-            placeId: resolved.placeId || "",
-            latitude: lat ?? resolved.latitude,
-            longitude: lng ?? resolved.longitude,
-            formattedAddress: resolved.formattedAddress || "",
-          });
-          setAddressQuery(resolved.formattedAddress || "");
-        } catch {
-          setAddressMeta({
-            placeId: "",
-            latitude: lat,
-            longitude: lng,
-            formattedAddress: "",
-          });
-          setAddressLookupError(
-            "Unable to verify your exact address right now. Please search again or retry current location.",
-          );
-        } finally {
-          setAutoDetecting(false);
-        }
-      },
-      () => setAutoDetecting(false),
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialAddress]);
+    const runSilentAutoDetect = async () => {
+      if (!navigator.geolocation) return;
+
+      const permissionState = await getGeolocationPermissionState();
+      if (permissionState !== "granted") {
+        return;
+      }
+
+      setAutoDetecting(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          try {
+            const resolved = await resolveAddressFromCoordinates(lat, lng);
+            setFormData((prev) => ({
+              ...prev,
+              street: resolved.street || prev.street,
+              city: resolved.city || prev.city,
+              pincode: resolved.zipCode || prev.pincode,
+              landmark: resolved.landmark || prev.landmark,
+            }));
+            setAddressMeta({
+              placeId: resolved.placeId || "",
+              latitude: lat ?? resolved.latitude,
+              longitude: lng ?? resolved.longitude,
+              formattedAddress: resolved.formattedAddress || "",
+            });
+          } catch {
+            setAddressMeta({
+              placeId: "",
+              latitude: lat,
+              longitude: lng,
+              formattedAddress: "",
+            });
+            setAddressLookupError(
+              "Unable to verify your exact address right now. Please search again or retry current location.",
+            );
+          } finally {
+            setAutoDetecting(false);
+          }
+        },
+        () => setAutoDetecting(false),
+        { enableHighAccuracy: true, timeout: 8000 },
+      );
+    };
+
+    runSilentAutoDetect();
+  }, [initialAddress, isOpen, resolveAddressFromCoordinates, user?.phone]);
 
   const applyResolvedAddress = useCallback((resolved, lat, lng) => {
     setFormData((prev) => ({
@@ -475,14 +523,8 @@ const useAddressPickerGoogle = (options = {}) => {
       longitude: lng ?? resolved.longitude,
       formattedAddress: resolved.formattedAddress || "",
     });
-    setAddressQuery(resolved.formattedAddress || "");
     setAddressLookupError("");
   }, []);
-
-  const resolveAddressFromCoordinates = useCallback(
-    async (lat, lng) => reverseGeocodeCoordinates(lat, lng),
-    [],
-  );
 
   const {
     handleAddressQueryChange,
@@ -498,6 +540,7 @@ const useAddressPickerGoogle = (options = {}) => {
       setAddressPredictions,
       setAddressQuery,
       setAddressLookupError,
+      setLocationPermissionMessage,
       setLocationLoading,
       applyResolvedAddress,
       resolveAddressFromCoordinates,
@@ -521,15 +564,14 @@ const useAddressPickerGoogle = (options = {}) => {
           Number(resolved.latitude),
           Number(resolved.longitude),
         );
-        setAddressQuery(
-          resolved.formattedAddress || prediction.description || "",
-        );
+        setAddressQuery("");
         setAddressPredictions([]);
+        setLocationPermissionMessage("");
       } catch {
         setAddressLookupError("Unable to resolve selected location.");
       }
     },
-    [applyResolvedAddress],
+    [applyResolvedAddress, setLocationPermissionMessage],
   );
 
   const handleFormChange = useCallback((event) => {
@@ -574,6 +616,7 @@ const useAddressPickerGoogle = (options = {}) => {
     mapLoadError,
     locationLoading,
     autoDetecting,
+    locationPermissionMessage,
     isAddressVerified,
     distanceFromStoreKm,
     isAddressServiceable,

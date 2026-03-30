@@ -7,6 +7,8 @@ import AddressPickerDetailsSection from "./AddressPickerDetailsSection";
 import AddressPickerMapSection from "./AddressPickerMapSection";
 import AddressPickerSearchSection from "./AddressPickerSearchSection";
 
+const VIZIANAGARAM_CENTER = { lat: 18.1067, lng: 83.3956 };
+
 const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
   const dispatch = useDispatch();
 
@@ -18,6 +20,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
   const picker = useAddressPicker({
     initialAddress,
     onSave: handleSaveAddress,
+    isOpen,
   });
 
   const {
@@ -31,11 +34,11 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
     mapLoadError,
     locationLoading,
     autoDetecting,
+    locationPermissionMessage,
     isAddressVerified,
     distanceFromStoreKm,
     isAddressServiceable,
     maxDeliveryRadiusKm,
-    storeLocation,
     handleAddressQueryChange,
     handleSelectPrediction,
     handleUseCurrentLocation,
@@ -56,22 +59,8 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
         lng: Number(addressMeta.longitude),
       };
     }
-    const sLat = Number(storeLocation?.lat);
-    const sLng = Number(storeLocation?.lng);
-    if (
-      Number.isFinite(sLat) &&
-      Number.isFinite(sLng) &&
-      !(sLat === 0 && sLng === 0)
-    ) {
-      return { lat: sLat, lng: sLng };
-    }
-    return { lat: 18.1067, lng: 83.3956 };
-  }, [
-    addressMeta.latitude,
-    addressMeta.longitude,
-    hasAddressCoordinates,
-    storeLocation,
-  ]);
+    return VIZIANAGARAM_CENTER;
+  }, [addressMeta.latitude, addressMeta.longitude, hasAddressCoordinates]);
 
   const markerPosition = hasAddressCoordinates
     ? [Number(addressMeta.latitude), Number(addressMeta.longitude)]
@@ -135,6 +124,7 @@ const AddressPickerModal = ({ isOpen, onClose, onSave, initialAddress }) => {
             handleMapPinChange={handleMapPinChange}
             handleUseCurrentLocation={handleUseCurrentLocation}
             locationLoading={locationLoading}
+            locationPermissionMessage={locationPermissionMessage}
           />
 
           <AddressPickerDetailsSection

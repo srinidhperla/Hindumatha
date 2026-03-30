@@ -16,7 +16,7 @@ import {
   ORDER_STATUS_OPTIONS,
   getOrderSummary,
   getOrderItemName,
-  getOrderItemShortSummary,
+  getOrderItemOptionEntries,
   getOrderItems,
   getOrderSpecialInstructions,
 } from "./adminShared";
@@ -138,25 +138,24 @@ const getSortValue = (order, field) => {
   }
 };
 
-const getItemsPreviewRows = (order, maxItems = 2) => {
+const getItemsPreviewRows = (order) => {
   const items = getOrderItems(order);
 
   if (!items.length) {
-    return ["Custom Cake"];
+    return ["Custom Cake\nQty: 1"];
   }
 
-  const rows = items.slice(0, maxItems).map((item) => {
-    const summary = getOrderItemShortSummary(item, 3);
-    return summary
-      ? `${getOrderItemName(item)} | ${summary}`
-      : getOrderItemName(item);
+  return items.map((item) => {
+    const optionLines = getOrderItemOptionEntries(item).map(
+      (entry) => `${entry.label}: ${entry.value}`,
+    );
+    const parsedQty = Number(item?.quantity);
+    const quantity = Number.isFinite(parsedQty) && parsedQty > 0 ? parsedQty : 1;
+
+    return [getOrderItemName(item), ...optionLines, `Qty: ${quantity}`].join(
+      "\n",
+    );
   });
-
-  if (items.length > maxItems) {
-    rows.push(`+${items.length - maxItems} more item(s)`);
-  }
-
-  return rows;
 };
 
 const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
@@ -433,7 +432,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                       {getItemsPreviewRows(order).map((row, index) => (
                         <p
                           key={`${order._id}-item-preview-${index}`}
-                          className="text-xs text-primary-700"
+                          className="whitespace-pre-line text-xs text-primary-700"
                         >
                           {row}
                         </p>

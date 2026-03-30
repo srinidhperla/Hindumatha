@@ -19,6 +19,7 @@ const AddressPickerMapSection = ({
   handleMapPinChange,
   handleUseCurrentLocation,
   locationLoading,
+  locationPermissionMessage,
 }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -137,6 +138,12 @@ const AddressPickerMapSection = ({
         </svg>
         {locationLoading ? "Detecting..." : "Use current location"}
       </button>
+
+      {locationPermissionMessage && (
+        <div className="mt-3 whitespace-pre-line rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 shadow-sm">
+          {locationPermissionMessage}
+        </div>
+      )}
     </div>
   );
 };

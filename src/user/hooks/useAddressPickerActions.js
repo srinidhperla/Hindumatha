@@ -5,6 +5,11 @@ import {
 } from "@/user/hooks/useAddressPicker.utils";
 import { resetAutocompleteSession } from "@/user/components/order/orderHelpers";
 
+const LOCATION_BLOCKED_MESSAGE = `Location access is blocked. To enable it:
+- Click the lock icon 🔒 in your browser address bar
+- Find Location and change to Allow
+- Then click Use Current Location again`;
+
 const useAddressPickerActions = ({
   formDataCity,
   hasConfiguredStoreLocation,
@@ -14,6 +19,7 @@ const useAddressPickerActions = ({
   setAddressPredictions,
   setAddressQuery,
   setAddressLookupError,
+  setLocationPermissionMessage,
   setLocationLoading,
   applyResolvedAddress,
   resolveAddressFromCoordinates,
@@ -36,6 +42,7 @@ const useAddressPickerActions = ({
 
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
       setAddressQuery(query);
+      setLocationPermissionMessage("");
 
       if (trimmed.length < 2) {
         requestIdRef.current += 1;
@@ -98,9 +105,34 @@ const useAddressPickerActions = ({
     ],
   );
 
-  const handleUseCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
+  const handleUseCurrentLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setAddressLookupError("Location services are not available in this browser.");
+      return;
+    }
+
     setLocationLoading(true);
+    setAddressQuery("");
+    setAddressPredictions([]);
+    setAddressLookupError("");
+    setLocationPermissionMessage("");
+
+    if (navigator.permissions?.query) {
+      try {
+        const permissionStatus = await navigator.permissions.query({
+          name: "geolocation",
+        });
+
+        if (permissionStatus?.state === "denied") {
+          setLocationLoading(false);
+          setLocationPermissionMessage(LOCATION_BLOCKED_MESSAGE);
+          return;
+        }
+      } catch {
+        // Permission API can fail in some browsers; continue to geolocation API.
+      }
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const lat = position.coords.latitude;
@@ -109,15 +141,20 @@ const useAddressPickerActions = ({
           const resolved = await resolveAddressFromCoordinates(lat, lng);
           resetAutocompleteSession();
           applyResolvedAddress(resolved, lat, lng);
+          setLocationPermissionMessage("");
         } catch {
           setAddressLookupError("Unable to detect your address.");
         } finally {
           setLocationLoading(false);
         }
       },
-      () => {
+      (error) => {
         setLocationLoading(false);
-        setAddressLookupError("Location access denied. Enable GPS.");
+        if (error?.code === 1) {
+          setLocationPermissionMessage(LOCATION_BLOCKED_MESSAGE);
+          return;
+        }
+        setAddressLookupError("Unable to detect your address.");
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -125,6 +162,9 @@ const useAddressPickerActions = ({
     applyResolvedAddress,
     resolveAddressFromCoordinates,
     setAddressLookupError,
+    setAddressPredictions,
+    setAddressQuery,
+    setLocationPermissionMessage,
     setLocationLoading,
   ]);
 
@@ -138,6 +178,7 @@ const useAddressPickerActions = ({
         const resolved = await resolveAddressFromCoordinates(nextLat, nextLng);
         resetAutocompleteSession();
         applyResolvedAddress(resolved, nextLat, nextLng);
+        setLocationPermissionMessage("");
       } catch {
         setAddressMeta((prev) => ({
           ...prev,
@@ -152,6 +193,7 @@ const useAddressPickerActions = ({
       resolveAddressFromCoordinates,
       setAddressLookupError,
       setAddressMeta,
+      setLocationPermissionMessage,
     ],
   );
 
