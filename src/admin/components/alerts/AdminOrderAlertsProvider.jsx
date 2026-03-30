@@ -10,7 +10,7 @@ import React, {
 import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
 import { useLocation } from "react-router-dom";
-import { fetchOrders } from "@/features/orders/orderSlice";
+import { upsertIncomingOrder } from "@/features/orders/orderSlice";
 import { getSocketServerUrl } from "@/utils/socketUrl";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -787,8 +787,6 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       return undefined;
     }
 
-    dispatch(fetchOrders());
-
     let eventSource = null;
     let fallbackStarted = false;
 
@@ -818,7 +816,9 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       const orderId = createdOrder?._id;
 
       setLastCreatedOrder(createdOrder);
-      dispatch(fetchOrders());
+      if (createdOrder) {
+        dispatch(upsertIncomingOrder(createdOrder));
+      }
 
       if (orderId) {
         setActiveAlertOrderIds((currentIds) =>
@@ -859,6 +859,10 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       const updatedOrder = streamEvent?.payload || null;
       const orderId = updatedOrder?._id;
 
+      if (updatedOrder) {
+        dispatch(upsertIncomingOrder(updatedOrder));
+      }
+
       if (
         orderId &&
         updatedOrder?.status &&
@@ -868,8 +872,6 @@ export const AdminOrderAlertsProvider = ({ children }) => {
           currentIds.filter((currentId) => currentId !== orderId),
         );
       }
-
-      dispatch(fetchOrders());
     };
 
     const socket = io(SOCKET_URL, {

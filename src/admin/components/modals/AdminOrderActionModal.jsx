@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Modal from "@/shared/ui/Modal";
 import { ActionButton, StatusChip } from "@/shared/ui/Primitives";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
+import { ORDER_STATUS_OPTIONS } from "../../pages/adminShared";
 
 const ACCEPT_OPTIONS = [
   { value: "15min", label: "15 min" },
@@ -19,11 +20,7 @@ const REJECT_OPTIONS = [
   { value: "shopClosed", label: "Shop closed" },
   { value: "other", label: "Other" },
 ];
-const STATUS_EDIT_OPTIONS = [
-  { value: "confirmed", label: "Confirmed" },
-  { value: "preparing", label: "Preparing" },
-  { value: "ready", label: "Ready for delivery" },
-];
+const STATUS_EDIT_OPTIONS = ORDER_STATUS_OPTIONS;
 
 const inputClassName =
   "mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/90 px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70";

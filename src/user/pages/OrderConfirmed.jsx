@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchOrderById } from "@/features/orders/orderSlice";
 import useUserOrderUpdates from "@/user/hooks/useUserOrderUpdates";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
+import { getStatusLabel } from "@/user/pages/account/orderPageUtils";
 
 const formatAddress = (address = {}) =>
   [address.street, address.landmark, address.city, address.state, address.zipCode]
@@ -176,7 +177,7 @@ const OrderConfirmed = () => {
           <aside className="rounded-3xl border border-primary-100 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-bold text-primary-900">Next steps</h2>
             <div className="mt-4 space-y-3 text-sm text-primary-700">
-              <p>Bakery status: <span className="font-semibold capitalize">{order.status}</span></p>
+              <p>Bakery status: <span className="font-semibold">{getStatusLabel(order.status)}</span></p>
               <p>Estimated delivery: <span className="font-semibold">{formatEstimatedDelivery(order)}</span></p>
               <p>Delivery request: <span className="font-semibold">{formatRequestedDelivery(order)}</span></p>
             </div>

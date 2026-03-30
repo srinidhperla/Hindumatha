@@ -14,6 +14,17 @@ export const getPaymentMethodLabel = (paymentMethod) => {
   return paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1);
 };
 
+export const getPaymentStatusLabel = (paymentStatus) => {
+  switch (paymentStatus) {
+    case "completed":
+      return "Successful";
+    case "failed":
+      return "Failed";
+    default:
+      return "Pending";
+  }
+};
+
 export const getPaymentStatusClasses = (paymentStatus) => {
   switch (paymentStatus) {
     case "completed":

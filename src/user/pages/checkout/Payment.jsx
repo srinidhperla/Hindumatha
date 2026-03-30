@@ -240,6 +240,21 @@ const Payment = () => {
   }, [basePricingSnapshot, checkoutData?.pricing]);
 
   useEffect(() => {
+    if (!checkoutData) {
+      return;
+    }
+
+    try {
+      sessionStorage.setItem(
+        CHECKOUT_STORAGE_KEY,
+        JSON.stringify(checkoutData),
+      );
+    } catch {
+      // Ignore session storage sync failures and keep checkout usable.
+    }
+  }, [checkoutData]);
+
+  useEffect(() => {
     setCheckoutData((currentCheckoutData) => {
       if (!currentCheckoutData) {
         return currentCheckoutData;
@@ -318,6 +333,13 @@ const Payment = () => {
         ...(prev?.orderData || {}),
         couponCode: normalized,
       },
+      checkoutForm: {
+        ...(prev?.checkoutForm || {}),
+        formData: {
+          ...(prev?.checkoutForm?.formData || {}),
+          couponCode: normalized,
+        },
+      },
     }));
     setCouponFeedback(feedback);
   };
@@ -337,6 +359,13 @@ const Payment = () => {
       orderData: {
         ...(prev?.orderData || {}),
         couponCode: "",
+      },
+      checkoutForm: {
+        ...(prev?.checkoutForm || {}),
+        formData: {
+          ...(prev?.checkoutForm?.formData || {}),
+          couponCode: "",
+        },
       },
     }));
     setCouponInput("");
@@ -620,6 +649,7 @@ const Payment = () => {
                 (sum, item) => sum + Number(item.quantity || 0),
                 0,
               )}
+              paymentMethod={checkoutData.orderData.paymentMethod}
               embedded
             />
 

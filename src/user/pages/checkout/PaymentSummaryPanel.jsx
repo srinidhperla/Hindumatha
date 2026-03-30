@@ -7,6 +7,7 @@ const PaymentSummaryPanel = ({
   itemCount = 0,
   totalUnits = 0,
   embedded = false,
+  paymentMethod = "",
 }) => (
   <aside className={embedded ? "commerce-summary-panel" : "commerce-sidebar"}>
     <p className="commerce-sidebar-kicker">Summary</p>
@@ -59,10 +60,12 @@ const PaymentSummaryPanel = ({
         </span>
       </div>
     </div>
-    <div className="commerce-note">
-      Secure Razorpay checkout will open in the next step for UPI and card
-      payments.
-    </div>
+    {["upi", "card"].includes(String(paymentMethod || "").toLowerCase()) && (
+      <div className="commerce-note">
+        Secure Razorpay checkout will open in the next step for UPI and card
+        payments.
+      </div>
+    )}
   </aside>
 );
 

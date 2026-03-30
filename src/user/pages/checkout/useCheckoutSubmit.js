@@ -418,6 +418,21 @@ export const useCheckoutSubmit = ({
         pricing,
         freeDeliveryProgress,
         availableCoupons,
+        checkoutForm: {
+          formData: {
+            ...formData,
+            clientOrderRequestId,
+          },
+          scheduledDeliveryDate: scheduledDate,
+          addressMode: selectedAddressId ? "saved" : "new",
+          selectedAddressId,
+          saveAddressForNextTime,
+          addressLabel,
+          addressMeta: {
+            ...addressMeta,
+          },
+          addressQuery,
+        },
         customer: {
           name: formData.name,
           email: user?.email || "",

@@ -10,6 +10,25 @@ import { useCheckoutAddressState } from "./useCheckoutAddressState";
 import { useCheckoutDerivedData } from "./useCheckoutDerivedData";
 import { useCheckoutSubmit } from "./useCheckoutSubmit";
 import CheckoutEmptyState from "./CheckoutEmptyState";
+import { getPendingCheckout } from "./paymentHelpers";
+
+const getRestorableSpecialInstructions = (pendingCheckout) => {
+  const savedValue = pendingCheckout?.checkoutForm?.formData?.specialInstructions;
+  if (savedValue !== undefined) {
+    return savedValue;
+  }
+
+  return String(pendingCheckout?.orderData?.specialInstructions || "")
+    .split("|")
+    .map((entry) => entry.trim())
+    .filter(
+      (entry) =>
+        entry &&
+        !/^contact name:/i.test(entry) &&
+        !/^phone:/i.test(entry),
+    )
+    .join(" | ");
+};
 
 const Order = () => {
   const dispatch = useDispatch();
@@ -22,6 +41,7 @@ const Order = () => {
   const deliverySettings = useSelector((state) => state.site.deliverySettings);
 
   const [scheduledDeliveryDate, setScheduledDeliveryDate] = useState("");
+  const [hasRestoredCheckout, setHasRestoredCheckout] = useState(false);
   const [formData, setFormData] = useState({
     deliveryMode: "",
     deliveryDateTime: "",
@@ -86,6 +106,107 @@ const Order = () => {
     scrollToPageTop();
     dispatch(fetchProducts());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (hasRestoredCheckout) {
+      return;
+    }
+
+    setHasRestoredCheckout(true);
+
+    const pendingCheckout = getPendingCheckout(location.state);
+    if (!pendingCheckout?.orderData) {
+      return;
+    }
+
+    const checkoutForm = pendingCheckout.checkoutForm || {};
+    const savedFormData = checkoutForm.formData || {};
+    const deliveryAddress = pendingCheckout.orderData.deliveryAddress || {};
+    const restoredDeliveryDateTime =
+      savedFormData.deliveryDateTime ||
+      pendingCheckout.orderData.deliveryDateTime ||
+      "";
+    const restoredFormattedAddress =
+      checkoutForm.addressMeta?.formattedAddress ||
+      deliveryAddress.formattedAddress ||
+      "";
+    const restoredPaymentMethod =
+      savedFormData.paymentMethod || pendingCheckout.orderData.paymentMethod || "";
+    const restoredCouponCode = normalizeCouponCode(
+      pendingCheckout.orderData.couponCode || savedFormData.couponCode || "",
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      deliveryMode:
+        savedFormData.deliveryMode ||
+        pendingCheckout.orderData.deliveryMode ||
+        prev.deliveryMode,
+      deliveryDateTime: restoredDeliveryDateTime,
+      paymentMethod: restoredPaymentMethod,
+      specialInstructions: getRestorableSpecialInstructions(pendingCheckout),
+      name:
+        savedFormData.name ||
+        pendingCheckout.customer?.name ||
+        prev.name ||
+        "",
+      phone:
+        savedFormData.phone ||
+        pendingCheckout.customer?.phone ||
+        deliveryAddress.phone ||
+        prev.phone ||
+        "",
+      address: savedFormData.address || deliveryAddress.street || prev.address,
+      city: savedFormData.city || deliveryAddress.city || prev.city,
+      pincode:
+        savedFormData.pincode || deliveryAddress.zipCode || prev.pincode,
+      couponCode: restoredCouponCode,
+      clientOrderRequestId:
+        savedFormData.clientOrderRequestId ||
+        pendingCheckout.orderData.clientOrderRequestId ||
+        prev.clientOrderRequestId,
+    }));
+
+    setScheduledDeliveryDate(
+      checkoutForm.scheduledDeliveryDate ||
+        (restoredDeliveryDateTime.includes("T")
+          ? restoredDeliveryDateTime.split("T")[0]
+          : ""),
+    );
+
+    addressState.setEditingAddressId("");
+    addressState.setSelectedAddressId(checkoutForm.selectedAddressId || "");
+    addressState.setSaveAddressForNextTime(
+      checkoutForm.saveAddressForNextTime === true,
+    );
+    addressState.setAddressMode(
+      checkoutForm.selectedAddressId ? "saved" : checkoutForm.addressMode || "new",
+    );
+    addressState.setAddressLabel(
+      checkoutForm.addressLabel || deliveryAddress.label || "Home",
+    );
+    addressState.setAddressMeta({
+      placeId: checkoutForm.addressMeta?.placeId || deliveryAddress.placeId || "",
+      latitude: Number.isFinite(Number(checkoutForm.addressMeta?.latitude))
+        ? Number(checkoutForm.addressMeta.latitude)
+        : Number.isFinite(Number(deliveryAddress.lat))
+          ? Number(deliveryAddress.lat)
+          : null,
+      longitude: Number.isFinite(Number(checkoutForm.addressMeta?.longitude))
+        ? Number(checkoutForm.addressMeta.longitude)
+        : Number.isFinite(Number(deliveryAddress.lng))
+          ? Number(deliveryAddress.lng)
+          : null,
+      formattedAddress: restoredFormattedAddress,
+    });
+    addressState.setAddressQuery(
+      checkoutForm.addressQuery ||
+        restoredFormattedAddress ||
+        [deliveryAddress.street, deliveryAddress.city, deliveryAddress.zipCode]
+          .filter(Boolean)
+          .join(", "),
+    );
+  }, [addressState, hasRestoredCheckout, location.state]);
 
   useEffect(() => {
     if (formData.deliveryMode !== "scheduled") {

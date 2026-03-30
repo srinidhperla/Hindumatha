@@ -10,6 +10,7 @@ import {
   getRejectionReasonLabel,
   getOrderTimelineEvents,
   getPaymentMethodLabel,
+  getPaymentStatusLabel,
   getPaymentStatusClasses,
   getStatusLabel,
   getTimelineActorLabel,
@@ -46,7 +47,7 @@ const OrderCard = ({ order, loading, onCancelOrder, onDownloadInvoice }) => {
           <span
             className={`rounded-full px-4 py-2 text-sm font-semibold capitalize ${getPaymentStatusClasses(order.paymentStatus)}`}
           >
-            Payment {order.paymentStatus || "pending"}
+            Payment {getPaymentStatusLabel(order.paymentStatus)}
           </span>
         </div>
       </div>

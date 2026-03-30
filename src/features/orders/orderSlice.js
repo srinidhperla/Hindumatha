@@ -30,10 +30,8 @@ const upsertOrderById = (orders = [], nextOrder) => {
 
 const shouldKeepDeliveryOrder = (order) =>
   Boolean(
-    order?.assignedDeliveryPartner?._id &&
-      order?.status !== "delivered" &&
-      order?.status !== "cancelled" &&
-      order?.deliveryStatus !== "delivered",
+    (order?.assignedDeliveryPartner?._id || order?.assignedDeliveryPartner) &&
+      order?.status !== "cancelled",
   );
 
 // Async thunks

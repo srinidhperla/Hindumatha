@@ -1,11 +1,15 @@
 export const ORDER_STATUS_OPTIONS = [
-  { value: "pending", label: "Placed" },
+  { value: "pending", label: "Pending" },
   { value: "confirmed", label: "Confirmed" },
-  { value: "preparing", label: "Baking" },
-  { value: "ready", label: "Out for Delivery" },
+  { value: "preparing", label: "Preparing" },
+  { value: "ready", label: "Ready" },
   { value: "delivered", label: "Delivered" },
   { value: "cancelled", label: "Cancelled" },
 ];
+
+export const getOrderStatusLabel = (status = "") =>
+  ORDER_STATUS_OPTIONS.find((option) => option.value === status)?.label ||
+  String(status || "").trim();
 
 export const DEFAULT_PRODUCT_CATEGORIES = [
   "cakes",

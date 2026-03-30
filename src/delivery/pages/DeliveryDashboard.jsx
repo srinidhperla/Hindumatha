@@ -10,6 +10,7 @@ import { SurfaceCard, ActionButton, StatusChip } from "@/shared/ui/Primitives";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
 import { buildGoogleMapsSearchUrl, formatAddressText } from "@/utils/mapsLinks";
 import { getSocketServerUrl } from "@/utils/socketUrl";
+import { getStatusLabel } from "@/user/pages/account/orderPageUtils";
 
 const SOCKET_URL = getSocketServerUrl();
 
@@ -110,7 +111,7 @@ const DeliveryDashboard = () => {
                       Order {getOrderDisplayCode(order)}
                     </StatusChip>
                     <StatusChip tone="info" className="capitalize">
-                      {order.deliveryStatus || "pending"}
+                      {getStatusLabel(order.status || "pending")}
                     </StatusChip>
                   </div>
                   <h2 className="text-xl font-bold text-primary-900">

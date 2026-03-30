@@ -37,6 +37,17 @@ const getPaymentStatusClasses = (paymentStatus) => {
   }
 };
 
+const getPaymentStatusLabel = (paymentStatus) => {
+  switch (paymentStatus) {
+    case "completed":
+      return "Successful";
+    case "failed":
+      return "Failed";
+    default:
+      return "Pending";
+  }
+};
+
 const formatRequestedDelivery = (order) => {
   if (order?.deliveryMode === "now") {
     return "Deliver now";
@@ -129,9 +140,7 @@ const OrderDetailsModal = ({
   const specialInstructions = getOrderSpecialInstructions(order);
   const deliveryFee = Number(order.deliveryFee || 0);
   const discountAmount = Number(order.discountAmount || 0);
-  const canEditProgressStatus = ["confirmed", "preparing", "ready"].includes(
-    String(order.status || ""),
-  );
+  const canEditProgressStatus = true;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-primary-900/70 via-primary-900/55 to-black/60 p-4 backdrop-blur-md">
@@ -296,7 +305,7 @@ const OrderDetailsModal = ({
               <p
                 className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold capitalize ${getPaymentStatusClasses(order.paymentStatus)}`}
               >
-                {order.paymentStatus || "pending"}
+                {getPaymentStatusLabel(order.paymentStatus)}
               </p>
             </div>
             {order.paymentGateway && (
@@ -315,6 +324,12 @@ const OrderDetailsModal = ({
                 </p>
               </div>
             )}
+            <div>
+              <p className="text-sm text-primary-700">Created</p>
+              <p className="text-sm font-semibold text-primary-900">
+                {new Date(order.createdAt).toLocaleString("en-IN")}
+              </p>
+            </div>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -375,6 +390,13 @@ const OrderDetailsModal = ({
                     if (!nextValue || nextValue === order.status) return;
                     if (nextValue === "cancelled") {
                       onRequestAction?.("reject", order);
+                      return;
+                    }
+                    if (
+                      nextValue === "confirmed" &&
+                      !String(order?.estimatedDeliveryTime || "").trim()
+                    ) {
+                      onRequestAction?.("accept", order);
                       return;
                     }
                     onStatusChange?.(order._id, nextValue);

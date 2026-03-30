@@ -11,7 +11,11 @@ import { ActionButton } from "@/shared/ui/Primitives";
 import { fetchOrderAnalytics } from "@/services/orderAPI";
 import { updateOrderStatus } from "@/features/orders/orderSlice";
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
-import { getOrderSummary, ORDER_STATUS_OPTIONS } from "./adminShared";
+import {
+  getOrderSummary,
+  ORDER_STATUS_OPTIONS,
+  getOrderStatusLabel,
+} from "./adminShared";
 
 const getTodayKey = () =>
   new Intl.DateTimeFormat("en-CA", {
@@ -279,7 +283,7 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
                           )}
                         </p>
                         <p className="mt-1 text-sm font-medium capitalize text-[#7a5c0f]">
-                          {order.status}
+                          {getOrderStatusLabel(order.status)}
                         </p>
                       </div>
                     </div>

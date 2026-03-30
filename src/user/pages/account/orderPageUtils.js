@@ -1,8 +1,8 @@
 export const ORDER_TIMELINE = [
-  { key: "pending", label: "Placed" },
+  { key: "pending", label: "Pending" },
   { key: "confirmed", label: "Confirmed" },
-  { key: "preparing", label: "Baking" },
-  { key: "ready", label: "Out for delivery" },
+  { key: "preparing", label: "Preparing" },
+  { key: "ready", label: "Ready" },
   { key: "delivered", label: "Delivered" },
 ];
 
@@ -83,7 +83,7 @@ export const formatRequestedDelivery = (order) => {
 export const formatEstimatedDelivery = (order) => {
   const key = String(order?.estimatedDeliveryTime || "").trim();
   if (!key) {
-    return "Awaiting bakery confirmation";
+    return "Awaiting admin acceptance";
   }
 
   if (key === "custom") {
@@ -137,6 +137,17 @@ export const getPaymentStatusClasses = (paymentStatus) => {
       return "bg-red-50 text-red-700";
     default:
       return "bg-amber-50 text-amber-700";
+  }
+};
+
+export const getPaymentStatusLabel = (paymentStatus) => {
+  switch (paymentStatus) {
+    case "completed":
+      return "Successful";
+    case "failed":
+      return "Failed";
+    default:
+      return "Pending";
   }
 };
 

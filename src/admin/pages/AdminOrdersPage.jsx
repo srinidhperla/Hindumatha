@@ -14,6 +14,7 @@ import AdminOrderAlertToolbar from "@/admin/components/orders/AdminOrderAlertToo
 import {
   getErrorMessage,
   ORDER_STATUS_OPTIONS,
+  getOrderStatusLabel,
   getOrderSummary,
   getOrderItemName,
   getOrderItemOptionEntries,
@@ -23,6 +24,7 @@ import {
 import { getOrderDisplayCode } from "@/utils/orderDisplay";
 import {
   getPaymentMethodLabel,
+  getPaymentStatusLabel,
   getPaymentStatusTone,
 } from "./adminOrdersHelpers";
 
@@ -90,10 +92,39 @@ const getStatusTone = (status) => {
   }
 };
 
-const canEditProgressStatus = (status) =>
-  ["confirmed", "preparing", "ready"].includes(String(status || ""));
+const canEditProgressStatus = () => true;
 
 const getProgressEditOptions = () => ORDER_STATUS_OPTIONS;
+
+const getNextProgressStatus = (status) => {
+  const normalizedStatus = String(status || "").toLowerCase();
+
+  switch (normalizedStatus) {
+    case "pending":
+      return "confirmed";
+    case "confirmed":
+      return "preparing";
+    case "preparing":
+      return "ready";
+    case "ready":
+      return "delivered";
+    default:
+      return "";
+  }
+};
+
+const getStatusButtonClasses = (status) => {
+  switch (getStatusTone(status)) {
+    case "success":
+      return "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100";
+    case "warning":
+      return "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100";
+    case "danger":
+      return "border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100";
+    default:
+      return "border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100";
+  }
+};
 
 const SORTABLE_COLUMNS = {
   order: "order",
@@ -167,8 +198,10 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
   const [actionMode, setActionMode] = useState("");
   const [actionOrder, setActionOrder] = useState(null);
   const [actionSubmitting, setActionSubmitting] = useState(false);
+  const [statusEditorOrderId, setStatusEditorOrderId] = useState("");
   const [sortField, setSortField] = useState(SORTABLE_COLUMNS.createdAt);
   const [sortDirection, setSortDirection] = useState("desc");
+  const statusEditorRefs = useRef({});
   const latestOrder = useMemo(() => orders?.[0] || null, [orders]);
   const handledOrderRef = useRef(null);
   const {
@@ -234,6 +267,40 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
     return undefined;
   }, [lastCreatedOrder, onToast]);
 
+  useEffect(() => {
+    if (!statusEditorOrderId) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const select = statusEditorRefs.current?.[statusEditorOrderId];
+      if (!select) {
+        return;
+      }
+
+      select.focus();
+
+      if (typeof select.showPicker === "function") {
+        try {
+          select.showPicker();
+          return;
+        } catch {
+          // Fallback to focus/click below when showPicker is unavailable.
+        }
+      }
+
+      try {
+        select.click();
+      } catch {
+        // Some browsers do not allow programmatic opening of native selects.
+      }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [statusEditorOrderId]);
+
   const openActionModal = (mode, order) => {
     setActionMode(mode);
     setActionOrder(order);
@@ -274,6 +341,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
         onToast("Order updated successfully.");
       }
 
+      setStatusEditorOrderId("");
       closeActionModal();
     } catch (error) {
       onToast(getErrorMessage(error, "Failed to update this order."), "error");
@@ -291,6 +359,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
         setSelectedOrder(updatedOrder);
       }
 
+      setStatusEditorOrderId("");
       onToast(`Order moved to ${nextStatus}.`);
     } catch (error) {
       onToast(
@@ -300,7 +369,43 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
     }
   };
 
-  if (loading) {
+  const handleStatusSelection = (order, nextStatus) => {
+    if (!nextStatus || nextStatus === order.status) {
+      return;
+    }
+
+    if (nextStatus === "cancelled") {
+      openActionModal("reject", order);
+      return;
+    }
+
+    if (nextStatus === "confirmed" && !String(order?.estimatedDeliveryTime || "").trim()) {
+      openActionModal("accept", order);
+      return;
+    }
+
+    handleDirectStatusChange(order._id, nextStatus);
+  };
+
+  const handleAdvanceStatus = (order) => {
+    const nextStatus = getNextProgressStatus(order?.status);
+
+    if (!nextStatus) {
+      return;
+    }
+
+    if (
+      nextStatus === "confirmed" &&
+      !String(order?.estimatedDeliveryTime || "").trim()
+    ) {
+      openActionModal("accept", order);
+      return;
+    }
+
+    handleDirectStatusChange(order._id, nextStatus);
+  };
+
+  if (loading && !orders.length) {
     return <LoadingState />;
   }
 
@@ -350,7 +455,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
 
       <SurfaceCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className="min-w-[1880px] divide-y divide-gold-200/60 text-sm">
+          <table className="min-w-[1760px] divide-y divide-gold-200/60 text-sm">
             <thead className="bg-gold-50/50">
               <tr>
                 {[
@@ -361,13 +466,11 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                     key: SORTABLE_COLUMNS.specialInstructions,
                     label: "Special Instructions",
                   },
-                  { key: SORTABLE_COLUMNS.status, label: "Status" },
                   { key: SORTABLE_COLUMNS.paymentStatus, label: "Payment" },
                   { key: SORTABLE_COLUMNS.paymentMethod, label: "Method" },
                   { key: SORTABLE_COLUMNS.totalAmount, label: "Total" },
                   { key: SORTABLE_COLUMNS.requestedDelivery, label: "Requested" },
                   { key: SORTABLE_COLUMNS.estimatedDelivery, label: "Estimated" },
-                  { key: SORTABLE_COLUMNS.createdAt, label: "Created" },
                 ].map((column) => (
                   <th
                     key={column.key}
@@ -381,9 +484,9 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                       {column.label}
                       {sortField === column.key
                         ? sortDirection === "asc"
-                          ? "▲"
-                          : "▼"
-                        : "↕"}
+                          ? "[^]"
+                          : "[v]"
+                        : "[^v]"}
                     </button>
                   </th>
                 ))}
@@ -394,7 +497,18 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                   Assign to Delivery
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700">
-                  Status Actions
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 hover:text-primary-900"
+                    onClick={() => toggleSort(SORTABLE_COLUMNS.status)}
+                  >
+                    Status
+                    {sortField === SORTABLE_COLUMNS.status
+                      ? sortDirection === "asc"
+                        ? "[^]"
+                        : "[v]"
+                      : "[^v]"}
+                  </button>
                 </th>
               </tr>
             </thead>
@@ -449,21 +563,11 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <StatusChip tone={getStatusTone(order.status)} className="capitalize">
-                      {order.status}
-                    </StatusChip>
-                    {order.status === "cancelled" && getRejectionReasonLabel(order) && (
-                      <p className="mt-1 text-xs text-rose-700">
-                        {getRejectionReasonLabel(order)}
-                      </p>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
                     <StatusChip
                       tone={getPaymentStatusTone(order.paymentStatus)}
                       className="capitalize"
                     >
-                      {order.paymentStatus || "pending"}
+                      {getPaymentStatusLabel(order.paymentStatus)}
                     </StatusChip>
                   </td>
                   <td className="px-4 py-3 text-primary-800">
@@ -477,9 +581,6 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                   </td>
                   <td className="px-4 py-3 text-primary-700">
                     {formatEstimatedDelivery(order)}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-primary-600">
-                    {new Date(order.createdAt).toLocaleString("en-IN")}
                   </td>
                   <td className="px-4 py-3">
                     <ActionButton
@@ -511,38 +612,21 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex min-w-[240px] flex-wrap gap-2">
-                      {order.status === "pending" && (
-                        <ActionButton
-                          type="button"
-                          variant="success"
-                          onClick={() => openActionModal("accept", order)}
-                        >
-                          Accept
-                        </ActionButton>
-                      )}
-                      {order.status === "pending" && (
-                        <ActionButton
-                          type="button"
-                          variant="danger"
-                          onClick={() => openActionModal("reject", order)}
-                        >
-                          Reject
-                        </ActionButton>
-                      )}
-                      {isProgressEditable && (
+                    <div className="flex min-w-[240px] items-start gap-2">
+                      {statusEditorOrderId === order._id && isProgressEditable ? (
                         <select
+                          ref={(node) => {
+                            if (node) {
+                              statusEditorRefs.current[order._id] = node;
+                            } else {
+                              delete statusEditorRefs.current[order._id];
+                            }
+                          }}
                           value={order.status}
                           onChange={(event) => {
-                            const nextValue = event.target.value;
-                            if (!nextValue || nextValue === order.status) return;
-                            if (nextValue === "cancelled") {
-                              openActionModal("reject", order);
-                              return;
-                            }
-                            handleDirectStatusChange(order._id, nextValue);
+                            handleStatusSelection(order, event.target.value);
                           }}
-                          className="rounded-2xl border border-gold-200/70 bg-white px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
+                          className="min-h-[42px] min-w-[150px] rounded-full border border-gold-200/70 bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
                           aria-label="Update order progress"
                           title="Update order progress"
                         >
@@ -552,8 +636,55 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                             </option>
                           ))}
                         </select>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleAdvanceStatus(order)}
+                          disabled={!getNextProgressStatus(order.status)}
+                          className={`inline-flex min-h-[42px] items-center rounded-full border px-4 py-2 text-sm font-semibold admin-motion disabled:cursor-not-allowed disabled:opacity-70 ${getStatusButtonClasses(order.status)}`}
+                        >
+                          {getOrderStatusLabel(order.status)}
+                        </button>
+                      )}
+                      {isProgressEditable && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setStatusEditorOrderId((current) =>
+                              current === order._id ? "" : order._id,
+                            )
+                          }
+                          className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold-200/70 bg-white text-primary-700 shadow-sm admin-motion hover:border-gold-400 hover:bg-gold-50"
+                          aria-label="Edit status"
+                          title="Edit status"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M4 20h4l10-10a2 2 0 1 0-4-4L4 16v4Z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m12 6 4 4"
+                            />
+                          </svg>
+                        </button>
                       )}
                     </div>
+                    {order.status === "cancelled" && getRejectionReasonLabel(order) && (
+                      <p className="mt-1 text-xs text-rose-700">
+                        {getRejectionReasonLabel(order)}
+                      </p>
+                    )}
                   </td>
                 </tr>
           );
@@ -588,3 +719,4 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
 };
 
 export default AdminOrdersPage;
+

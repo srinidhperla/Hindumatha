@@ -24,6 +24,7 @@ import { OptimizedImage } from "@/shared/ui";
 import { formatINR } from "@/utils/currency";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import CartItemCard from "./CartItemCard";
+import { CHECKOUT_STORAGE_KEY } from "./paymentHelpers";
 
 const getResolvedCartItem = (item) => {
   const hasExplicitFlavors = normalizeFlavorOptions(item.product).length > 0;
@@ -152,6 +153,7 @@ const Cart = () => {
   };
 
   const handleProceed = () => {
+    sessionStorage.removeItem(CHECKOUT_STORAGE_KEY);
     window.scrollTo({ top: 0, behavior: "auto" });
     navigate(isAuthenticated ? "/order" : "/login", {
       state: {},
