@@ -2,14 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const promoImage =
-  "https://res.cloudinary.com/dh39jlcy0/image/upload/v1774850910/photo-1535141192574-5d4897c12636_tutrky.jpg";
+  "https://images.unsplash.com/photo-1535141192574-5d4897c12636?auto=format&fit=crop&w=900&q=70";
 
 const categoryFallbackIcons = [
-  "hhttps://res.cloudinary.com/dh39jlcy0/image/upload/v1774845917/product_images/gallery/cake4.jpg",
-  "https://res.cloudinary.com/dh39jlcy0/image/upload/v1774845913/product_images/gallery/cake1.jpg",
-  "https://res.cloudinary.com/dh39jlcy0/image/upload/v1774845918/product_images/gallery/cake5.jpg",
-  "https://res.cloudinary.com/dh39jlcy0/image/upload/v1774845915/product_images/gallery/cake2.jpg",
-  "https://res.cloudinary.com/dh39jlcy0/image/upload/v1774775303/product_images/1774775303244-719376582.png",
+  "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=640&q=70",
+  "https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=640&q=70",
+  "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=640&q=70",
+  "https://images.unsplash.com/photo-1535141192574-5d4897c12636?auto=format&fit=crop&w=640&q=70",
+  "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=crop&w=640&q=70",
 ];
 
 const NavbarMegaMenu = ({

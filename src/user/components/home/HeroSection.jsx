@@ -11,10 +11,63 @@ import {
 const HERO_IMAGE_SIZES =
   "(max-width: 768px) 800px, (max-width: 1200px) 1200px, 1600px";
 
+const HERO_IMAGE_WIDTHS = [800, 1200, 1600];
+
+const CLOUDINARY_UPLOAD_MARKER = "/image/upload/";
+
+const isCloudinaryUploadImage = (imageUrl) =>
+  /https?:\/\/res\.cloudinary\.com\/.+\/image\/upload\//i.test(
+    String(imageUrl || "")
+  );
+
+const buildCloudinaryWidthUrl = (imageUrl, width) => {
+  try {
+    const parsedUrl = new URL(String(imageUrl || "").trim());
+    const markerIndex = parsedUrl.pathname.indexOf(CLOUDINARY_UPLOAD_MARKER);
+
+    if (markerIndex === -1) {
+      return parsedUrl.toString();
+    }
+
+    const prefixPath = parsedUrl.pathname.slice(
+      0,
+      markerIndex + CLOUDINARY_UPLOAD_MARKER.length
+    );
+    const uploadSuffix = parsedUrl.pathname
+      .slice(markerIndex + CLOUDINARY_UPLOAD_MARKER.length)
+      .split("/")
+      .filter(Boolean);
+
+    const hasTransformSegment =
+      uploadSuffix.length > 1 && !/^v\d+$/i.test(uploadSuffix[0]);
+    const preservedSuffix = hasTransformSegment
+      ? uploadSuffix.slice(1)
+      : uploadSuffix;
+
+    parsedUrl.pathname = `${prefixPath}f_auto,q_auto,w_${width}/${preservedSuffix.join(
+      "/"
+    )}`;
+    return parsedUrl.toString();
+  } catch {
+    return String(imageUrl || "").trim();
+  }
+};
+
 const buildResponsiveHeroImage = (imageUrl) => {
   const source = String(imageUrl || "").trim();
   if (!source) {
     return { src: "", srcSet: "" };
+  }
+
+  if (isCloudinaryUploadImage(source)) {
+    const srcSet = HERO_IMAGE_WIDTHS.map(
+      (width) => `${buildCloudinaryWidthUrl(source, width)} ${width}w`
+    ).join(", ");
+
+    return {
+      src: buildCloudinaryWidthUrl(source, HERO_IMAGE_WIDTHS[0]),
+      srcSet,
+    };
   }
 
   try {
@@ -28,7 +81,9 @@ const buildResponsiveHeroImage = (imageUrl) => {
 
     return {
       src: createWidthUrl(800),
-      srcSet: `${createWidthUrl(800)} 800w, ${createWidthUrl(1200)} 1200w, ${createWidthUrl(1600)} 1600w`,
+      srcSet: HERO_IMAGE_WIDTHS.map(
+        (width) => `${createWidthUrl(width)} ${width}w`
+      ).join(", "),
     };
   } catch {
     return { src: source, srcSet: "" };
