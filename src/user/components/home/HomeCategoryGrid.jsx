@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
-import { isProductPurchasable } from "@/utils/productOptions";
 
 const pickRandomItem = (items = []) => {
   if (!Array.isArray(items) || items.length === 0) {
@@ -18,8 +17,7 @@ const getProductImagePool = (product) => {
     .filter(Boolean);
 };
 
-const GRID_COLUMNS = 6;
-const MAX_GRID_TILES = 24;
+const GRID_ITEM_COUNT = 12;
 
 const shuffleItems = (items = []) => {
   const shuffledItems = [...items];
@@ -35,10 +33,9 @@ const shuffleItems = (items = []) => {
 
 const HomeCategoryGrid = ({ products = [] }) => {
   const tiles = useMemo(() => {
-    const liveProducts = (Array.isArray(products) ? products : []).filter(
-      (product) =>
-        product?.isAddon !== true && isProductPurchasable(product),
-    );
+    const liveProducts = (Array.isArray(products) ? products : [])
+      .filter((product) => product?.isAddon !== true)
+      .filter((product) => product?.isAvailable !== false);
 
     const productTiles = liveProducts
       .map((product) => {
@@ -53,17 +50,7 @@ const HomeCategoryGrid = ({ products = [] }) => {
         };
       })
       .filter(Boolean);
-
-    const shuffledTiles = shuffleItems(productTiles);
-
-    const cappedTiles = shuffledTiles.slice(0, MAX_GRID_TILES);
-    if (cappedTiles.length >= GRID_COLUMNS) {
-      const fullRowsCount =
-        Math.floor(cappedTiles.length / GRID_COLUMNS) * GRID_COLUMNS;
-      return cappedTiles.slice(0, fullRowsCount);
-    }
-
-    return cappedTiles;
+    return shuffleItems(productTiles).slice(0, GRID_ITEM_COUNT);
   }, [products]);
 
   if (tiles.length === 0) {
