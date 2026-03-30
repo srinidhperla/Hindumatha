@@ -5,10 +5,7 @@ import {
 } from "@/user/hooks/useAddressPicker.utils";
 import { resetAutocompleteSession } from "@/user/components/order/orderHelpers";
 
-const LOCATION_BLOCKED_MESSAGE = `Location access is blocked. To enable it:
-- Click the lock icon 🔒 in your browser address bar
-- Find Location and change to Allow
-- Then click Use Current Location again`;
+const LOCATION_BLOCKED_MESSAGE = `Location access is blocked. Please enable to use current location feature`;
 
 const useAddressPickerActions = ({
   formDataCity,
@@ -100,6 +97,7 @@ const useAddressPickerActions = ({
       setAddressLookupError,
       setAddressPredictions,
       setAddressQuery,
+      setLocationPermissionMessage,
       storeLat,
       storeLng,
     ],
@@ -107,7 +105,9 @@ const useAddressPickerActions = ({
 
   const handleUseCurrentLocation = useCallback(async () => {
     if (!navigator.geolocation) {
-      setAddressLookupError("Location services are not available in this browser.");
+      setAddressLookupError(
+        "Location services are not available in this browser.",
+      );
       return;
     }
 
@@ -185,7 +185,9 @@ const useAddressPickerActions = ({
           latitude: nextLat,
           longitude: nextLng,
         }));
-        setAddressLookupError("Unable to resolve location. Try moving the pin.");
+        setAddressLookupError(
+          "Unable to resolve location. Try moving the pin.",
+        );
       }
     },
     [

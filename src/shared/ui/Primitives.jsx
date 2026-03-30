@@ -70,24 +70,47 @@ export const ActionButton = ({
   );
 };
 
-export const Toggle = ({ checked, onClick, disabled = false, label }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    aria-pressed={checked}
-    className={join(
-      "relative inline-flex h-8 w-14 items-center rounded-full p-1 admin-motion",
-      checked ? "bg-sage-500" : "bg-primary-200",
-      disabled ? "opacity-60" : "",
-    )}
-  >
-    <span className="sr-only">{label || "toggle"}</span>
-    <span
+export const Toggle = ({
+  checked,
+  onClick,
+  disabled = false,
+  label,
+  size = "default",
+}) => {
+  const sizeStyles =
+    size === "compact"
+      ? {
+          track: "h-7 w-12 p-1 sm:h-8 sm:w-14",
+          thumb: "h-5 w-5 sm:h-6 sm:w-6",
+          position: checked ? "translate-x-5 sm:translate-x-6" : "translate-x-0",
+        }
+      : {
+          track: "h-8 w-14 p-1",
+          thumb: "h-6 w-6",
+          position: checked ? "translate-x-6" : "translate-x-0",
+        };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={checked}
       className={join(
-        "h-6 w-6 rounded-full bg-white shadow-sm admin-motion-transform",
-        checked ? "translate-x-6" : "translate-x-0",
+        "relative inline-flex items-center rounded-full admin-motion",
+        sizeStyles.track,
+        checked ? "bg-sage-500" : "bg-primary-200",
+        disabled ? "opacity-60" : "",
       )}
-    />
-  </button>
-);
+    >
+      <span className="sr-only">{label || "toggle"}</span>
+      <span
+        className={join(
+          "rounded-full bg-white shadow-sm admin-motion-transform",
+          sizeStyles.thumb,
+          sizeStyles.position,
+        )}
+      />
+    </button>
+  );
+};

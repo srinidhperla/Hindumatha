@@ -172,6 +172,20 @@ const Menu = () => {
     return query.get("product") || "";
   }, [location.search]);
 
+  const targetSearchTerm = useMemo(() => {
+    const query = new URLSearchParams(location.search);
+    return query.get("search") || "";
+  }, [location.search]);
+
+  useEffect(() => {
+    const normalizedSearchTerm = String(targetSearchTerm || "").trim();
+    setSearchTerm(normalizedSearchTerm);
+
+    if (normalizedSearchTerm) {
+      setSelectedCategory("All");
+    }
+  }, [targetSearchTerm]);
+
   useEffect(() => {
     if (!targetProductId) {
       setHighlightedProductId("");

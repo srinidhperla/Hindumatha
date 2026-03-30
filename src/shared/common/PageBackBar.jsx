@@ -55,7 +55,7 @@ const PageBackBar = () => {
   };
 
   return (
-    <div className="sticky top-[72px] z-30 border-b border-gold-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(250,243,228,0.9))] backdrop-blur sm:top-[94px] lg:top-[110px]">
+    <div className="sticky top-[72px] z-30 border-b border-gold-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(250,243,228,0.9))] backdrop-blur lg:top-[88px]">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-primary-500">

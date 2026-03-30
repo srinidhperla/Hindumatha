@@ -204,7 +204,7 @@ function App() {
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <UserToast />
-        <main className="flex-grow pt-16 lg:pt-20">
+        <main className="flex-grow pt-[72px] lg:pt-[88px]">
           <PageBackBar />
           <Suspense fallback={<RouteFallback />}>
             <Routes>

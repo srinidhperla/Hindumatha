@@ -30,7 +30,7 @@ const MenuCategorySections = ({
               }`}
               style={{ animationDelay: `${Math.min(productIndex, 8) * 60}ms` }}
             >
-              <div className="menu-product-image-wrap">
+              <div className="menu-product-image-wrap h-52 sm:h-56">
                 <button
                   type="button"
                   onClick={() => openImagePreview(product)}

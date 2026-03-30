@@ -1,10 +1,13 @@
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { FiArrowUp, FiMessageCircle } from "react-icons/fi";
 import SeoMeta from "@/shared/seo/SeoMeta";
 import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
 const HeroSection = lazy(() => import("@/user/components/home/HeroSection"));
+const HomeCategoryGrid = lazy(
+  () => import("@/user/components/home/HomeCategoryGrid"),
+);
 const FeaturedProducts = lazy(
   () => import("@/user/components/home/FeaturedProducts"),
 );
@@ -36,16 +39,24 @@ const Home = () => {
   const { products } = useSelector((state) => state.products);
   const [showTopButton, setShowTopButton] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
-  const storefrontProducts = products.filter(
-    (product) => product.isAddon !== true,
+  const storefrontProducts = useMemo(
+    () => products.filter((product) => product.isAddon !== true),
+    [products],
   );
-  const featuredProducts = storefrontProducts.slice(0, 8);
+  const featuredProducts = useMemo(
+    () => storefrontProducts.slice(0, 8),
+    [storefrontProducts],
+  );
   const currentYear = new Date().getFullYear();
   const establishedYear = Number(businessInfo.establishedYear) || 1976;
   const yearsExperience = Math.max(1, currentYear - establishedYear);
-  const categoryCount = new Set(
-    storefrontProducts.map((product) => product.category).filter(Boolean),
-  ).size;
+  const categoryCount = useMemo(
+    () =>
+      new Set(
+        storefrontProducts.map((product) => product.category).filter(Boolean),
+      ).size,
+    [storefrontProducts],
+  );
 
   useEffect(() => {
     const onScroll = () => setShowTopButton(window.scrollY > 420);
@@ -137,7 +148,12 @@ const Home = () => {
           establishedYear={establishedYear}
           categoryCount={categoryCount}
           deliverySettings={deliverySettings}
+          products={storefrontProducts}
         />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <HomeCategoryGrid products={storefrontProducts} />
       </Suspense>
 
       <Suspense
