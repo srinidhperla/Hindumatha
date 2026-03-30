@@ -23,36 +23,36 @@ const HomeCategoryGrid = ({ products = [] }) => {
       (product) => product?.isAddon !== true && product?.isAvailable !== false,
     );
 
-    const groupedByCategory = new Map();
+    const productTiles = liveProducts
+      .map((product) => {
+        const randomImage = pickRandomItem(getProductImagePool(product));
+        if (!product?._id || !randomImage) return null;
 
-    liveProducts.forEach((product) => {
-      const categoryKey = String(product?.category || "").trim();
-      if (!categoryKey) return;
+        return {
+          key: String(product._id),
+          label: String(product?.name || "").trim() || "Cake",
+          image: randomImage,
+          productId: product._id,
+        };
+      })
+      .filter(Boolean);
 
-      const current = groupedByCategory.get(categoryKey) || [];
-      current.push(product);
-      groupedByCategory.set(categoryKey, current);
-    });
+    const shuffledTiles = [...productTiles];
+    for (let index = shuffledTiles.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [shuffledTiles[index], shuffledTiles[randomIndex]] = [
+        shuffledTiles[randomIndex],
+        shuffledTiles[index],
+      ];
+    }
 
-    const nextTiles = [];
-    groupedByCategory.forEach((categoryProducts, categoryKey) => {
-      const randomProduct = pickRandomItem(categoryProducts);
-      if (!randomProduct?._id) return;
+    const cappedTiles = shuffledTiles.slice(0, 24);
+    if (cappedTiles.length >= 6) {
+      const fullRowsCount = Math.floor(cappedTiles.length / 6) * 6;
+      return cappedTiles.slice(0, fullRowsCount);
+    }
 
-      const randomImage = pickRandomItem(getProductImagePool(randomProduct));
-      if (!randomImage) return;
-
-      nextTiles.push({
-        categoryKey,
-        label: String(randomProduct?.name || "").trim() || "Cake",
-        image: randomImage,
-        productId: randomProduct._id,
-      });
-    });
-
-    return nextTiles.sort((left, right) =>
-      left.label.localeCompare(right.label, "en", { sensitivity: "base" }),
-    );
+    return cappedTiles;
   }, [products]);
 
   if (tiles.length === 0) {
@@ -71,10 +71,10 @@ const HomeCategoryGrid = ({ products = [] }) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
           {tiles.map((tile) => (
             <Link
-              key={tile.categoryKey}
+              key={tile.key}
               to={`/menu?product=${tile.productId}`}
               className="group rounded-2xl border border-[#d9c79d] bg-white/85 p-2.5 shadow-[0_10px_20px_rgba(18,12,2,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_14px_26px_rgba(18,12,2,0.12)]"
             >

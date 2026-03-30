@@ -237,7 +237,7 @@ const HeroSection = ({
   };
 
   return (
-    <section className="relative h-[620px] overflow-hidden sm:h-[640px] lg:h-[100svh]">
+    <section className="relative h-[540px] overflow-hidden sm:h-[600px] lg:h-[86svh]">
       {heroSlides.map((slide, index) => {
         const responsiveImage = buildResponsiveHeroImage(slide.image);
         return (
@@ -265,7 +265,7 @@ const HeroSection = ({
         );
       })}
 
-      <div className="absolute inset-0 z-10 flex flex-col justify-center px-4 pb-24 pt-24 sm:px-8 sm:pb-28 sm:pt-28 lg:px-12 lg:pb-24">
+      <div className="absolute inset-0 z-10 flex flex-col justify-center px-4 pb-10 pt-20 sm:px-8 sm:pb-12 sm:pt-24 lg:px-12 lg:pb-10">
         <div className="max-w-3xl">
           <div className="animate-fadeInUp mb-4 inline-flex items-center gap-2">
             <span className="h-px w-5 bg-[#c9a84c]" />
@@ -364,7 +364,7 @@ const HeroSection = ({
         </div>
       </div>
 
-      <div className="absolute bottom-[72px] left-4 z-20 flex items-center gap-2 sm:bottom-[74px] sm:left-10">
+      <div className="absolute bottom-5 left-4 z-20 flex items-center gap-2 sm:bottom-6 sm:left-10">
         {heroSlides.map((slide, index) => (
           <button
             key={slide.image}
@@ -380,7 +380,7 @@ const HeroSection = ({
         ))}
       </div>
 
-      <div className="absolute bottom-[68px] right-4 z-20 font-serif text-sm text-white/45 sm:bottom-[70px] sm:right-10">
+      <div className="absolute bottom-4 right-4 z-20 font-serif text-sm text-white/45 sm:bottom-5 sm:right-10">
         <strong className="text-2xl text-white">
           {String(activeSlide + 1).padStart(2, "0")}
         </strong>{" "}
