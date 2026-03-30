@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
+import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
 const pickRandomItem = (items = []) => {
   if (!Array.isArray(items) || items.length === 0) {
@@ -18,6 +19,7 @@ const getProductImagePool = (product) => {
 };
 
 const GRID_ITEM_COUNT = 12;
+const LAST_GRID_IDS_STORAGE_KEY = "home-grid-last-product-ids";
 
 const shuffleItems = (items = []) => {
   const shuffledItems = [...items];
@@ -39,8 +41,10 @@ const HomeCategoryGrid = ({ products = [] }) => {
 
     const productTiles = liveProducts
       .map((product) => {
-        const randomImage = pickRandomItem(getProductImagePool(product));
-        if (!product?._id || !randomImage) return null;
+        const randomImage =
+          pickRandomItem(getProductImagePool(product)) ||
+          CLOUDINARY_GALLERY_IMAGES.cake1;
+        if (!product?._id) return null;
 
         return {
           key: String(product._id),
@@ -50,7 +54,51 @@ const HomeCategoryGrid = ({ products = [] }) => {
         };
       })
       .filter(Boolean);
-    return shuffleItems(productTiles).slice(0, GRID_ITEM_COUNT);
+
+    const shuffledTiles = shuffleItems(productTiles);
+    if (shuffledTiles.length <= GRID_ITEM_COUNT) {
+      return shuffledTiles;
+    }
+
+    let previousIds = [];
+    if (typeof window !== "undefined") {
+      try {
+        const storedIds = JSON.parse(
+          window.localStorage.getItem(LAST_GRID_IDS_STORAGE_KEY) || "[]",
+        );
+        previousIds = Array.isArray(storedIds)
+          ? storedIds.map((id) => String(id))
+          : [];
+      } catch {
+        previousIds = [];
+      }
+    }
+
+    const previousIdSet = new Set(previousIds);
+    const freshTiles = shuffledTiles.filter(
+      (tile) => !previousIdSet.has(String(tile.productId)),
+    );
+    const repeatedTiles = shuffledTiles.filter((tile) =>
+      previousIdSet.has(String(tile.productId)),
+    );
+
+    const nextTiles = [...freshTiles, ...repeatedTiles].slice(0, GRID_ITEM_COUNT);
+    const randomizedNextTiles = shuffleItems(nextTiles);
+
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(
+          LAST_GRID_IDS_STORAGE_KEY,
+          JSON.stringify(
+            randomizedNextTiles.map((tile) => String(tile.productId)),
+          ),
+        );
+      } catch {
+        // Ignore storage write failures.
+      }
+    }
+
+    return randomizedNextTiles;
   }, [products]);
 
   if (tiles.length === 0) {
