@@ -8,6 +8,33 @@ import {
   typedWords,
 } from "@/user/components/home/heroContent";
 
+const HERO_IMAGE_SIZES =
+  "(max-width: 768px) 800px, (max-width: 1200px) 1200px, 1600px";
+
+const buildResponsiveHeroImage = (imageUrl) => {
+  const source = String(imageUrl || "").trim();
+  if (!source) {
+    return { src: "", srcSet: "" };
+  }
+
+  try {
+    const baseUrl = new URL(source);
+    const createWidthUrl = (width) => {
+      const nextUrl = new URL(baseUrl.toString());
+      nextUrl.searchParams.set("w", String(width));
+      nextUrl.searchParams.set("q", "80");
+      return nextUrl.toString();
+    };
+
+    return {
+      src: createWidthUrl(800),
+      srcSet: `${createWidthUrl(800)} 800w, ${createWidthUrl(1200)} 1200w, ${createWidthUrl(1600)} 1600w`,
+    };
+  } catch {
+    return { src: source, srcSet: "" };
+  }
+};
+
 const HeroSection = ({
   businessInfo,
   categoryCount,
@@ -63,7 +90,9 @@ const HeroSection = ({
 
   return (
     <section className="relative h-[620px] overflow-hidden sm:h-[640px] lg:h-[100svh]">
-      {heroSlides.map((slide, index) => (
+      {heroSlides.map((slide, index) => {
+        const responsiveImage = buildResponsiveHeroImage(slide.image);
+        return (
         <div
           key={slide.image}
           className={`absolute inset-0 transition-opacity duration-1000 ${
@@ -71,7 +100,9 @@ const HeroSection = ({
           }`}
         >
           <img
-            src={slide.image}
+            src={responsiveImage.src}
+            srcSet={responsiveImage.srcSet}
+            sizes={HERO_IMAGE_SIZES}
             alt={slide.alt}
             width={1600}
             height={900}
@@ -83,7 +114,8 @@ const HeroSection = ({
           />
           <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(18,12,2,.9)_0%,rgba(18,12,2,.52)_44%,rgba(18,12,2,.12)_100%)]" />
         </div>
-      ))}
+        );
+      })}
 
       <div className="absolute inset-0 z-10 flex flex-col justify-center px-4 pb-36 pt-24 sm:px-8 sm:pb-40 sm:pt-28 lg:px-12 lg:pb-36">
         <div className="max-w-3xl">

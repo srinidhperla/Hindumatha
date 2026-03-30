@@ -1,4 +1,5 @@
 import React from "react";
+import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
 const GalleryHero = ({
   businessInfo,
@@ -7,7 +8,10 @@ const GalleryHero = ({
   totalLikes,
 }) => (
   <section className="gallery-hero">
-    <div className="absolute inset-0 bg-[url('/images/gallery/cake3.jpg')] bg-cover bg-center mix-blend-overlay opacity-20"></div>
+    <div
+      className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-20"
+      style={{ backgroundImage: `url('${CLOUDINARY_GALLERY_IMAGES.cake3}')` }}
+    ></div>
     <div className="absolute top-0 left-0 h-96 w-96 animate-pulse rounded-full bg-caramel-400 opacity-30 mix-blend-multiply blur-3xl filter"></div>
     <div className="animation-delay-2000 absolute bottom-0 right-0 h-96 w-96 animate-pulse rounded-full bg-primary-400 opacity-30 mix-blend-multiply blur-3xl filter"></div>
 

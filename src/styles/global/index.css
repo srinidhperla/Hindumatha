@@ -812,7 +812,8 @@
 @layer components {
   .site-footer {
     @apply relative overflow-hidden text-[#fef6e4];
-    min-height: 420px;
+    min-height: 300px;
+    contain: layout;
     background:
       radial-gradient(
         circle at 14% 18%,
@@ -829,7 +830,7 @@
 
   @media (min-width: 1024px) {
     .site-footer {
-      height: 460px;
+      min-height: 460px;
     }
   }
 

@@ -1,10 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
 const GalleryCta = ({ businessInfo, whatsappUrl }) => (
   <div className="gallery-cta">
     <div className="absolute inset-0 rounded-3xl bg-[linear-gradient(145deg,#120c02_0%,#241708_45%,#3a2510_100%)]"></div>
-    <div className="absolute inset-0 rounded-3xl bg-[url('/images/gallery/cake1.jpg')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+    <div
+      className="absolute inset-0 rounded-3xl bg-cover bg-center opacity-20 mix-blend-overlay"
+      style={{ backgroundImage: `url('${CLOUDINARY_GALLERY_IMAGES.cake1}')` }}
+    ></div>
     <div className="relative p-12 text-center md:p-16">
       <h2 className="font-playfair mb-4 text-3xl font-bold text-white md:text-4xl">
         Want a Custom Design from {businessInfo.storeName}?

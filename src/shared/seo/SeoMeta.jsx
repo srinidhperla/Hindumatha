@@ -1,8 +1,9 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
+import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
 const DEFAULT_BASE_URL = "https://www.hindumathascakes.com";
-const DEFAULT_OG_IMAGE_PATH = "/images/gallery/cake1.jpg";
+const DEFAULT_OG_IMAGE_PATH = CLOUDINARY_GALLERY_IMAGES.cake1;
 
 const normalizeBaseUrl = (value) => {
   if (!value || typeof value !== "string") {

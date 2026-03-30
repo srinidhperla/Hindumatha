@@ -10,7 +10,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
 import Navbar from "@/shared/common/Navbar";
 import Footer from "@/shared/common/Footer";
-import { AdminOrderAlertsProvider } from "@/admin/components/alerts/AdminOrderAlertsProvider";
 import UserToast from "@/shared/ui/Toast";
 import PageBackBar from "@/shared/common/PageBackBar";
 import PrivateRoute from "@/user/components/auth/PrivateRoute";
@@ -54,7 +53,9 @@ const Payment = lazy(() => import("@/user/pages/checkout/Payment"));
 const OrderConfirmed = lazy(() => import("@/user/pages/OrderConfirmed"));
 const Orders = lazy(() => import("@/user/pages/account/Orders"));
 const Profile = lazy(() => import("@/user/pages/account/Profile"));
-const AdminDashboard = lazy(() => import("@/admin/pages/AdminDashboard"));
+const AdminDashboardWithAlerts = lazy(
+  () => import("@/admin/pages/AdminDashboardWithAlerts"),
+);
 const DeliveryDashboard = lazy(() => import("@/delivery/pages/DeliveryDashboard"));
 
 const RouteFallback = () => (
@@ -198,7 +199,7 @@ function App() {
   }, [dispatch]);
 
   return (
-    <AdminOrderAlertsProvider>
+    <>
       <RouteViewportReset />
       <div className="flex flex-col min-h-screen">
         <Navbar />
@@ -259,7 +260,7 @@ function App() {
                 path="/admin/*"
                 element={
                   <AdminRoute>
-                    <AdminDashboard />
+                    <AdminDashboardWithAlerts />
                   </AdminRoute>
                 }
               />
@@ -276,7 +277,7 @@ function App() {
         </main>
         {!hideFooter && <Footer />}
       </div>
-    </AdminOrderAlertsProvider>
+    </>
   );
 }
 

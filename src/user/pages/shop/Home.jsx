@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { FiArrowUp, FiMessageCircle } from "react-icons/fi";
 import SeoMeta from "@/shared/seo/SeoMeta";
+import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
 const HeroSection = lazy(() => import("@/user/components/home/HeroSection"));
 const FeaturedProducts = lazy(
@@ -88,7 +89,7 @@ const Home = () => {
     "@context": "https://schema.org",
     "@type": "Bakery",
     name: "Hindumatha's Cake World",
-    image: "https://www.hindumathascakes.com/images/gallery/cake1.jpg",
+    image: CLOUDINARY_GALLERY_IMAGES.cake1,
     address: {
       "@type": "PostalAddress",
       streetAddress: "123 Main Street",

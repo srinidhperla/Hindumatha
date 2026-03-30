@@ -1,3 +1,5 @@
+import { resolveCloudinaryGalleryImage } from "@/constants/galleryCloudinaryImages";
+
 const DEFAULT_CLOUDINARY_TRANSFORMS = "f_auto,q_auto,w_800";
 
 const CLOUDINARY_HOST_REGEX = /^https?:\/\/res\.cloudinary\.com\//i;
@@ -74,7 +76,9 @@ export const normalizeGalleryImageUrl = (imageUrl) => {
 };
 
 export const optimizeProductImageUrl = (imageUrl) => {
-  const normalized = normalizeGalleryImageUrl(imageUrl);
+  const normalized = resolveCloudinaryGalleryImage(
+    normalizeGalleryImageUrl(imageUrl),
+  );
   if (!normalized || isLocalGalleryPath(normalized)) {
     return normalized;
   }
@@ -100,7 +104,9 @@ export const normalizeProductImageFields = (product = {}) => {
 };
 
 export const toCloudinaryFetchUrl = (sourceUrl) => {
-  const normalizedSource = normalizeGalleryImageUrl(sourceUrl);
+  const normalizedSource = resolveCloudinaryGalleryImage(
+    normalizeGalleryImageUrl(sourceUrl),
+  );
   if (!normalizedSource) {
     return "";
   }

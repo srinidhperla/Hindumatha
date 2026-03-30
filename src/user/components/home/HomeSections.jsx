@@ -8,6 +8,7 @@ import {
   FiArrowRight,
 } from "react-icons/fi";
 import HomeCTASection from "./HomeCTASection";
+import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
 const WhyChooseUs = () => {
   const features = [
@@ -116,7 +117,7 @@ const AboutSection = ({
         <div className="relative animate-fadeInUp">
           <div className="relative rounded-2xl overflow-hidden shadow-warm">
             <img
-              src="/images/gallery/cake3.jpg"
+              src={CLOUDINARY_GALLERY_IMAGES.cake3}
               alt="About Hindumatha's Cake World"
               width={1200}
               height={800}

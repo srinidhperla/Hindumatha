@@ -20,6 +20,7 @@ const ALERT_GAP_MS = 1000;
 const ALERT_REPEAT_MS = ALERT_RING_DURATION_MS + ALERT_GAP_MS;
 const ALERT_PRE_GAIN = 2.3;
 const ALERT_POST_GAIN = 1.3;
+const PUSH_SUBSCRIPTION_DELAY_MS = 5000;
 const ALERTS_ENABLED_STORAGE_KEY = "bakeryAdminAlertsEnabled";
 const PUSH_SUBSCRIBED_STORAGE_KEY = "bakeryAdminPushSubscribed";
 const FCM_TOKEN_STORAGE_KEY = "bakeryAdminFcmToken";
@@ -944,8 +945,13 @@ export const AdminOrderAlertsProvider = ({ children }) => {
       return undefined;
     }
 
-    subscribeForPushAlerts().catch(() => null);
-    return undefined;
+    const timeoutId = window.setTimeout(() => {
+      subscribeForPushAlerts().catch(() => null);
+    }, PUSH_SUBSCRIPTION_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [
     alertsEnabled,
     canReceiveAdminAlerts,

@@ -14,11 +14,16 @@ const NavbarMobileMenu = ({
   closeMenu,
 }) => (
   <div
-    className={`overflow-hidden border-t border-[rgba(201,168,76,0.2)] bg-white/95 backdrop-blur-xl transition-all duration-300 lg:hidden ${
-      isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-    }`}
+    aria-hidden={!isMobileMenuOpen}
+    className="pointer-events-none absolute inset-x-0 top-full z-40 lg:hidden"
   >
-    <div className="space-y-1 px-4 py-4">
+    <div
+      className={`space-y-1 border-t border-[rgba(201,168,76,0.2)] bg-white/95 px-4 py-4 backdrop-blur-xl transition-[transform,opacity] duration-300 ${
+        isMobileMenuOpen
+          ? "visible pointer-events-auto translate-y-0 opacity-100"
+          : "invisible pointer-events-none -translate-y-3 opacity-0"
+      }`}
+    >
       {isDeliveryUser ? (
         <div className="mb-2 grid grid-cols-2 gap-2 rounded-xl border border-[rgba(201,168,76,0.25)] bg-[#f8f1dd] p-2">
           <Link
