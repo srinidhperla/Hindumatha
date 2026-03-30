@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
@@ -33,8 +33,59 @@ const shuffleItems = (items = []) => {
   return shuffledItems;
 };
 
+const readStoredIds = () => {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const storedIds = JSON.parse(
+      window.localStorage.getItem(LAST_GRID_IDS_STORAGE_KEY) || "[]",
+    );
+    return Array.isArray(storedIds) ? storedIds.map((id) => String(id)) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeStoredIds = (ids = []) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      LAST_GRID_IDS_STORAGE_KEY,
+      JSON.stringify((ids || []).map((id) => String(id))),
+    );
+  } catch {
+    // Ignore storage write failures.
+  }
+};
+
+const pickNextTiles = (allTiles = [], previousIds = []) => {
+  if (!Array.isArray(allTiles) || allTiles.length === 0) {
+    return [];
+  }
+
+  const shuffledTiles = shuffleItems(allTiles);
+  if (shuffledTiles.length <= GRID_ITEM_COUNT) {
+    return shuffledTiles;
+  }
+
+  const previousIdSet = new Set((previousIds || []).map((id) => String(id)));
+  const freshTiles = shuffledTiles.filter(
+    (tile) => !previousIdSet.has(String(tile.productId)),
+  );
+  const repeatedTiles = shuffledTiles.filter((tile) =>
+    previousIdSet.has(String(tile.productId)),
+  );
+
+  return shuffleItems([...freshTiles, ...repeatedTiles].slice(0, GRID_ITEM_COUNT));
+};
+
 const HomeCategoryGrid = ({ products = [] }) => {
-  const tiles = useMemo(() => {
+  const liveTiles = useMemo(() => {
     const liveProducts = (Array.isArray(products) ? products : [])
       .filter((product) => product?.isAddon !== true)
       .filter((product) => product?.isAvailable !== false);
@@ -54,52 +105,18 @@ const HomeCategoryGrid = ({ products = [] }) => {
         };
       })
       .filter(Boolean);
-
-    const shuffledTiles = shuffleItems(productTiles);
-    if (shuffledTiles.length <= GRID_ITEM_COUNT) {
-      return shuffledTiles;
-    }
-
-    let previousIds = [];
-    if (typeof window !== "undefined") {
-      try {
-        const storedIds = JSON.parse(
-          window.localStorage.getItem(LAST_GRID_IDS_STORAGE_KEY) || "[]",
-        );
-        previousIds = Array.isArray(storedIds)
-          ? storedIds.map((id) => String(id))
-          : [];
-      } catch {
-        previousIds = [];
-      }
-    }
-
-    const previousIdSet = new Set(previousIds);
-    const freshTiles = shuffledTiles.filter(
-      (tile) => !previousIdSet.has(String(tile.productId)),
-    );
-    const repeatedTiles = shuffledTiles.filter((tile) =>
-      previousIdSet.has(String(tile.productId)),
-    );
-
-    const nextTiles = [...freshTiles, ...repeatedTiles].slice(0, GRID_ITEM_COUNT);
-    const randomizedNextTiles = shuffleItems(nextTiles);
-
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(
-          LAST_GRID_IDS_STORAGE_KEY,
-          JSON.stringify(
-            randomizedNextTiles.map((tile) => String(tile.productId)),
-          ),
-        );
-      } catch {
-        // Ignore storage write failures.
-      }
-    }
-
-    return randomizedNextTiles;
+    return productTiles;
   }, [products]);
+
+  const [tiles, setTiles] = useState(() =>
+    pickNextTiles(liveTiles, readStoredIds()),
+  );
+
+  useEffect(() => {
+    const nextTiles = pickNextTiles(liveTiles, readStoredIds());
+    setTiles(nextTiles);
+    writeStoredIds(nextTiles.map((tile) => tile.productId));
+  }, [liveTiles]);
 
   if (tiles.length === 0) {
     return null;
