@@ -27,7 +27,7 @@ const MenuImagePreviewModal = ({ imagePreview, closeImagePreview }) => {
         alt={imagePreview.name}
         width={1200}
         height={1200}
-        loading="eager"
+        loading="lazy"
         maxWidth={1400}
         className="max-h-[88vh] w-auto max-w-[96vw] rounded-xl object-contain shadow-2xl"
       />

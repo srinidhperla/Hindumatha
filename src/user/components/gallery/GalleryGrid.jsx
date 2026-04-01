@@ -41,7 +41,7 @@ const GalleryGrid = ({
               alt={item.title}
               width={720}
               height={720}
-              loading={index < 4 ? "eager" : "lazy"}
+              loading="lazy"
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           </div>

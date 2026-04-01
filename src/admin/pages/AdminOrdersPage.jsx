@@ -370,7 +370,12 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
   };
 
   const handleStatusSelection = (order, nextStatus) => {
-    if (!nextStatus || nextStatus === order.status) {
+    if (!nextStatus) {
+      return;
+    }
+
+    if (nextStatus === order.status) {
+      setStatusEditorOrderId("");
       return;
     }
 
@@ -613,8 +618,26 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex min-w-[240px] items-start gap-2">
-                      {statusEditorOrderId === order._id && isProgressEditable ? (
+                      {order.status === "pending" ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <ActionButton
+                            type="button"
+                            variant="success"
+                            onClick={() => openActionModal("accept", order)}
+                          >
+                            Accept
+                          </ActionButton>
+                          <ActionButton
+                            type="button"
+                            variant="danger"
+                            onClick={() => openActionModal("reject", order)}
+                          >
+                            Reject
+                          </ActionButton>
+                        </div>
+                      ) : statusEditorOrderId === order._id && isProgressEditable ? (
                         <select
+                          key={`status-editor-${order._id}-${order.status}`}
                           ref={(node) => {
                             if (node) {
                               statusEditorRefs.current[order._id] = node;
@@ -622,14 +645,18 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                               delete statusEditorRefs.current[order._id];
                             }
                           }}
-                          value={order.status}
+                          defaultValue=""
                           onChange={(event) => {
                             handleStatusSelection(order, event.target.value);
                           }}
+                          onBlur={() => setStatusEditorOrderId("")}
                           className="min-h-[42px] min-w-[150px] rounded-full border border-gold-200/70 bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
                           aria-label="Update order progress"
                           title="Update order progress"
                         >
+                          <option value="" disabled>
+                            Select status
+                          </option>
                           {getProgressEditOptions().map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
@@ -640,7 +667,10 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                         <button
                           type="button"
                           onClick={() => handleAdvanceStatus(order)}
-                          disabled={!getNextProgressStatus(order.status)}
+                          disabled={
+                            order.status === "pending" ||
+                            !getNextProgressStatus(order.status)
+                          }
                           className={`inline-flex min-h-[42px] items-center rounded-full border px-4 py-2 text-sm font-semibold admin-motion disabled:cursor-not-allowed disabled:opacity-70 ${getStatusButtonClasses(order.status)}`}
                         >
                           {getOrderStatusLabel(order.status)}

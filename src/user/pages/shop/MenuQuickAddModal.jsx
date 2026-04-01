@@ -1,5 +1,6 @@
 import React from "react";
-import { isEggTypeAvailable } from "@/utils/productOptions";
+import { formatINR } from "@/utils/currency";
+import { getVariantPrice, isEggTypeAvailable } from "@/utils/productOptions";
 
 const MenuQuickAddModal = ({
   quickAddProduct,
@@ -19,6 +20,25 @@ const MenuQuickAddModal = ({
   if (!quickAddProduct) {
     return null;
   }
+
+  const hasEgg = quickAddProduct.isEgg !== false;
+  const hasEggless = quickAddProduct.isEggless === true;
+  const needsEggType = hasEgg && hasEggless;
+  const needsFlavorSelection = quickAddProduct.hasExplicitFlavors;
+  const resolvedFlavor =
+    quickAddFlavor || quickAddProduct.availableFlavors?.[0]?.name || "";
+  const canShowVariantPrice =
+    Boolean(quickAddWeight) &&
+    (!needsEggType || Boolean(quickAddEggType)) &&
+    (!needsFlavorSelection || Boolean(quickAddFlavor));
+  const selectedUnitPrice = canShowVariantPrice
+    ? getVariantPrice(quickAddProduct, {
+        flavorName: resolvedFlavor,
+        weightLabel: quickAddWeight,
+        eggType: quickAddEggType,
+      })
+    : 0;
+  const selectedTotalPrice = selectedUnitPrice * Number(quickAddQuantity || 1);
 
   return (
     <div
@@ -144,26 +164,49 @@ const MenuQuickAddModal = ({
             <span className="mb-2 block text-sm font-medium text-primary-700">
               Quantity
             </span>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setQuickAddQuantity((current) => Math.max(1, current - 1))
-                }
-                className="rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-lg font-bold text-primary-700 hover:bg-cream-100"
-              >
-                -
-              </button>
-              <div className="min-w-[72px] rounded-xl border border-primary-200 bg-white px-4 py-3 text-center text-base font-bold text-primary-800">
-                {quickAddQuantity}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuickAddQuantity((current) => Math.max(1, current - 1))
+                  }
+                  className="rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-lg font-bold text-primary-700 hover:bg-cream-100"
+                >
+                  -
+                </button>
+                <div className="min-w-[72px] rounded-xl border border-primary-200 bg-white px-4 py-3 text-center text-base font-bold text-primary-800">
+                  {quickAddQuantity}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setQuickAddQuantity((current) => current + 1)}
+                  className="rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-lg font-bold text-primary-700 hover:bg-cream-100"
+                >
+                  +
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setQuickAddQuantity((current) => current + 1)}
-                className="rounded-xl border border-primary-200 bg-cream-50 px-4 py-3 text-lg font-bold text-primary-700 hover:bg-cream-100"
-              >
-                +
-              </button>
+
+              {canShowVariantPrice ? (
+                <div className="rounded-xl border border-gold-200/70 bg-gold-50/60 px-4 py-3 sm:min-w-[220px]">
+                  <p className="text-sm font-semibold text-primary-700">
+                    Price per item
+                  </p>
+                  <p className="mt-0.5 text-xl font-extrabold text-primary-900">
+                    {formatINR(selectedUnitPrice)}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-primary-700">
+                    Total
+                  </p>
+                  <p className="text-2xl font-extrabold text-primary-900">
+                    {formatINR(selectedTotalPrice)}
+                  </p>
+                </div>
+              ) : (
+                <p className="sm:max-w-[260px] text-xs text-primary-500 sm:self-center">
+                  Select flavor, cake type, and {quickAddPortionMeta.singular.toLowerCase()} to see the exact price.
+                </p>
+              )}
             </div>
           </label>
         </div>

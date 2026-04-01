@@ -12,8 +12,11 @@ const isCloudinaryTransformSegment = (segment = "") =>
     String(segment || ""),
   );
 
-const buildCloudinaryTransforms = (width = DEFAULT_IMAGE_WIDTH) =>
-  `f_auto,q_auto,c_limit,w_${Math.max(1, Number(width) || DEFAULT_IMAGE_WIDTH)}`;
+const buildCloudinaryTransforms = (width = DEFAULT_IMAGE_WIDTH) => {
+  const normalizedWidth = Number(width);
+  const targetWidth = normalizedWidth === 500 ? 500 : DEFAULT_IMAGE_WIDTH;
+  return `f_auto,q_auto,w_${targetWidth}`;
+};
 
 const injectCloudinaryTransforms = (source, transforms) => {
   if (!source || !CLOUDINARY_HOST_REGEX.test(source)) {
@@ -127,32 +130,15 @@ export const getOptimizedImageAttributes = (
   imageUrl,
   {
     width = DEFAULT_IMAGE_WIDTH,
-    widths = DEFAULT_RESPONSIVE_WIDTHS,
+    widths: _widths = DEFAULT_RESPONSIVE_WIDTHS,
     sizes = "",
   } = {},
 ) => {
   const src = optimizeImageUrl(imageUrl, { width });
-  const uniqueWidths = Array.from(
-    new Set(
-      (Array.isArray(widths) ? widths : [])
-        .map((entry) => Number(entry))
-        .filter((entry) => Number.isFinite(entry) && entry > 0),
-    ),
-  ).sort((left, right) => left - right);
-
-  const canBuildResponsiveSet =
-    Boolean(src) && CLOUDINARY_HOST_REGEX.test(src) && uniqueWidths.length > 0;
 
   return {
     src,
-    srcSet: canBuildResponsiveSet
-      ? uniqueWidths
-          .map(
-            (candidateWidth) =>
-              `${optimizeImageUrl(src, { width: candidateWidth })} ${candidateWidth}w`,
-          )
-          .join(", ")
-      : "",
+    srcSet: "",
     sizes: sizes || undefined,
   };
 };

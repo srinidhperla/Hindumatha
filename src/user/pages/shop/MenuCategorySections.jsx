@@ -9,10 +9,13 @@ const MenuCategorySections = ({
   openImagePreview,
   openQuickAdd,
   highlightedProductId,
-}) => (
-  <div className="menu-sections">
-    {categorySections.map((section) => (
-      <section key={section.category} className="menu-section-block">
+}) => {
+  let renderedCardCount = 0;
+
+  return (
+    <div className="menu-sections">
+      {categorySections.map((section) => (
+        <section key={section.category} className="menu-section-block">
         <div className="menu-section-head">
           <div>
             <p className="menu-section-kicker">{section.items.length} items</p>
@@ -20,17 +23,21 @@ const MenuCategorySections = ({
           </div>
         </div>
         <div className="menu-items-grid">
-          {section.items.map((product, productIndex) => (
-            <article
-              key={product._id}
-              id={`menu-product-${product._id}`}
-              className={`menu-product-card animate-fadeInUp ${
-                highlightedProductId === product._id
-                  ? "ring-2 ring-[#c9a84c] ring-offset-2 ring-offset-[#fffaf0]"
-                  : ""
-              }`}
-              style={{ animationDelay: `${Math.min(productIndex, 8) * 60}ms` }}
-            >
+          {section.items.map((product, productIndex) => {
+            const shouldLoadEagerly = renderedCardCount < 4;
+            renderedCardCount += 1;
+
+            return (
+              <article
+                key={product._id}
+                id={`menu-product-${product._id}`}
+                className={`menu-product-card animate-fadeInUp ${
+                  highlightedProductId === product._id
+                    ? "ring-2 ring-[#c9a84c] ring-offset-2 ring-offset-[#fffaf0]"
+                    : ""
+                }`}
+                style={{ animationDelay: `${Math.min(productIndex, 8) * 60}ms` }}
+              >
               <div className="menu-product-image-wrap h-52 sm:h-56">
                 <button
                   type="button"
@@ -42,7 +49,8 @@ const MenuCategorySections = ({
                     alt={product.name}
                     width={320}
                     height={320}
-                    loading={productIndex < 2 ? "eager" : "lazy"}
+                    maxWidth={500}
+                    loading={shouldLoadEagerly ? "eager" : "lazy"}
                     className="menu-product-image"
                   />
                 </button>
@@ -117,12 +125,14 @@ const MenuCategorySections = ({
                   </button>
                 </div>
               </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
-      </section>
-    ))}
-  </div>
-);
+        </section>
+      ))}
+    </div>
+  );
+};
 
 export default MenuCategorySections;

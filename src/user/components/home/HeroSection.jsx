@@ -175,11 +175,11 @@ const HeroSection = ({
             alt={slide.alt}
             width={1600}
             height={900}
-            maxWidth={1600}
+            maxWidth={800}
             responsiveWidths={HERO_IMAGE_WIDTHS}
             sizes={HERO_IMAGE_SIZES}
-            loading={index === 0 ? "eager" : "lazy"}
-            fetchPriority={index === 0 ? "high" : "auto"}
+            loading="eager"
+            fetchPriority="high"
             className={`h-full w-full object-cover transition-transform duration-[8000ms] ${
               index === activeSlide ? "scale-100" : "scale-105"
             }`}

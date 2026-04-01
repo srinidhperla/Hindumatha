@@ -112,6 +112,7 @@ const FeaturedProducts = ({ products }) => {
                       alt={product.name}
                       width={600}
                       height={420}
+                      maxWidth={500}
                       loading="lazy"
                       className="w-full h-44 sm:h-52 object-cover transition-transform duration-500 group-hover:scale-105"
                     />

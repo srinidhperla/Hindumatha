@@ -82,7 +82,9 @@ const pickNextTiles = (allTiles = [], previousIds = []) => {
     previousIdSet.has(String(tile.productId)),
   );
 
-  return shuffleItems([...freshTiles, ...repeatedTiles].slice(0, GRID_ITEM_COUNT));
+  return shuffleItems(
+    [...freshTiles, ...repeatedTiles].slice(0, GRID_ITEM_COUNT),
+  );
 };
 
 const HomeCategoryGrid = ({ products = [] }) => {

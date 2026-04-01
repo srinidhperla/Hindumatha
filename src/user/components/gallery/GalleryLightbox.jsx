@@ -41,7 +41,7 @@ const GalleryLightbox = ({ item, onClose }) => {
               alt={item.title}
               width={900}
               height={900}
-              loading="eager"
+              loading="lazy"
               maxWidth={1400}
               className="h-full w-full object-cover"
             />

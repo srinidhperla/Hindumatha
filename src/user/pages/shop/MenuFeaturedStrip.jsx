@@ -28,6 +28,7 @@ const MenuFeaturedStrip = ({ featuredProducts, openImagePreview }) => {
               alt={product.name}
               width={320}
               height={220}
+              maxWidth={500}
               loading="lazy"
               className="menu-featured-image"
             />
