@@ -1,5 +1,3 @@
-import { haversineDistance } from "@/utils/deliveryGeo";
-
 export const GOOGLE_MAPS_API_KEY =
   import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 const API_BASE_URL = String(import.meta.env.VITE_API_URL || "/api").replace(
@@ -115,6 +113,27 @@ const fetchProxyJson = async (path, params = {}) => {
   }
 
   return payload || {};
+};
+
+const parseDistanceMatrixPayload = (payload = {}) => {
+  const element = payload?.rows?.[0]?.elements?.[0];
+  const distanceMeters = Number(element?.distance?.value);
+  const durationSeconds = Number(element?.duration?.value);
+
+  if (element?.status !== "OK" || !Number.isFinite(distanceMeters)) {
+    throw new Error(
+      String(
+        element?.error_message ||
+          element?.status ||
+          "Google distance matrix could not compute route.",
+      ).trim(),
+    );
+  }
+
+  return {
+    distanceKm: distanceMeters / 1000,
+    durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : null,
+  };
 };
 
 const geocodeRequestViaProxy = async ({ address, placeId, location }) => {
@@ -693,6 +712,17 @@ export const calculateDistanceMatrix = async ({ origin, destination }) => {
   }
 
   try {
+    const proxyPayload = await fetchProxyJson("distance-matrix", {
+      origin: `${originLat},${originLng}`,
+      destination: `${destinationLat},${destinationLng}`,
+    });
+
+    return parseDistanceMatrixPayload(proxyPayload);
+  } catch {
+    // Fall through to the browser SDK when the proxy is unavailable.
+  }
+
+  try {
     await waitForGoogleMapsSdk();
     const maps = getGoogleMaps();
     if (typeof maps?.importLibrary !== "function") {
@@ -746,15 +776,7 @@ export const calculateDistanceMatrix = async ({ origin, destination }) => {
 
     throw new Error("RouteMatrix could not compute route.");
   } catch {
-    return {
-      distanceKm: haversineDistance(
-        originLat,
-        originLng,
-        destinationLat,
-        destinationLng,
-      ),
-      durationSeconds: null,
-    };
+    throw new Error("Unable to calculate driving distance right now.");
   }
 };
 

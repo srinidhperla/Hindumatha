@@ -89,6 +89,7 @@ const Order = () => {
     hasConfiguredStoreLocation: derived.hasConfiguredStoreLocation,
     isAddressVerified: derived.isAddressVerified,
     isAddressServiceable: derived.isAddressServiceable,
+    deliveryDistanceKm: derived.distanceFromStoreKm,
     maxDeliveryRadiusKm: derived.maxDeliveryRadiusKm,
     addressMeta: addressState.addressMeta,
     addressLabel: addressState.addressLabel,

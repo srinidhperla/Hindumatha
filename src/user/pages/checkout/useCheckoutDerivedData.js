@@ -1,13 +1,12 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { calculateOrderPricing, DEFAULT_COUPONS } from "@/utils/orderPricing";
 import {
   getAvailableSlotsForDate,
   getLeadTimeMinutes,
-  haversineDistance,
-  isWithinDeliveryRadius,
   normalizeDeliverySettings,
 } from "@/utils/deliverySettings";
 import {
+  calculateDistanceMatrix,
   getResolvedCheckoutItem,
   hasValidCoordinates,
 } from "@/user/components/order/orderHelpers";
@@ -125,15 +124,58 @@ export const useCheckoutDerivedData = ({
     addressMeta.longitude,
   );
 
-  const distanceFromStoreKm =
-    isAddressVerified && hasConfiguredStoreLocation
-      ? haversineDistance(
-          storeLat,
-          storeLng,
-          Number(addressMeta.latitude),
-          Number(addressMeta.longitude),
-        )
-      : null;
+  const [distanceFromStoreKm, setDistanceFromStoreKm] = useState(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!isAddressVerified || !hasConfiguredStoreLocation) {
+      setDistanceFromStoreKm(null);
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    const resolveDrivingDistance = async () => {
+      setDistanceFromStoreKm(null);
+
+      try {
+        const result = await calculateDistanceMatrix({
+          origin: {
+            lat: storeLat,
+            lng: storeLng,
+          },
+          destination: {
+            lat: Number(addressMeta.latitude),
+            lng: Number(addressMeta.longitude),
+          },
+        });
+
+        if (!isCancelled) {
+          setDistanceFromStoreKm(
+            Number.isFinite(result?.distanceKm) ? result.distanceKm : null,
+          );
+        }
+      } catch {
+        if (!isCancelled) {
+          setDistanceFromStoreKm(null);
+        }
+      }
+    };
+
+    resolveDrivingDistance();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    addressMeta.latitude,
+    addressMeta.longitude,
+    hasConfiguredStoreLocation,
+    isAddressVerified,
+    storeLat,
+    storeLng,
+  ]);
 
   const estimatedDeliveryDistanceKm = Number.isFinite(distanceFromStoreKm)
     ? distanceFromStoreKm
@@ -163,13 +205,10 @@ export const useCheckoutDerivedData = ({
   );
 
   const isAddressServiceable =
+    isAddressVerified &&
     hasConfiguredStoreLocation &&
-    isWithinDeliveryRadius(
-      storeLocation,
-      Number(addressMeta.latitude),
-      Number(addressMeta.longitude),
-      maxDeliveryRadiusKm,
-    );
+    Number.isFinite(distanceFromStoreKm) &&
+    Number(distanceFromStoreKm) <= maxDeliveryRadiusKm;
 
   return {
     checkoutItems,

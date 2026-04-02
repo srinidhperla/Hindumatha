@@ -404,6 +404,8 @@ const useAddressPickerGoogle = (options = {}) => {
     }
 
     const calculateDistance = async () => {
+      setDistanceFromStoreKm(null);
+
       try {
         const result = await calculateDistanceMatrix({
           origin: { lat: storeLat, lng: storeLng },

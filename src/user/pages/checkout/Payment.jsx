@@ -18,7 +18,6 @@ import {
   normalizeCouponCode,
 } from "@/utils/orderPricing";
 import {
-  haversineDistance,
   normalizeDeliverySettings,
 } from "@/utils/deliverySettings";
 import {
@@ -100,22 +99,17 @@ const hasFreeDeliveryProgressChanged = (currentValue = {}, nextValue = {}) =>
   Number(currentValue?.remainingAmount || 0) !==
     Number(nextValue?.remainingAmount || 0);
 
-const getDeliveryDistanceKm = (checkoutData, normalizedDeliverySettings) => {
-  const addressLat = Number(checkoutData?.orderData?.deliveryAddress?.lat);
-  const addressLng = Number(checkoutData?.orderData?.deliveryAddress?.lng);
-  const storeLat = Number(normalizedDeliverySettings?.storeLocation?.lat);
-  const storeLng = Number(normalizedDeliverySettings?.storeLocation?.lng);
+const getDeliveryDistanceKm = (checkoutData) => {
+  const persistedDistanceKm = Number(
+    checkoutData?.orderData?.deliveryDistanceKm ??
+      checkoutData?.checkoutForm?.deliveryDistanceKm,
+  );
 
-  if (
-    !Number.isFinite(addressLat) ||
-    !Number.isFinite(addressLng) ||
-    !Number.isFinite(storeLat) ||
-    !Number.isFinite(storeLng)
-  ) {
-    return 0;
+  if (Number.isFinite(persistedDistanceKm) && persistedDistanceKm >= 0) {
+    return persistedDistanceKm;
   }
 
-  return haversineDistance(storeLat, storeLng, addressLat, addressLng);
+  return 0;
 };
 
 const getFreeDeliveryProgress = (subtotal, normalizedDeliverySettings) => {
@@ -200,8 +194,8 @@ const Payment = () => {
     basePricingSnapshot?.subtotal || checkoutData?.pricing?.subtotal || 0,
   );
   const deliveryDistanceKm = useMemo(
-    () => getDeliveryDistanceKm(checkoutData, normalizedLiveDeliverySettings),
-    [checkoutData, normalizedLiveDeliverySettings],
+    () => getDeliveryDistanceKm(checkoutData),
+    [checkoutData],
   );
 
   const deliverySummaryLabel = getDeliverySummaryLabel(checkoutData?.orderData);

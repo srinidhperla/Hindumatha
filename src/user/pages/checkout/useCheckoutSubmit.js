@@ -103,6 +103,7 @@ export const useCheckoutSubmit = ({
   hasConfiguredStoreLocation,
   isAddressVerified,
   isAddressServiceable,
+  deliveryDistanceKm,
   maxDeliveryRadiusKm,
   addressMeta,
   addressLabel,
@@ -393,6 +394,9 @@ export const useCheckoutSubmit = ({
           formData.deliveryMode === "scheduled"
             ? formData.deliveryDateTime
             : null,
+        deliveryDistanceKm: Number.isFinite(Number(deliveryDistanceKm))
+          ? Number(deliveryDistanceKm)
+          : null,
         paymentMethod: formData.paymentMethod,
         couponCode: normalizeCouponCode(formData.couponCode),
         clientOrderRequestId,
@@ -431,6 +435,9 @@ export const useCheckoutSubmit = ({
           addressMeta: {
             ...addressMeta,
           },
+          deliveryDistanceKm: Number.isFinite(Number(deliveryDistanceKm))
+            ? Number(deliveryDistanceKm)
+            : null,
           addressQuery,
         },
         customer: {
