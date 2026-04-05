@@ -2,6 +2,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   registerUser,
   loginUser,
+  forgotPasswordRequest,
+  resetPasswordRequest,
   googleLoginUser,
   getProfileData,
   updateProfileData,
@@ -134,6 +136,36 @@ export const googleLogin = createAsyncThunk(
   },
 );
 
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await forgotPasswordRequest(payload);
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to send reset email" },
+      );
+    }
+  },
+);
+
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const data = await resetPasswordRequest(payload);
+      if (data?.token) {
+        persistToken(data.token);
+      }
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to reset password" },
+      );
+    }
+  },
+);
+
 export const getProfile = createAsyncThunk(
   "auth/getProfile",
   async (_, { rejectWithValue }) => {
@@ -175,6 +207,12 @@ const initialState = {
   isAuthenticated: Boolean(storedToken && storedUser),
   loading: false,
   error: null,
+  passwordResetRequestLoading: false,
+  passwordResetRequestMessage: "",
+  passwordResetRequestError: null,
+  passwordResetLoading: false,
+  passwordResetMessage: "",
+  passwordResetError: null,
 };
 
 const authSlice = createSlice({
@@ -190,6 +228,14 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    clearPasswordResetState: (state) => {
+      state.passwordResetRequestLoading = false;
+      state.passwordResetRequestMessage = "";
+      state.passwordResetRequestError = null;
+      state.passwordResetLoading = false;
+      state.passwordResetMessage = "";
+      state.passwordResetError = null;
     },
   },
   extraReducers: (builder) => {
@@ -225,6 +271,40 @@ const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Login failed";
+      })
+      .addCase(forgotPassword.pending, (state) => {
+        state.passwordResetRequestLoading = true;
+        state.passwordResetRequestMessage = "";
+        state.passwordResetRequestError = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state, action) => {
+        state.passwordResetRequestLoading = false;
+        state.passwordResetRequestMessage =
+          action.payload?.message || "Reset email sent";
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.passwordResetRequestLoading = false;
+        state.passwordResetRequestError =
+          action.payload?.message || "Failed to send reset email";
+      })
+      .addCase(resetPassword.pending, (state) => {
+        state.passwordResetLoading = true;
+        state.passwordResetMessage = "";
+        state.passwordResetError = null;
+      })
+      .addCase(resetPassword.fulfilled, (state, action) => {
+        state.passwordResetLoading = false;
+        state.passwordResetMessage =
+          action.payload?.message || "Password reset successful";
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        persistUser(action.payload.user);
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.passwordResetLoading = false;
+        state.passwordResetError =
+          action.payload?.message || "Failed to reset password";
       })
       .addCase(googleLogin.pending, (state) => {
         state.loading = true;
@@ -284,5 +364,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, clearPasswordResetState } =
+  authSlice.actions;
 export default authSlice.reducer;

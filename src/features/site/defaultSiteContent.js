@@ -78,6 +78,8 @@ const defaultSiteContent = {
     secure: false,
     from: "",
     recipient: "",
+    recipients: [],
+    recipientCount: 0,
     reminderIntervalMinutes: 5,
     pendingOrderCount: 0,
   },

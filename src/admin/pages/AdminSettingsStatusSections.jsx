@@ -95,10 +95,12 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
-            Recipient
+            Recipients
           </p>
           <p className="mt-2 break-all text-sm font-semibold text-primary-900">
-            {alertStatus.recipient || "No recipient configured"}
+            {(alertStatus.recipients || []).length
+              ? alertStatus.recipients.join(", ")
+              : alertStatus.recipient || "No recipient configured"}
           </p>
           <p className="mt-1 text-xs text-primary-500">
             Source: {alertStatus.recipientSource || "unknown"}
@@ -119,6 +121,11 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
           <p className="mt-2 break-all text-sm font-semibold text-primary-900">
             {alertStatus.resendFrom || alertStatus.from || "Not configured"}
           </p>
+          {alertStatus.configurationHint ? (
+            <p className="mt-1 text-xs text-amber-700">
+              {alertStatus.configurationHint}
+            </p>
+          ) : null}
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
@@ -128,6 +135,14 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
             {(alertStatus.missingResendFields || []).length
               ? alertStatus.missingResendFields.join(", ")
               : "None"}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
+            Recipient Count
+          </p>
+          <p className="mt-2 text-sm font-semibold text-primary-900">
+            {alertStatus.recipientCount || 0}
           </p>
         </div>
         <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">

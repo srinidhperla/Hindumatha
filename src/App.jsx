@@ -48,6 +48,8 @@ const Contact = lazy(() => import("@/user/pages/shop/Contact"));
 const Cart = lazy(() => import("@/user/pages/checkout/Cart"));
 const Login = lazy(() => import("@/user/pages/account/Login"));
 const Register = lazy(() => import("@/user/pages/account/Register"));
+const ForgotPassword = lazy(() => import("@/user/pages/account/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/user/pages/account/ResetPassword"));
 const Order = lazy(() => import("@/user/pages/checkout/Order"));
 const Payment = lazy(() => import("@/user/pages/checkout/Payment"));
 const OrderConfirmed = lazy(() => import("@/user/pages/OrderConfirmed"));
@@ -216,6 +218,11 @@ function App() {
               <Route path="/cart" element={<Cart />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route
+                path="/reset-password/:token"
+                element={<ResetPassword />}
+              />
               <Route
                 path="/order"
                 element={

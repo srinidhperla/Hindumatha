@@ -105,6 +105,14 @@ const LoginFormCard = ({
               )}
             </button>
           </div>
+          <div className="mt-2 flex justify-end">
+            <Link
+              to="/forgot-password"
+              className="text-sm font-medium text-caramel-600 transition-colors hover:text-caramel-700 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </div>
 
         {/* Error */}

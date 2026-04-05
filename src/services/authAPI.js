@@ -6,6 +6,12 @@ export const registerUser = (userData) =>
 export const loginUser = (credentials) =>
   apiClient.post("/auth/login", credentials).then((res) => res.data);
 
+export const forgotPasswordRequest = (payload) =>
+  apiClient.post("/auth/forgot-password", payload).then((res) => res.data);
+
+export const resetPasswordRequest = (payload) =>
+  apiClient.post("/auth/reset-password", payload).then((res) => res.data);
+
 export const googleLoginUser = (token) =>
   apiClient.post("/auth/google-login", { token }).then((res) => res.data);
 
