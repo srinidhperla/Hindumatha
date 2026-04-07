@@ -6,7 +6,7 @@ export const heroSlides = [
   },
   {
     image:
-      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1775544953/1775544600140-24908349-hero-page-image1_scrcd3.webp",
+      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1775545083/product_images/1775545082831-706313507-cake1.webp",
     alt: "Chocolate cake",
   },
   {
