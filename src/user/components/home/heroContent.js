@@ -1,17 +1,17 @@
 export const heroSlides = [
   {
     image:
-      "https://res.cloudinary.com/dh39jlcy0/image/upload/f_auto,q_auto,w_800/v1774850910/photo-1535141192574-5d4897c12636_tutrky.jpg",
+      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1775544953/1775544600140-24908349-hero-page-image1_scrcd3.webp",
     alt: "Signature cake",
   },
   {
     image:
-      "https://res.cloudinary.com/dh39jlcy0/image/upload/f_auto,q_auto,w_800/v1774845913/product_images/gallery/cake1.jpg",
+      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1775544953/1775544600140-24908349-hero-page-image1_scrcd3.webp",
     alt: "Chocolate cake",
   },
   {
     image:
-      "https://res.cloudinary.com/dh39jlcy0/image/upload/f_auto,q_auto,w_800/v1774845921/product_images/gallery/cake8.jpg",
+      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1775545083/product_images/1775545083535-842864084-cake8.webp",
     alt: "Wedding cake",
   },
 ];
