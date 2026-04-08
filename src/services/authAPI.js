@@ -16,7 +16,7 @@ export const googleLoginUser = (token) =>
   apiClient.post("/auth/google-login", { token }).then((res) => res.data);
 
 export const getProfileData = () =>
-  apiClient.get("/auth/profile").then((res) => res.data);
+  apiClient.get("/auth/me").then((res) => res.data);
 
 export const updateProfileData = (profileData) =>
   apiClient.put("/auth/profile", profileData).then((res) => res.data);
