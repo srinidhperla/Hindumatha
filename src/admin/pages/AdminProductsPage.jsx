@@ -370,12 +370,19 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
     }));
   };
 
-  const handleAddWeight = () => {
-    const normalizedLabel = customWeightLabel.trim();
+  const handleAddWeight = (weightLabel = customWeightLabel) => {
+    const normalizedLabel = weightLabel.trim();
 
     if (!normalizedLabel) {
       return;
     }
+
+    const defaultOption = getDefaultOptionsForPortionType(
+      formData.portionType,
+    ).find(
+      (option) =>
+        option.label.toLowerCase() === normalizedLabel.toLowerCase(),
+    );
 
     setFormData((currentFormData) => {
       if (
@@ -393,7 +400,7 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
           ...currentFormData.weightOptions,
           {
             label: normalizedLabel,
-            multiplier: 1,
+            multiplier: defaultOption?.multiplier || 1,
             isAvailable: true,
           },
         ],
@@ -415,10 +422,17 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
   const handleFlavorWeightAvailabilityChange = (nextMatrix) => {
     setFormData((currentFormData) => {
       const resolvedMatrix = nextMatrix || {};
+      const axes = getVariantAxes(currentFormData);
+      const minimumPrice = getMinimumVariantPrice(
+        currentFormData.variantPrices,
+        resolvedMatrix,
+        axes,
+      );
 
       return {
         ...currentFormData,
         flavorWeightAvailability: resolvedMatrix,
+        price: minimumPrice !== null ? minimumPrice : 0,
       };
     });
   };
@@ -428,7 +442,7 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
     setFormData((currentFormData) => ({
       ...currentFormData,
       portionType: normalizedType,
-      weightOptions: getDefaultOptionsForPortionType(normalizedType),
+      weightOptions: [],
       flavorWeightAvailability: {},
       variantPrices: {},
     }));
@@ -469,11 +483,6 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
 
     if (!editingProduct && !imageItems.length) {
       onToast("Please upload at least one product image.", "error");
-      return;
-    }
-
-    if (!formData.weightOptions.length) {
-      onToast("Add at least one weight option.", "error");
       return;
     }
 

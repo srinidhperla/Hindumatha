@@ -31,8 +31,6 @@ export const useProductFormPricing = ({
     const row = resolveTypedRow(formData.variantPrices, key) || {};
     const raw = readRowValue(row, weightOption.label);
     const direct = readVariantPriceValue(raw);
-    const fallbackBasePrice = Number(formData.price);
-    const fallbackMultiplier = Number(weightOption?.multiplier || 1);
 
     if (Number.isFinite(direct) && direct > 0) {
       return direct;
@@ -40,15 +38,6 @@ export const useProductFormPricing = ({
 
     if (raw === "" || raw === 0 || raw === "0") {
       return "";
-    }
-
-    if (
-      Number.isFinite(fallbackBasePrice) &&
-      fallbackBasePrice > 0 &&
-      Number.isFinite(fallbackMultiplier) &&
-      fallbackMultiplier > 0
-    ) {
-      return fallbackBasePrice * fallbackMultiplier;
     }
 
     return "";

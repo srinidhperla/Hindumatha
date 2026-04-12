@@ -57,6 +57,7 @@ export const getResolvedCheckoutItem = (item) => {
     flavorForWeightFilter,
     selectedEggType,
   );
+  const hasWeightOptions = getAvailableWeightOptions(item.product).length > 0;
   const selectedWeight =
     availableWeights.find((option) => option.label === item.selectedWeight)
       ?.label ||
@@ -71,6 +72,7 @@ export const getResolvedCheckoutItem = (item) => {
   return {
     ...item,
     portionTypeMeta: getPortionTypeMeta(item.product?.portionType),
+    hasWeightOptions,
     selectedEggType,
     selectedFlavor,
     selectedWeight,
@@ -80,7 +82,7 @@ export const getResolvedCheckoutItem = (item) => {
       isProductPurchasable(item.product) &&
       (!hasExplicitFlavors || Boolean(selectedFlavor)) &&
       (availableEggTypes.length <= 1 || Boolean(selectedEggType)) &&
-      Boolean(selectedWeight),
+      (!hasWeightOptions || Boolean(selectedWeight)),
   };
 };
 

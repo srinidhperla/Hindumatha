@@ -52,6 +52,8 @@ const siteSlice = createSlice({
         state.coupons = normalizedSiteContent.coupons || state.coupons;
         state.categoryOrder =
           normalizedSiteContent.categoryOrder || state.categoryOrder;
+        state.categorySettings =
+          normalizedSiteContent.categorySettings || state.categorySettings;
         state.galleryItems =
           normalizedSiteContent.galleryItems || state.galleryItems;
       })
@@ -87,6 +89,8 @@ const siteSlice = createSlice({
         state.socialLinks = action.payload.socialLinks || state.socialLinks;
         state.coupons = action.payload.coupons || state.coupons;
         state.categoryOrder = action.payload.categoryOrder || state.categoryOrder;
+        state.categorySettings =
+          action.payload.categorySettings || state.categorySettings;
       })
       .addCase(updateSiteSettings.rejected, (state, action) => {
         state.saving = false;

@@ -57,6 +57,7 @@ const ProductFormModal = ({
     onFlavorWeightAvailabilityChange,
   });
   const portionTypeMeta = getPortionTypeMeta(formData.portionType);
+  const hasWeightOptions = formData.weightOptions.length > 0;
 
   return (
     <Modal
@@ -91,6 +92,7 @@ const ProductFormModal = ({
         >
           <ProductBasicsSection
             formData={formData}
+            hasWeightOptions={hasWeightOptions}
             inputClassName={inputClassName}
             availableCategories={availableCategories}
             useCustomCategory={useCustomCategory}
@@ -127,7 +129,7 @@ const ProductFormModal = ({
             onRemoveImage={onRemoveImage}
           />
 
-          {formData.weightOptions.length > 0 && selectedEggTypes.length > 0 && (
+          {hasWeightOptions && selectedEggTypes.length > 0 && (
             <SurfaceCard className="p-3 sm:p-5">
               <h3 className="text-base sm:text-lg font-semibold text-primary-900">
                 Set Prices

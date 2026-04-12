@@ -79,7 +79,7 @@ export const normalizeWeightOptions = (product) => {
     }));
   }
 
-  return DEFAULT_WEIGHT_OPTIONS;
+  return [];
 };
 
 const resolveVariantFlavorName = (product, flavorName = "") => {
@@ -157,11 +157,33 @@ export const isFlavorWeightAvailable = (product, flavorName, weightLabel) => {
   return matrix?.[flavorName]?.[weightLabel] === true;
 };
 
-export const getAvailableFlavorOptions = (product) => {
+export const getAvailableFlavorOptions = (product, eggType = "") => {
   const flavors = normalizeFlavorOptions(product).filter(
     (option) => option.isAvailable,
   );
-  return flavors.length > 0 ? flavors : [{ name: "Cake", isAvailable: true }];
+
+  if (!flavors.length) {
+    return [{ name: "Cake", isAvailable: true }];
+  }
+
+  if (!eggType) {
+    return flavors;
+  }
+
+  const hasWeights = normalizeWeightOptions(product).some(
+    (option) => option.isAvailable,
+  );
+
+  if (!hasWeights) {
+    return flavors;
+  }
+
+  const filteredFlavors = flavors.filter(
+    (flavor) =>
+      getAvailableWeightOptions(product, flavor.name, eggType).length > 0,
+  );
+
+  return filteredFlavors;
 };
 
 export const getAvailableWeightOptions = (
@@ -172,6 +194,10 @@ export const getAvailableWeightOptions = (
   const weightOptions = normalizeWeightOptions(product).filter(
     (option) => option.isAvailable,
   );
+
+  if (!weightOptions.length) {
+    return [];
+  }
 
   if (!flavorName) {
     return weightOptions;
@@ -207,6 +233,11 @@ export const getAvailableWeightOptions = (
 export const isEggTypeAvailable = (product, eggType) => {
   const source = product?.flavorWeightAvailability || {};
   const weights = normalizeWeightOptions(product).filter((o) => o.isAvailable);
+
+  if (!weights.length) {
+    return true;
+  }
+
   const flavors = normalizeFlavorOptions(product);
   const flavorNames =
     flavors.length > 0 ? flavors.map((f) => f.name) : ["Cake"];
@@ -222,24 +253,40 @@ export const isEggTypeAvailable = (product, eggType) => {
 };
 
 export const getOrderableFlavors = (product) => {
+  const weights = normalizeWeightOptions(product).filter((o) => o.isAvailable);
+
+  if (!weights.length) {
+    return getAvailableFlavorOptions(product);
+  }
+
   const flavors = getAvailableFlavorOptions(product);
   const matrix = normalizeFlavorWeightAvailability(product);
-  const weights = normalizeWeightOptions(product).filter((o) => o.isAvailable);
   return flavors.filter((flavor) =>
     weights.some((w) => matrix?.[flavor.name]?.[w.label] === true),
   );
 };
 
 export const getOrderableWeights = (product) => {
+  const weights = normalizeWeightOptions(product).filter((o) => o.isAvailable);
+
+  if (!weights.length) {
+    return [];
+  }
+
   const flavors = getAvailableFlavorOptions(product);
   const matrix = normalizeFlavorWeightAvailability(product);
-  const weights = normalizeWeightOptions(product).filter((o) => o.isAvailable);
   return weights.filter((weight) =>
     flavors.some((f) => matrix?.[f.name]?.[weight.label] === true),
   );
 };
 
 export const getMenuWeightVariantCount = (product) => {
+  const allWeights = normalizeWeightOptions(product).filter((o) => o.isAvailable);
+
+  if (!allWeights.length) {
+    return 0;
+  }
+
   const flavors = getAvailableFlavorOptions(product);
   const flavorNames =
     flavors.length > 0 ? flavors.map((option) => option.name) : [""];
@@ -277,9 +324,19 @@ export const getMenuWeightVariantCount = (product) => {
 
 export const isProductPurchasable = (product) => {
   if (product?.isAvailable === false) return false;
+  const weights = normalizeWeightOptions(product).filter((o) => o.isAvailable);
+
+  if (!weights.length) {
+    const explicitFlavors = normalizeFlavorOptions(product);
+    if (explicitFlavors.length === 0) {
+      return Number.isFinite(Number(product?.price)) && Number(product.price) >= 0;
+    }
+
+    return explicitFlavors.some((flavor) => flavor.isAvailable !== false);
+  }
+
   const flavors = getAvailableFlavorOptions(product);
   const matrix = normalizeFlavorWeightAvailability(product);
-  const weights = normalizeWeightOptions(product).filter((o) => o.isAvailable);
   return flavors.some((flavor) =>
     weights.some((w) => matrix?.[flavor.name]?.[w.label] === true),
   );
@@ -294,9 +351,7 @@ export const createDefaultProductForm = () => ({
   image: "",
   images: [],
   flavorOptions: [],
-  weightOptions: DEFAULT_PRODUCT_FORM_WEIGHT_OPTIONS.map((option) => ({
-    ...option,
-  })),
+  weightOptions: [],
   flavorWeightAvailability: {},
   variantPrices: {},
   isEgg: true,

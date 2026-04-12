@@ -92,29 +92,31 @@ const CartItemCard = ({
             </label>
           )}
 
-          <label className="block">
-            <span className="commerce-field-label">
-              {item.portionTypeMeta.heading}
-            </span>
-            <select
-              value={item.selectedWeight}
-              onChange={(event) =>
-                dispatch(
-                  updateCartItemOptions({
-                    id: item.id,
-                    selectedWeight: event.target.value,
-                  }),
-                )
-              }
-              className="commerce-input"
-            >
-              {item.availableWeights.map((weight) => (
-                <option key={weight.label} value={weight.label}>
-                  {weight.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {item.hasWeightOptions && (
+            <label className="block">
+              <span className="commerce-field-label">
+                {item.portionTypeMeta.heading}
+              </span>
+              <select
+                value={item.selectedWeight}
+                onChange={(event) =>
+                  dispatch(
+                    updateCartItemOptions({
+                      id: item.id,
+                      selectedWeight: event.target.value,
+                    }),
+                  )
+                }
+                className="commerce-input"
+              >
+                {item.availableWeights.map((weight) => (
+                  <option key={weight.label} value={weight.label}>
+                    {weight.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <div>
             <span className="commerce-field-label">Quantity</span>

@@ -34,9 +34,11 @@ const OrderReviewStep = ({ checkoutItems }) => (
                 {item.product.name}
               </h3>
               <div className="commerce-meta-chips mt-2">
-                <span className="commerce-chip commerce-chip--muted">
-                  {`${item.portionTypeMeta?.singular || "Option"}: ${item.selectedWeight}`}
-                </span>
+                {item.hasWeightOptions && item.selectedWeight && (
+                  <span className="commerce-chip commerce-chip--muted">
+                    {`${item.portionTypeMeta?.singular || "Option"}: ${item.selectedWeight}`}
+                  </span>
+                )}
                 {item.selectedEggType && (
                   <span className="commerce-chip commerce-chip--muted">
                     {`Cake Type: ${item.selectedEggType === "egg" ? "Egg" : "Eggless"}`}

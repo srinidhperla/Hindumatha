@@ -163,6 +163,7 @@ const AdminInventoryProductCard = ({
   const showEgg = product.isEgg !== false;
   const showEggless = product.isEggless === true;
   const hasFlavors = flavorOptions.length > 0;
+  const hasWeightOptions = weightOptions.length > 0;
   const cols = showEgg && showEggless ? "grid-cols-2" : "grid-cols-1";
 
   return (
@@ -222,15 +223,15 @@ const AdminInventoryProductCard = ({
               {flavorOptions.length > 0
                 ? `${availableFlavorCount}/${flavorOptions.length} flavors | `
                 : ""}
-              {weightOptions.length > 0
+              {hasWeightOptions
                 ? `${availableWeightCount}/${weightOptions.length} ${portionTypeMeta.heading.toLowerCase()}`
-                : `No ${portionTypeMeta.heading.toLowerCase()}`}
+                : "Single price"}
             </p>
           </div>
         </div>
       </div>
 
-      {(showEgg || showEggless) && (
+      {hasWeightOptions && (showEgg || showEggless) && (
         <div className={`grid ${cols} divide-x divide-slate-100`}>
           {showEgg && renderColumn("egg", "Egg", hasFlavors)}
           {showEggless && renderColumn("eggless", "Eggless", hasFlavors)}

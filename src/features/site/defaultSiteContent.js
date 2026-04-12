@@ -71,6 +71,13 @@ const defaultSiteContent = {
     },
   ],
   categoryOrder: ["cakes", "pastries", "breads", "cookies", "custom"],
+  categorySettings: [
+    { name: "cakes", isActive: true },
+    { name: "pastries", isActive: true },
+    { name: "breads", isActive: true },
+    { name: "cookies", isActive: true },
+    { name: "custom", isActive: true },
+  ],
   alertStatus: {
     configured: false,
     host: "",

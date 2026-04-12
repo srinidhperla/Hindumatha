@@ -19,7 +19,12 @@ import {
   LoadingState,
   MetricCard,
 } from "@/admin/components/ui/AdminUi";
-import { ActionButton, StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
+import {
+  ActionButton,
+  StatusChip,
+  SurfaceCard,
+  Toggle,
+} from "@/shared/ui/Primitives";
 import { DEFAULT_PRODUCT_CATEGORIES, getErrorMessage } from "./adminShared";
 import useAdminInventoryToggles from "@/admin/hooks/useAdminInventoryToggles";
 import AdminInventoryProductCard from "./AdminInventoryProductCard";
@@ -33,7 +38,14 @@ import {
   normalizeWeightOptions,
 } from "@/utils/productOptions";
 import { updateProductDisplayOrder } from "@/features/products/productSlice";
-import { updateSiteCategoryOrder } from "@/features/site/siteThunks";
+import {
+  updateSiteCategoryOrder,
+  updateSiteSettings,
+} from "@/features/site/siteThunks";
+import {
+  isCategoryActive,
+  normalizeCategorySettings,
+} from "@/utils/categorySettings";
 
 const CategoryCard = ({
   category,
@@ -41,6 +53,9 @@ const CategoryCard = ({
   children,
   sortable = false,
   saving = false,
+  categoryIsActive = true,
+  onToggleCategoryVisibility,
+  categoryToggleSaving = false,
 }) => {
   const sortableApi = useSortable({ id: category, disabled: !sortable });
   const style = sortable
@@ -83,10 +98,22 @@ const CategoryCard = ({
             </div>
 
             <div className="flex items-center gap-2">
+              <StatusChip tone={categoryIsActive ? "success" : "warning"}>
+                {categoryIsActive ? "Live" : "Hidden"}
+              </StatusChip>
+              <Toggle
+                checked={categoryIsActive}
+                onClick={onToggleCategoryVisibility}
+                disabled={saving || categoryToggleSaving}
+                label={`toggle ${category} category visibility`}
+                size="compact"
+              />
               {sortable && (
                 <StatusChip tone="info">Category order enabled</StatusChip>
               )}
-              {saving && <StatusChip tone="accent">Saving...</StatusChip>}
+              {(saving || categoryToggleSaving) && (
+                <StatusChip tone="accent">Saving...</StatusChip>
+              )}
             </div>
           </div>
         </div>
@@ -115,11 +142,14 @@ const sortProducts = (products = []) =>
 const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
   const dispatch = useDispatch();
   const { products, loading } = useSelector((state) => state.products);
-  const { categoryOrder = [] } = useSelector((state) => state.site);
+  const { categoryOrder = [], categorySettings = [] } = useSelector(
+    (state) => state.site,
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [savingCategoryOrder, setSavingCategoryOrder] = useState(false);
   const [savingProductCategory, setSavingProductCategory] = useState("");
+  const [savingCategoryVisibility, setSavingCategoryVisibility] = useState("");
   const {
     savingKey,
     handleProductToggle,
@@ -141,7 +171,11 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
     const ordered = [];
     const seen = new Set();
 
-    [...categoryOrder, ...DEFAULT_PRODUCT_CATEGORIES].forEach((category) => {
+    [
+      ...categoryOrder,
+      ...DEFAULT_PRODUCT_CATEGORIES,
+      ...categorySettings.map((entry) => entry?.name),
+    ].forEach((category) => {
       const normalized = String(category || "").trim();
       if (!normalized || seen.has(normalized)) {
         return;
@@ -160,7 +194,7 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
     });
 
     return ordered;
-  }, [categoryOrder, products, syncVersion]);
+  }, [categoryOrder, categorySettings, products, syncVersion]);
 
   const filteredProducts = useMemo(
     () =>
@@ -309,6 +343,34 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
     }
   };
 
+  const handleCategoryVisibilityToggle = async (category) => {
+    const nextCategorySettings = normalizeCategorySettings(
+      availableCategories,
+      categorySettings,
+    ).map((entry) =>
+      entry.name === category
+        ? { ...entry, isActive: !isCategoryActive(categorySettings, category) }
+        : entry,
+    );
+
+    try {
+      setSavingCategoryVisibility(category);
+      await dispatch(
+        updateSiteSettings({ categorySettings: nextCategorySettings }),
+      ).unwrap();
+      onToast(
+        `${formatCategoryLabel(category)} category is now ${isCategoryActive(nextCategorySettings, category) ? "live" : "hidden"}.`,
+      );
+    } catch (error) {
+      onToast(
+        getErrorMessage(error, "Failed to update category visibility."),
+        "error",
+      );
+    } finally {
+      setSavingCategoryVisibility("");
+    }
+  };
+
   const renderProductCards = (category, categoryProducts) => (
     <DndContext
       sensors={sensors}
@@ -441,6 +503,14 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
                       category={category}
                       count={categoryProducts.length}
                       sortable
+                      categoryIsActive={isCategoryActive(
+                        categorySettings,
+                        category,
+                      )}
+                      onToggleCategoryVisibility={() =>
+                        handleCategoryVisibilityToggle(category)
+                      }
+                      categoryToggleSaving={savingCategoryVisibility === category}
                       saving={
                         savingCategoryOrder || savingProductCategory === category
                       }
@@ -462,6 +532,11 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
                   key={category}
                   category={category}
                   count={categoryProducts.length}
+                  categoryIsActive={isCategoryActive(categorySettings, category)}
+                  onToggleCategoryVisibility={() =>
+                    handleCategoryVisibilityToggle(category)
+                  }
+                  categoryToggleSaving={savingCategoryVisibility === category}
                   saving={savingProductCategory === category}
                 >
                   {renderProductCards(category, categoryProducts)}

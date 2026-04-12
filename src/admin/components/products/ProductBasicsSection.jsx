@@ -4,6 +4,7 @@ import { SurfaceCard, Toggle } from "@/shared/ui/Primitives";
 
 const ProductBasicsSection = ({
   formData,
+  hasWeightOptions,
   inputClassName,
   availableCategories,
   useCustomCategory,
@@ -45,12 +46,14 @@ const ProductBasicsSection = ({
             min="0"
             step="0.01"
             value={formData.price}
-            readOnly
+            onChange={onChange}
+            readOnly={hasWeightOptions}
             className={inputClassName}
           />
           <p className="mt-1 text-xs text-primary-600">
-            Preserved from the saved product and updated only when you edit a
-            price in Set Prices.
+            {hasWeightOptions
+              ? "Preserved from the saved product and updated only when you edit a price in Set Prices."
+              : "Used directly when this product has no weights."}
           </p>
         </label>
       </div>

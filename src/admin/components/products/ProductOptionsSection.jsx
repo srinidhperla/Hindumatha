@@ -1,6 +1,7 @@
 import React from "react";
 import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 import {
+  getDefaultOptionsForPortionType,
   getPortionTypeMeta,
   PRODUCT_PORTION_TYPES,
 } from "@/utils/productOptions";
@@ -22,6 +23,15 @@ const ProductOptionsSection = ({
   onWeightFieldChange,
 }) => {
   const portionTypeMeta = getPortionTypeMeta(formData.portionType);
+  const suggestedWeightOptions = getDefaultOptionsForPortionType(
+    formData.portionType,
+  ).filter(
+    (option) =>
+      !formData.weightOptions.some(
+        (current) =>
+          current.label.toLowerCase() === option.label.toLowerCase(),
+      ),
+  );
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -131,9 +141,25 @@ const ProductOptionsSection = ({
             {portionTypeMeta.heading}
           </h3>
           <p className="mt-1 text-xs sm:text-sm text-primary-600">
-            Configure {portionTypeMeta.singular} labels. Prices are managed in
-            Set Prices.
+            Add {portionTypeMeta.singular} labels only when this product needs
+            them. If you leave this empty, the base price is used directly.
           </p>
+
+          {suggestedWeightOptions.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {suggestedWeightOptions.map((option) => (
+                <ActionButton
+                  key={option.label}
+                  type="button"
+                  variant="soft"
+                  onClick={() => onAddWeight(option.label)}
+                  className="rounded-full px-3 py-1 text-xs"
+                >
+                  + {option.label}
+                </ActionButton>
+              ))}
+            </div>
+          )}
 
           <div className="mt-3 sm:mt-4">
             <label className="block text-xs font-semibold text-primary-600">

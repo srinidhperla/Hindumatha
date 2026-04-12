@@ -17,6 +17,7 @@ import {
   isProductPurchasable,
   normalizeFlavorOptions,
 } from "@/utils/productOptions";
+import { isCategoryActive } from "@/utils/categorySettings";
 import SeoMeta from "@/shared/seo/SeoMeta";
 import { MenuItemSkeleton } from "@/shared/ui/Skeleton";
 import MenuCategorySections from "./MenuCategorySections";
@@ -38,12 +39,19 @@ const Menu = () => {
   const [quickAddWeight, setQuickAddWeight] = useState("");
   const [quickAddEggType, setQuickAddEggType] = useState("");
   const [quickAddQuantity, setQuickAddQuantity] = useState(1);
+  const [quickAddErrors, setQuickAddErrors] = useState({
+    cakeType: "",
+    flavor: "",
+    weight: "",
+  });
   const [imagePreview, setImagePreview] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [retryScheduled, setRetryScheduled] = useState(false);
   const { products, loading, error } = useSelector((state) => state.products);
-  const { categoryOrder = [] } = useSelector((state) => state.site);
+  const { categoryOrder = [], categorySettings = [] } = useSelector(
+    (state) => state.site,
+  );
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -124,8 +132,9 @@ const Menu = () => {
     () =>
       normalizedProducts
         .filter((product) => product.isAvailable !== false)
+        .filter((product) => isCategoryActive(categorySettings, product.category))
         .filter((product) => product.isAddon !== true),
-    [normalizedProducts],
+    [categorySettings, normalizedProducts],
   );
 
   // Derive quickAddProduct from latest normalizedProducts so it stays in sync
@@ -145,6 +154,12 @@ const Menu = () => {
       visibleProducts.map((product) => product.categoryLabel).filter(Boolean),
     ),
   ];
+
+  useEffect(() => {
+    if (selectedCategory !== "All" && !categories.includes(selectedCategory)) {
+      setSelectedCategory("All");
+    }
+  }, [categories, selectedCategory]);
 
   const filteredProducts = visibleProducts.filter((product) => {
     const matchesCategory =
@@ -242,6 +257,11 @@ const Menu = () => {
   const openQuickAdd = (product) => {
     if (!product.canOrder) return;
     setQuickAddProductId(product._id);
+    setQuickAddErrors({
+      cakeType: "",
+      flavor: "",
+      weight: "",
+    });
     // Keep fallback only for internal weight availability filtering.
     if (!product.hasExplicitFlavors) {
       setQuickAddFlavor(product.availableFlavors[0]?.name || "Cake");
@@ -266,6 +286,11 @@ const Menu = () => {
     setQuickAddWeight("");
     setQuickAddEggType("");
     setQuickAddQuantity(1);
+    setQuickAddErrors({
+      cakeType: "",
+      flavor: "",
+      weight: "",
+    });
   };
 
   const openImagePreview = (product) => {
@@ -295,9 +320,68 @@ const Menu = () => {
     target.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
+  const setQuickAddFieldError = (field, message) => {
+    setQuickAddErrors((current) => ({
+      ...current,
+      [field]: message,
+    }));
+  };
+
+  const clearQuickAddFieldError = (field) => {
+    setQuickAddErrors((current) =>
+      current[field]
+        ? {
+            ...current,
+            [field]: "",
+          }
+        : current,
+    );
+  };
+
+  const handleQuickAddEggTypeSelect = (nextEggType) => {
+    setQuickAddEggType(nextEggType);
+    clearQuickAddFieldError("cakeType");
+  };
+
+  const handleQuickAddFlavorSelect = (nextFlavor) => {
+    const needsEggType =
+      quickAddProduct?.isEgg !== false && quickAddProduct?.isEggless === true;
+
+    if (needsEggType && !quickAddEggType) {
+      setQuickAddFieldError("flavor", "Please select Cake Type first");
+      scrollToQuickAddField("quick-add-flavor");
+      return;
+    }
+
+    setQuickAddFlavor(nextFlavor);
+    clearQuickAddFieldError("flavor");
+    clearQuickAddFieldError("weight");
+  };
+
+  const handleQuickAddWeightSelect = (nextWeight) => {
+    const needsEggType =
+      quickAddProduct?.isEgg !== false && quickAddProduct?.isEggless === true;
+
+    if (needsEggType && !quickAddEggType) {
+      setQuickAddFieldError("weight", "Please select Cake Type first");
+      scrollToQuickAddField("quick-add-weight");
+      return;
+    }
+
+    if (quickAddProduct?.hasExplicitFlavors && !quickAddFlavor) {
+      setQuickAddFieldError("weight", "Please select a Flavor first");
+      scrollToQuickAddField("quick-add-weight");
+      return;
+    }
+
+    setQuickAddWeight(nextWeight);
+    clearQuickAddFieldError("weight");
+  };
+
   // Dynamically compute available weights based on selected flavor + egg type
   const quickAddWeights = useMemo(() => {
     if (!quickAddProduct) return [];
+    if (quickAddProduct.hasExplicitFlavors && !quickAddFlavor) return [];
     const flavorForWeightFilter =
       quickAddFlavor || quickAddProduct.availableFlavors[0]?.name || "";
     if (!flavorForWeightFilter) return [];
@@ -307,6 +391,30 @@ const Menu = () => {
       quickAddEggType,
     );
   }, [quickAddProduct, quickAddFlavor, quickAddEggType]);
+
+  const quickAddFlavors = useMemo(() => {
+    if (!quickAddProduct) {
+      return [];
+    }
+
+    return getAvailableFlavorOptions(quickAddProduct, quickAddEggType);
+  }, [quickAddProduct, quickAddEggType]);
+
+  React.useEffect(() => {
+    if (!quickAddProduct?.hasExplicitFlavors || !quickAddFlavor) {
+      return;
+    }
+
+    const hasSelectedFlavor = quickAddFlavors.some(
+      (flavor) => flavor.name === quickAddFlavor,
+    );
+
+    if (!hasSelectedFlavor) {
+      setQuickAddFlavor("");
+      clearQuickAddFieldError("flavor");
+      clearQuickAddFieldError("weight");
+    }
+  }, [quickAddFlavor, quickAddFlavors, quickAddProduct]);
 
   // Reset weight if current selection is no longer available
   React.useEffect(() => {
@@ -324,6 +432,8 @@ const Menu = () => {
     const hasEggless = quickAddProduct?.isEggless === true;
     const needsEggType = hasEgg && hasEggless;
     const needsFlavorSelection = quickAddProduct?.hasExplicitFlavors;
+    const needsWeightSelection =
+      (quickAddProduct?.availableWeights?.length || 0) > 0;
 
     if (!quickAddProduct) {
       dispatch(
@@ -335,36 +445,36 @@ const Menu = () => {
       return;
     }
 
-    if (needsFlavorSelection && !quickAddFlavor) {
-      scrollToQuickAddField("quick-add-flavor");
-      dispatch(
-        showToast({
-          message: "Please choose a flavor.",
-          type: "error",
-        }),
-      );
-      return;
-    }
-
     if (needsEggType && !quickAddEggType) {
+      setQuickAddErrors({
+        cakeType: "Please select Cake Type to continue",
+        flavor: "",
+        weight: "",
+      });
       scrollToQuickAddField("quick-add-type");
-      dispatch(
-        showToast({
-          message: "Please choose a cake type (Egg or Eggless).",
-          type: "error",
-        }),
-      );
       return;
     }
 
-    if (!quickAddWeight) {
+    if (needsFlavorSelection && !quickAddFlavor) {
+      setQuickAddErrors({
+        cakeType: "",
+        flavor: "Please select Flavor to continue",
+        weight: "",
+      });
+      scrollToQuickAddField("quick-add-flavor");
+      return;
+    }
+
+    if (needsWeightSelection && !quickAddWeight) {
+      setQuickAddErrors({
+        cakeType: "",
+        flavor: "",
+        weight: `Please select ${quickAddPortionMeta.singular.replace(
+          /^./,
+          (char) => char.toUpperCase(),
+        )} to continue`,
+      });
       scrollToQuickAddField("quick-add-weight");
-      dispatch(
-        showToast({
-          message: `Please select ${quickAddPortionMeta.singular.toLowerCase()}.`,
-          type: "error",
-        }),
-      );
       return;
     }
 
@@ -475,14 +585,16 @@ const Menu = () => {
           quickAddProduct={quickAddProduct}
           quickAddPortionMeta={quickAddPortionMeta}
           quickAddEggType={quickAddEggType}
-          setQuickAddEggType={setQuickAddEggType}
+          setQuickAddEggType={handleQuickAddEggTypeSelect}
           quickAddFlavor={quickAddFlavor}
-          setQuickAddFlavor={setQuickAddFlavor}
+          setQuickAddFlavor={handleQuickAddFlavorSelect}
+          quickAddFlavors={quickAddFlavors}
           quickAddWeight={quickAddWeight}
-          setQuickAddWeight={setQuickAddWeight}
+          setQuickAddWeight={handleQuickAddWeightSelect}
           quickAddQuantity={quickAddQuantity}
           setQuickAddQuantity={setQuickAddQuantity}
           quickAddWeights={quickAddWeights}
+          quickAddErrors={quickAddErrors}
           closeQuickAdd={closeQuickAdd}
           handleQuickAdd={handleQuickAdd}
         />
