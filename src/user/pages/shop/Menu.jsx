@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "@/features/cart/cartSlice";
@@ -25,15 +25,26 @@ import MenuControls from "./MenuControls";
 import MenuCustomOrderCta from "./MenuCustomOrderCta";
 import MenuEmptyState from "./MenuEmptyState";
 import MenuFeaturedStrip from "./MenuFeaturedStrip";
+import MenuFloatingNavigator from "./MenuFloatingNavigator";
 import MenuImagePreviewModal from "./MenuImagePreviewModal";
 import MenuQuickAddModal from "./MenuQuickAddModal";
+
+const getMenuSectionId = (category = "") =>
+  `menu-section-${String(category)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")}`;
 
 const Menu = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeObservedCategory, setActiveObservedCategory] = useState("");
   const [highlightedProductId, setHighlightedProductId] = useState("");
+  const [isFloatingNavOpen, setIsFloatingNavOpen] = useState(false);
+  const [pendingCategoryScroll, setPendingCategoryScroll] = useState("");
   const [quickAddProductId, setQuickAddProductId] = useState(null);
   const [quickAddFlavor, setQuickAddFlavor] = useState("");
   const [quickAddWeight, setQuickAddWeight] = useState("");
@@ -48,6 +59,7 @@ const Menu = () => {
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [retryScheduled, setRetryScheduled] = useState(false);
+  const handledTargetProductIdRef = useRef("");
   const { products, loading, error } = useSelector((state) => state.products);
   const { categoryOrder = [], categorySettings = [] } = useSelector(
     (state) => state.site,
@@ -154,6 +166,7 @@ const Menu = () => {
       visibleProducts.map((product) => product.categoryLabel).filter(Boolean),
     ),
   ];
+  const menuCategoryNames = categories.filter((category) => category !== "All");
 
   useEffect(() => {
     if (selectedCategory !== "All" && !categories.includes(selectedCategory)) {
@@ -176,11 +189,16 @@ const Menu = () => {
     .filter((category) => category !== "All")
     .map((category) => ({
       category,
+      sectionId: getMenuSectionId(category),
       items: filteredProducts.filter(
         (product) => product.categoryLabel === category,
       ),
     }))
     .filter((section) => section.items.length > 0);
+  const activeFloatingCategory =
+    selectedCategory !== "All"
+      ? selectedCategory
+      : activeObservedCategory || menuCategoryNames[0] || "";
 
   const targetProductId = useMemo(() => {
     const query = new URLSearchParams(location.search);
@@ -203,7 +221,12 @@ const Menu = () => {
 
   useEffect(() => {
     if (!targetProductId) {
+      handledTargetProductIdRef.current = "";
       setHighlightedProductId("");
+      return;
+    }
+
+    if (handledTargetProductIdRef.current === targetProductId) {
       return;
     }
 
@@ -213,6 +236,9 @@ const Menu = () => {
     if (!targetProduct) {
       return;
     }
+
+    handledTargetProductIdRef.current = targetProductId;
+    setActiveObservedCategory(targetProduct.categoryLabel || "");
 
     if (
       targetProduct.categoryLabel &&
@@ -250,9 +276,115 @@ const Menu = () => {
     visibleProducts,
     selectedCategory,
     searchTerm,
-    setSelectedCategory,
-    setSearchTerm,
   ]);
+
+  useEffect(() => {
+    if (!categorySections.length) {
+      setActiveObservedCategory("");
+      return undefined;
+    }
+
+    const sectionState = new Map();
+
+    const updateActiveCategory = () => {
+      const nextSection = categorySections
+        .map((section) => ({
+          category: section.category,
+          sectionId: section.sectionId,
+          state: sectionState.get(section.sectionId),
+        }))
+        .filter(({ state }) => state?.isIntersecting)
+        .sort((left, right) => {
+          const ratioDiff = (right.state?.ratio || 0) - (left.state?.ratio || 0);
+          if (Math.abs(ratioDiff) > 0.01) {
+            return ratioDiff;
+          }
+
+          return Math.abs(left.state?.top || 0) - Math.abs(right.state?.top || 0);
+        })[0];
+
+      if (nextSection?.category) {
+        setActiveObservedCategory((current) =>
+          current === nextSection.category ? current : nextSection.category,
+        );
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          sectionState.set(entry.target.id, {
+            isIntersecting: entry.isIntersecting,
+            ratio: entry.intersectionRatio,
+            top: entry.boundingClientRect.top,
+          });
+        });
+
+        updateActiveCategory();
+      },
+      {
+        root: null,
+        rootMargin: "-140px 0px -42% 0px",
+        threshold: [0.15, 0.3, 0.45, 0.6, 0.75],
+      },
+    );
+
+    categorySections.forEach((section) => {
+      const element = document.getElementById(section.sectionId);
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    setActiveObservedCategory((current) => current || categorySections[0].category);
+
+    return () => observer.disconnect();
+  }, [categorySections]);
+
+  useEffect(() => {
+    if (!isFloatingNavOpen) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsFloatingNavOpen(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isFloatingNavOpen]);
+
+  useEffect(() => {
+    if (!pendingCategoryScroll) {
+      return undefined;
+    }
+
+    const targetSectionId = getMenuSectionId(pendingCategoryScroll);
+    const targetSection = document.getElementById(targetSectionId);
+
+    if (!targetSection) {
+      return undefined;
+    }
+
+    const scrollTimer = window.setTimeout(() => {
+      targetSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      setActiveObservedCategory(pendingCategoryScroll);
+      setPendingCategoryScroll("");
+    }, 120);
+
+    return () => window.clearTimeout(scrollTimer);
+  }, [categorySections, pendingCategoryScroll]);
 
   const openQuickAdd = (product) => {
     if (!product.canOrder) return;
@@ -307,6 +439,14 @@ const Menu = () => {
   };
 
   const clearFilters = () => {
+    setSelectedCategory("All");
+    setSearchTerm("");
+  };
+
+  const handleFloatingCategorySelect = (category) => {
+    setIsFloatingNavOpen(false);
+    setActiveObservedCategory(category);
+    setPendingCategoryScroll(category);
     setSelectedCategory("All");
     setSearchTerm("");
   };
@@ -575,6 +715,15 @@ const Menu = () => {
         )}
 
         <MenuCustomOrderCta />
+
+        <MenuFloatingNavigator
+          isOpen={isFloatingNavOpen}
+          categories={menuCategoryNames}
+          activeCategory={activeFloatingCategory}
+          onOpen={() => setIsFloatingNavOpen(true)}
+          onClose={() => setIsFloatingNavOpen(false)}
+          onSelectCategory={handleFloatingCategorySelect}
+        />
 
         <MenuImagePreviewModal
           imagePreview={imagePreview}

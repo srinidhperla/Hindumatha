@@ -15,10 +15,14 @@ const MenuCategorySections = ({
   return (
     <div className="menu-sections">
       {categorySections.map((section) => (
-        <section key={section.category} className="menu-section-block">
+        <section
+          key={section.category}
+          id={section.sectionId}
+          data-menu-category={section.category}
+          className="menu-section-block"
+        >
         <div className="menu-section-head">
           <div>
-            <p className="menu-section-kicker">{section.items.length} items</p>
             <h2 className="menu-section-title">{section.category}</h2>
           </div>
         </div>
