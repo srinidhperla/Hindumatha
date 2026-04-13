@@ -189,7 +189,7 @@ const MenuQuickAddModal = ({
               </span>
               {flavorLocked && (
                 <p className="mb-2 text-[11px] font-medium text-primary-400">
-                  Lock Select Cake Type first
+                  Select Cake Type first
                 </p>
               )}
               <div className="flex flex-wrap gap-2">
