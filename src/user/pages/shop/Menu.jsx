@@ -443,6 +443,16 @@ const Menu = () => {
     setSearchTerm("");
   };
 
+  const handleCategoryFilterSelect = (category) => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+    setPendingCategoryScroll("");
+    setSelectedCategory(category);
+  };
+
   const handleFloatingCategorySelect = (category) => {
     setIsFloatingNavOpen(false);
     setActiveObservedCategory(category);
@@ -649,7 +659,7 @@ const Menu = () => {
           setSearchTerm={setSearchTerm}
           categories={categories}
           selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
+          onSelectCategory={handleCategoryFilterSelect}
         />
 
         <div className="menu-results-bar">

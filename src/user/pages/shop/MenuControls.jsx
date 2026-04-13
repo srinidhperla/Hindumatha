@@ -5,7 +5,7 @@ const MenuControls = ({
   setSearchTerm,
   categories,
   selectedCategory,
-  setSelectedCategory,
+  onSelectCategory,
 }) => {
   const searchInputRef = useRef(null);
   const hasSearchValue = searchTerm.trim().length > 0;
@@ -65,7 +65,7 @@ const MenuControls = ({
           <button
             key={category}
             type="button"
-            onClick={() => setSelectedCategory(category)}
+            onClick={() => onSelectCategory(category)}
             className={`menu-category-pill ${
               selectedCategory === category
                 ? "menu-category-pill--active"

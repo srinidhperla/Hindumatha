@@ -205,21 +205,18 @@ const TestimonialsSection = () => {
     {
       initials: "PR",
       name: "Priya Reddy",
-      location: "Vizianagaram",
       text: "The wedding cake was absolutely stunning! Everyone at the reception couldn't stop talking about how delicious it was. Thank you for making our day special!",
       color: "from-caramel-400 to-caramel-500",
     },
     {
       initials: "RK",
       name: "Rajesh Kumar",
-      location: "Visakhapatnam",
       text: "Best bakery in town! I order birthday cakes for my kids every year from here. The taste is always consistent and the designs are creative.",
       color: "from-sage-400 to-sage-500",
     },
     {
       initials: "SL",
       name: "Sunita Lakshmi",
-      location: "Srikakulam",
       text: "Ordered a custom cake for my anniversary and it exceeded all expectations. The attention to detail and taste was phenomenal. Highly recommend!",
       color: "from-berry-400 to-berry-500",
     },
