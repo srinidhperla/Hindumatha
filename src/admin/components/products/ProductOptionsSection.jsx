@@ -185,6 +185,12 @@ const ProductOptionsSection = ({
               onChange={(event) =>
                 onCustomWeightLabelChange(event.target.value)
               }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  onAddWeight();
+                }
+              }}
               placeholder={portionTypeMeta.example}
               className={inputClassName.replace("mt-1 ", "")}
             />

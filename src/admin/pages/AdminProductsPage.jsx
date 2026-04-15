@@ -370,30 +370,60 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
     }));
   };
 
-  const handleAddWeight = (weightLabel = customWeightLabel) => {
-    const normalizedLabel = weightLabel.trim();
+  const handleAddWeight = (weightLabel) => {
+    const resolveUnitLabel = (value, fallback) => {
+      if (typeof value === "string" || typeof value === "number") {
+        return String(value);
+      }
+
+      if (value && typeof value === "object") {
+        if (typeof value.label === "string" || typeof value.label === "number") {
+          return String(value.label);
+        }
+        return String(fallback || "");
+      }
+
+      return String(fallback || "");
+    };
+
+    const normalizedLabel = resolveUnitLabel(
+      weightLabel,
+      customWeightLabel,
+    ).trim();
 
     if (!normalizedLabel) {
+      onToast("Please enter a unit label.", "error");
       return;
     }
 
-    const defaultOption = getDefaultOptionsForPortionType(
-      formData.portionType,
-    ).find(
-      (option) =>
-        option.label.toLowerCase() === normalizedLabel.toLowerCase(),
-    );
+    if (normalizedLabel.toLowerCase() === "[object object]") {
+      onToast("Invalid unit label. Please enter plain text.", "error");
+      return;
+    }
+
+    let hasAdded = false;
+    let isDuplicate = false;
 
     setFormData((currentFormData) => {
       if (
         currentFormData.weightOptions.some(
           (option) =>
-            option.label.toLowerCase() === normalizedLabel.toLowerCase(),
+            String(option.label || "").toLowerCase() ===
+            normalizedLabel.toLowerCase(),
         )
       ) {
+        isDuplicate = true;
         return currentFormData;
       }
 
+      const defaultOption = getDefaultOptionsForPortionType(
+        currentFormData.portionType,
+      ).find(
+        (option) =>
+          option.label.toLowerCase() === normalizedLabel.toLowerCase(),
+      );
+
+      hasAdded = true;
       return {
         ...currentFormData,
         weightOptions: [
@@ -407,7 +437,14 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
       };
     });
 
-    setCustomWeightLabel("");
+    if (isDuplicate) {
+      onToast(`"${normalizedLabel}" is already added.`, "error");
+      return;
+    }
+
+    if (hasAdded) {
+      setCustomWeightLabel("");
+    }
   };
 
   const handleRemoveWeight = (label) => {
