@@ -12,7 +12,33 @@ const sortOptions = [
   { value: "code-asc", label: "Code order" },
 ];
 
-const FilterPanel = ({
+const renderChoiceChip = (label, isSelected, onClick, compact = false) => (
+  <button
+    key={label}
+    type="button"
+    onClick={onClick}
+    className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+      compact ? "min-w-[84px]" : ""
+    } ${
+      isSelected
+        ? "border-[#2f2319] bg-[#2f2319] text-[#fff7e3] shadow-[0_10px_24px_rgba(18,12,2,0.18)]"
+        : "border-[rgba(201,168,76,0.22)] bg-white text-primary-800 hover:border-[#c9a84c] hover:bg-[#fff8ec]"
+    }`}
+  >
+    {label}
+  </button>
+);
+
+const FilterSection = ({ title, children }) => (
+  <div className="rounded-[28px] border border-[rgba(201,168,76,0.18)] bg-white/88 p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">
+      {title}
+    </p>
+    <div className="mt-3 flex flex-wrap gap-2">{children}</div>
+  </div>
+);
+
+const FilterSheet = ({
   categories,
   selectedCategory,
   onCategoryChange,
@@ -31,14 +57,14 @@ const FilterPanel = ({
   onClearFilters,
   onClose,
 }) => (
-  <div className="flex h-full flex-col">
-    <div className="flex items-center justify-between gap-3 border-b border-[rgba(201,168,76,0.18)] pb-4">
+  <div className="flex h-full flex-col bg-[#fffaf1]">
+    <div className="flex items-center justify-between gap-3 border-b border-[rgba(201,168,76,0.18)] px-4 py-4 sm:px-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9a7a2b]">
-          Filter cakes
+          Filters
         </p>
         <h3 className="mt-1 text-xl font-bold text-primary-900">
-          Refine results
+          Refine your gallery
         </h3>
       </div>
       <div className="flex items-center gap-2">
@@ -51,123 +77,94 @@ const FilterPanel = ({
             Clear
           </button>
         ) : null}
-        {onClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(42,31,14,0.12)] bg-white text-primary-900"
-            aria-label="Close filters"
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(42,31,14,0.12)] bg-white text-primary-900"
+          aria-label="Close filters"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-        ) : null}
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
       </div>
     </div>
 
-    <div className="mt-4 space-y-4 overflow-y-auto pr-1">
-      <label className="block rounded-[28px] border border-[rgba(201,168,76,0.18)] bg-white/88 p-4">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">
-          Sort
-        </span>
-        <select
-          value={sortBy}
-          onChange={(event) => onSortChange(event.target.value)}
-          className="w-full rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white px-4 py-3 text-sm text-primary-900 shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[#f3dfab]"
-        >
-          {sortOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
+      <FilterSection title="Sort">
+        {sortOptions.map((option) =>
+          renderChoiceChip(
+            option.label,
+            sortBy === option.value,
+            () => onSortChange(option.value),
+          ),
+        )}
+      </FilterSection>
 
-      <div className="rounded-[28px] border border-[rgba(201,168,76,0.18)] bg-white/88 p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">
-          Category
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => onCategoryChange(category)}
-              className={`gallery-filter-pill ${
-                selectedCategory === category
-                  ? "gallery-filter-pill--active"
-                  : "gallery-filter-pill--inactive"
-              }`}
-            >
-              {formatGalleryCategoryLabel(category)}
-            </button>
-          ))}
-        </div>
-      </div>
+      <FilterSection title="Category">
+        {categories.map((category) =>
+          renderChoiceChip(
+            formatGalleryCategoryLabel(category),
+            selectedCategory === category,
+            () => onCategoryChange(category),
+          ),
+        )}
+      </FilterSection>
 
-      <label className="block rounded-[28px] border border-[rgba(201,168,76,0.18)] bg-white/88 p-4">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">
-          Cake Type
-        </span>
-        <select
-          value={selectedCakeType}
-          onChange={(event) => onCakeTypeChange(event.target.value)}
-          className="w-full rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white px-4 py-3 text-sm text-primary-900 shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[#f3dfab]"
-        >
-          <option value="">All cake types</option>
-          {cakeTypeOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
+      <FilterSection title="Cake Type">
+        {renderChoiceChip(
+          "All",
+          !selectedCakeType,
+          () => onCakeTypeChange(""),
+          true,
+        )}
+        {cakeTypeOptions.map((option) =>
+          renderChoiceChip(
+            option,
+            selectedCakeType === option,
+            () => onCakeTypeChange(option),
+            true,
+          ),
+        )}
+      </FilterSection>
 
-      <label className="block rounded-[28px] border border-[rgba(201,168,76,0.18)] bg-white/88 p-4">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">
-          Fondant
-        </span>
-        <select
-          value={selectedFondant}
-          onChange={(event) => onFondantChange(event.target.value)}
-          className="w-full rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white px-4 py-3 text-sm text-primary-900 shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[#f3dfab]"
-        >
-          <option value="">All fondant styles</option>
-          {fondantOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
+      <FilterSection title="Fondant">
+        {renderChoiceChip(
+          "All",
+          !selectedFondant,
+          () => onFondantChange(""),
+          true,
+        )}
+        {fondantOptions.map((option) =>
+          renderChoiceChip(
+            option,
+            selectedFondant === option,
+            () => onFondantChange(option),
+            true,
+          ),
+        )}
+      </FilterSection>
 
-      <label className="block rounded-[28px] border border-[rgba(201,168,76,0.18)] bg-white/88 p-4">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-primary-600">
-          Weight
-        </span>
-        <select
-          value={selectedWeight}
-          onChange={(event) => onWeightChange(event.target.value)}
-          className="w-full rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white px-4 py-3 text-sm text-primary-900 shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[#f3dfab]"
-        >
-          <option value="">All weights</option>
-          {weightOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <FilterSection title="Weight">
+        {renderChoiceChip("All", !selectedWeight, () => onWeightChange(""), true)}
+        {weightOptions.map((option) =>
+          renderChoiceChip(
+            option.label,
+            selectedWeight === option.value,
+            () => onWeightChange(option.value),
+            true,
+          ),
+        )}
+      </FilterSection>
     </div>
   </div>
 );
@@ -195,7 +192,7 @@ const GalleryGrid = ({
   onOpenCalculator,
   onSelectImage,
 }) => {
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   return (
     <>
@@ -207,7 +204,7 @@ const GalleryGrid = ({
                 type="text"
                 value={searchTerm}
                 onChange={(event) => onSearchChange(event.target.value)}
-                placeholder="Search by cake name or code"
+                placeholder="Search cake by name or code"
                 className="w-full rounded-2xl border border-[rgba(201,168,76,0.35)] bg-white px-4 py-3 pl-11 text-sm text-primary-900 shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[#f3dfab]"
               />
               <svg
@@ -226,7 +223,7 @@ const GalleryGrid = ({
 
             <button
               type="button"
-              onClick={() => setIsFilterDrawerOpen(true)}
+              onClick={() => setIsFilterOpen(true)}
               className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[#2f2319] px-4 py-3 text-sm font-semibold text-[#fff7e3] shadow-md transition hover:bg-[#433224]"
             >
               <svg
@@ -249,22 +246,18 @@ const GalleryGrid = ({
       </div>
 
       <div className="gallery-grid">
-        {filteredItems.map((item, index) => (
-          <div
-            key={item._id}
-            className={`gallery-card group ${index === 0 ? "xl:col-span-2" : ""}`}
-            style={{ animationDelay: `${index * 90}ms` }}
-          >
+        {filteredItems.map((item) => (
+          <div key={item._id} className="gallery-card group">
             <button
               type="button"
               onClick={() => onSelectImage(item)}
-              className="relative block aspect-square w-full overflow-hidden text-left"
+              className="relative block aspect-[4/5] w-full overflow-hidden text-left"
             >
               <OptimizedImage
                 src={item.imageUrl}
                 alt={item.title}
                 width={720}
-                height={720}
+                height={900}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
@@ -273,27 +266,25 @@ const GalleryGrid = ({
                   {item.cakeCode}
                 </div>
               ) : null}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(18,12,2,0.82)] via-[rgba(18,12,2,0.34)] to-transparent p-4">
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white/92 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7a5c0f] shadow-md">
-                    {formatGalleryCategoryLabel(item.category)}
-                  </span>
-                  {formatGalleryWeightRange(item) ? (
-                    <span className="rounded-full bg-[#fff5d8] px-3 py-1 text-[11px] font-semibold text-primary-900 shadow-md">
-                      Weight {formatGalleryWeightRange(item)}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
             </button>
 
             <div className="space-y-4 p-4 sm:p-5">
-              <div>
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7a5c0f] shadow-sm">
+                    {formatGalleryCategoryLabel(item.category)}
+                  </span>
+                  {formatGalleryWeightRange(item) ? (
+                    <span className="rounded-full bg-[#fff5d8] px-3 py-1 text-[11px] font-semibold text-primary-900 shadow-sm">
+                      {formatGalleryWeightRange(item)}
+                    </span>
+                  ) : null}
+                </div>
                 <h3 className="text-lg font-semibold text-primary-900">
                   {item.title}
                 </h3>
                 {!item.isProduct && item.price > 0 ? (
-                  <p className="mt-2 text-sm font-medium text-primary-700">
+                  <p className="text-sm font-medium text-primary-700">
                     {item.priceLabel || "Starting at"} Rs.
                     {Number(item.price || 0).toLocaleString("en-IN")} per kg
                   </p>
@@ -325,14 +316,11 @@ const GalleryGrid = ({
         </div>
       ) : null}
 
-      {isFilterDrawerOpen ? (
-        <div className="fixed inset-0 z-50 bg-[rgba(18,12,2,0.55)]">
-          <div
-            className="absolute inset-0"
-            onClick={() => setIsFilterDrawerOpen(false)}
-          />
-          <div className="absolute right-0 top-0 h-full w-full max-w-md overflow-hidden bg-[#fffaf1] p-4 shadow-[-18px_0_40px_rgba(18,12,2,0.24)]">
-            <FilterPanel
+      {isFilterOpen ? (
+        <div className="fixed inset-0 z-50 bg-[rgba(18,12,2,0.58)]">
+          <div className="absolute inset-0" onClick={() => setIsFilterOpen(false)} />
+          <div className="absolute inset-x-0 bottom-0 top-0 bg-[#fffaf1] sm:left-auto sm:right-0 sm:w-full sm:max-w-lg">
+            <FilterSheet
               categories={categories}
               selectedCategory={selectedCategory}
               onCategoryChange={onCategoryChange}
@@ -349,7 +337,7 @@ const GalleryGrid = ({
               onSortChange={onSortChange}
               hasActiveFilters={hasActiveFilters}
               onClearFilters={onClearFilters}
-              onClose={() => setIsFilterDrawerOpen(false)}
+              onClose={() => setIsFilterOpen(false)}
             />
           </div>
         </div>

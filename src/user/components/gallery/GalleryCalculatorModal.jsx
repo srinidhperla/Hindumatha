@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@/shared/ui/Modal";
-import { ActionButton, StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
+import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 import { buildGalleryCombinationKey } from "@/admin/pages/adminGalleryPricingUtils";
 import {
   buildGalleryWeightChoices,
-  formatGalleryWeightRange,
   getGalleryWeightRange,
 } from "@/utils/galleryItems";
 
@@ -148,8 +147,47 @@ const getCombinationOption = (entry, sectionKey) =>
     )?.option || "",
   ).trim();
 
+const OptionField = ({
+  title,
+  options = [],
+  selectedValue = "",
+  onSelect,
+  note = "",
+  compact = false,
+}) => (
+  <SurfaceCard className="p-4 sm:p-5">
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-primary-900">{title}</p>
+        {note ? <p className="mt-1 text-xs text-primary-600">{note}</p> : null}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const isSelected = selectedValue === option.value;
+
+          return (
+            <button
+              key={`${title}-${option.value}`}
+              type="button"
+              onClick={() => onSelect(option.value)}
+              className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition-all ${
+                compact ? "min-w-[88px]" : ""
+              } ${
+                isSelected
+                  ? "border-[#b45f40] bg-[#b45f40] text-white shadow-[0_14px_24px_rgba(180,95,64,0.24)]"
+                  : "border-[rgba(42,31,14,0.12)] bg-white text-primary-800 hover:border-[#d3b18f] hover:bg-[#fff8f1]"
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  </SurfaceCard>
+);
+
 const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [selectedWeight, setSelectedWeight] = useState("");
   const sharedOptionPrices = useMemo(
     () => buildSharedOptionPrices(galleryFieldConfig, item),
@@ -319,41 +357,14 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     [selectableSections],
   );
 
-  const requiredSelectionKeys = useMemo(() => {
-    const keys = hasCombinationPricing
-      ? coreSections.map((section) => section.key)
-      : [];
-
-    if (weightRange) {
-      keys.push("weight");
-    }
-
-    return keys;
-  }, [coreSections, hasCombinationPricing, weightRange]);
-
-  const selectedRequiredCount = useMemo(() => {
-    const optionCount = requiredSelectionKeys.filter((sectionKey) => {
-      if (sectionKey === "weight") {
-        return hasWeightSelection;
-      }
-
-      return String(selectedOptions[sectionKey] || "").trim();
-    }).length;
-
-    return optionCount;
-  }, [hasWeightSelection, requiredSelectionKeys, selectedOptions]);
-
   const isEstimateReady = useMemo(() => {
     if (hasCombinationPricing) {
       return (
-        requiredSelectionKeys.length > 0 &&
-        requiredSelectionKeys.every((sectionKey) => {
-          if (sectionKey === "weight") {
-            return hasWeightSelection;
-          }
-
-          return String(selectedOptions[sectionKey] || "").trim();
-        })
+        coreSections.length > 0 &&
+        hasWeightSelection &&
+        coreSections.every((section) =>
+          String(selectedOptions[section.key] || "").trim(),
+        )
       );
     }
 
@@ -365,9 +376,9 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
         ))
     );
   }, [
+    coreSections,
     hasCombinationPricing,
     hasWeightSelection,
-    requiredSelectionKeys,
     selectedOptions,
     weightRange,
   ]);
@@ -427,53 +438,6 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     [addOnSections, selectedOptions, sharedOptionPrices],
   );
 
-  const priceSummaryRows = useMemo(() => {
-    const rows = [];
-
-    if (weightRange && selectedWeight) {
-      rows.push({
-        key: "weight",
-        title: "Weight",
-        value: `${selectedWeight} ${weightRange.unit}`,
-        note: "Used for 1kg-based pricing",
-      });
-    }
-
-    coreSections.forEach((section) => {
-      const selectedOption = String(selectedOptions[section.key] || "").trim();
-      if (!selectedOption) {
-        return;
-      }
-
-      rows.push({
-        key: section.key,
-        title: section.title,
-        value: selectedOption,
-        note: hasCombinationPricing ? "Included in cake style" : "Main choice",
-      });
-    });
-
-    selectedAddOnEntries.forEach((entry) => {
-      rows.push({
-        key: entry.sectionKey,
-        title: entry.sectionTitle,
-        value: entry.option,
-        note: entry.isPerKg
-          ? `${formatPriceDelta(entry.price)} / kg`
-          : `${formatPriceDelta(entry.price)} fixed`,
-      });
-    });
-
-    return rows;
-  }, [
-    coreSections,
-    hasCombinationPricing,
-    selectedAddOnEntries,
-    selectedOptions,
-    selectedWeight,
-    weightRange,
-  ]);
-
   const priceBreakdown = useMemo(() => {
     const basePricePerKg = Number(item?.price) || 0;
     const combinationPricePerKg = Number(selectedCombinationEntry?.price || 0);
@@ -499,6 +463,35 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
       total,
     };
   }, [item, selectedAddOnEntries, selectedCombinationEntry, weightMultiplier]);
+  const coreFieldOptions = useMemo(
+    () =>
+      coreSections.map((section) => ({
+        ...section,
+        options: section.options.map((option) => ({
+          value: option,
+          label: option,
+        })),
+      })),
+    [coreSections],
+  );
+  const addOnFieldOptions = useMemo(
+    () =>
+      addOnSections.map((section) => ({
+        ...section,
+        options: section.options.map((option) => ({
+          value: option,
+          label:
+            section.area === "general"
+              ? `${option} ${formatPriceDelta(
+                  findOptionPrice(sharedOptionPrices, section.key, option),
+                )}/kg`
+              : `${option} ${formatPriceDelta(
+                  findOptionPrice(sharedOptionPrices, section.key, option),
+                )}`,
+        })),
+      })),
+    [addOnSections, sharedOptionPrices],
+  );
 
   const estimatedRange = useMemo(() => {
     if (!isEstimateReady) {
@@ -518,7 +511,6 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
   return (
     <Modal
       title={`Configure ${item.title || "Cake"}`}
-      badge={<StatusChip tone="accent">Live estimate</StatusChip>}
       onClose={onClose}
       maxWidthClassName="max-w-5xl"
       footer={
@@ -530,124 +522,6 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
       }
     >
       <div className="space-y-5">
-        <div className="flex justify-end">
-          <ActionButton
-            type="button"
-            variant="secondary"
-            className="min-w-[48px] rounded-full px-4 py-2 text-xs sm:text-sm"
-            onClick={() => setIsGuideOpen((current) => !current)}
-          >
-            {isGuideOpen ? "Hide Help" : "Quick Guide"}
-          </ActionButton>
-        </div>
-
-        {isGuideOpen ? (
-          <SurfaceCard className="p-4 sm:p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700">
-              Quick guide
-            </p>
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl border border-[rgba(201,168,76,0.2)] bg-[#fff8ec] p-4">
-                <p className="text-sm font-semibold text-primary-900">
-                  Base price is treated as 1kg
-                </p>
-                <p className="mt-1 text-sm text-primary-600">
-                  Pick the weight first. The calculator multiplies the 1kg price by
-                  your selected cake weight.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-[rgba(201,168,76,0.2)] bg-white p-4">
-                <p className="text-sm font-semibold text-primary-900">
-                  Main cake style updates next
-                </p>
-                <p className="mt-1 text-sm text-primary-600">
-                  Cake type, egg type, and flavor unlock the matched price row when
-                  combination pricing is enabled.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-[rgba(201,168,76,0.2)] bg-white p-4">
-                <p className="text-sm font-semibold text-primary-900">
-                  General add-ons scale, extras stay fixed
-                </p>
-                <p className="mt-1 text-sm text-primary-600">
-                  General fields are treated as per-kg. Extras like photo or doll are
-                  added as one fixed charge.
-                </p>
-              </div>
-            </div>
-          </SurfaceCard>
-        ) : null}
-
-        <SurfaceCard className="overflow-hidden">
-          <div className="bg-[linear-gradient(135deg,rgba(255,248,226,0.95),rgba(255,255,255,0.92)_58%,rgba(255,244,226,0.86))] p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <StatusChip tone="info">
-                  {item.priceLabel || "Starting at"} {formatCurrency(item.price)} / kg
-                </StatusChip>
-                <p className="mt-3 text-sm leading-6 text-primary-700">
-                  Select the cake weight, choose the main cake style, then add any
-                  finishing options you need.
-                </p>
-                {formatGalleryWeightRange(item) ? (
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary-500">
-                    Available range: {formatGalleryWeightRange(item)}
-                  </p>
-                ) : null}
-              </div>
-              {requiredSelectionKeys.length ? (
-                <div className="rounded-2xl border border-[rgba(42,31,14,0.1)] bg-white/80 px-4 py-3 text-center shadow-sm">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-500">
-                    Required selections
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-primary-900">
-                    {selectedRequiredCount}/{requiredSelectionKeys.length} done
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </SurfaceCard>
-
-        {priceSummaryRows.length ? (
-          <SurfaceCard className="p-4 sm:p-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700">
-                  Your selections
-                </p>
-                <p className="mt-1 text-sm text-primary-600">
-                  Live summary of the choices affecting the final estimate.
-                </p>
-              </div>
-              <StatusChip tone="accent">
-                Total now {formatCurrency(priceBreakdown.total)}
-              </StatusChip>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {priceSummaryRows.map((entry) => (
-                <div
-                  key={`summary-${entry.key}`}
-                  className="rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/80 p-4"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary-500">
-                    {entry.title}
-                  </p>
-                  <div className="mt-2 flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-primary-900">
-                      {entry.value}
-                    </p>
-                    <span className="text-xs font-semibold text-primary-600">
-                      {entry.note}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </SurfaceCard>
-        ) : null}
-
         {!selectableSections.length && !weightChoices.length ? (
           <SurfaceCard className="p-4 sm:p-5">
             <p className="text-sm text-primary-600">
@@ -657,264 +531,49 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
         ) : (
           <div className="space-y-5">
             {weightChoices.length ? (
-              <SurfaceCard className="p-4 sm:p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-primary-900">
-                      Choose the weight
-                    </h3>
-                    <p className="mt-1 text-sm text-primary-600">
-                      Pick one weight from the available range.
-                    </p>
-                  </div>
-                  {selectedWeight ? (
-                    <StatusChip tone="success">
-                      {selectedWeight} {weightRange?.unit || "kg"} selected
-                    </StatusChip>
-                  ) : (
-                    <StatusChip tone="warning">Pick weight</StatusChip>
-                  )}
-                </div>
-
-                <div className="mt-5 rounded-[28px] border border-[rgba(201,168,76,0.18)] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,248,236,0.84))] p-4">
-                  <div className="relative">
-                    <div className="pointer-events-none absolute left-3 right-3 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-[rgba(201,168,76,0.24)]" />
-                    <div className="relative flex gap-3 overflow-x-auto pb-2">
-                      {weightChoices.map((choice) => {
-                        const isSelected = selectedWeight === choice.value;
-
-                        return (
-                          <button
-                            key={choice.value}
-                            type="button"
-                            onClick={() => setSelectedWeight(choice.value)}
-                            className={`relative z-[1] min-w-[88px] shrink-0 rounded-full border px-4 py-3 text-center text-sm font-semibold transition-all ${
-                              isSelected
-                                ? "border-[#b45f40] bg-[#b45f40] text-white shadow-[0_16px_28px_rgba(180,95,64,0.26)]"
-                                : "border-[rgba(42,31,14,0.12)] bg-white text-primary-800 hover:border-[#d3b18f] hover:bg-[#fff8f1]"
-                            }`}
-                          >
-                            {choice.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </SurfaceCard>
+              <OptionField
+                title="Weight"
+                options={weightChoices}
+                selectedValue={selectedWeight}
+                onSelect={setSelectedWeight}
+                compact
+              />
             ) : null}
 
-            {coreSections.length ? (
-              <SurfaceCard className="p-4 sm:p-5">
-                <div>
-                  <h3 className="mt-2 text-lg font-semibold text-primary-900">
-                    Choose the main cake style
-                  </h3>
-                  <p className="mt-1 text-sm text-primary-600">
-                    Pick the required cake details first. Available options update
-                    automatically.
-                  </p>
-                </div>
+            {coreFieldOptions.map((section) => (
+              <OptionField
+                key={section.key}
+                title={section.title}
+                options={section.options}
+                selectedValue={selectedOptions[section.key] || ""}
+                onSelect={(value) =>
+                  setSelectedOptions((current) => ({
+                    ...current,
+                    [section.key]: value,
+                  }))
+                }
+              />
+            ))}
 
-                <div className="mt-5 space-y-4">
-                  {coreSections.map((section, index) => (
-                    <div
-                      key={section.key}
-                      className="rounded-[28px] border border-[rgba(201,168,76,0.2)] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,248,235,0.78))] p-4"
-                    >
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#2f2319] text-sm font-bold text-white">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-primary-900">
-                              {section.title}
-                            </p>
-                            <p className="mt-1 text-xs text-primary-600">
-                              {section.key === "eggOptions"
-                                ? "Egg choices depend on the cake type you pick."
-                                : section.key === "flavors"
-                                  ? "Only matching flavors are shown here."
-                                  : "Choose one option to continue the cake setup."}
-                            </p>
-                          </div>
-                        </div>
-                        {selectedOptions[section.key] ? (
-                          <StatusChip tone="success">Selected</StatusChip>
-                        ) : (
-                          <StatusChip tone="warning">Pending</StatusChip>
-                        )}
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {section.options.map((option) => {
-                          const isSelected = selectedOptions[section.key] === option;
-
-                          return (
-                            <button
-                              key={`${section.key}-${option}`}
-                              type="button"
-                              onClick={() =>
-                                setSelectedOptions((current) => ({
-                                  ...current,
-                                  [section.key]: option,
-                                }))
-                              }
-                              className={`min-h-[52px] rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all ${
-                                isSelected
-                                  ? "border-[#b45f40] bg-[#b45f40] text-white shadow-[0_16px_28px_rgba(180,95,64,0.26)]"
-                                  : "border-[rgba(42,31,14,0.12)] bg-white text-primary-800 hover:border-[#d3b18f] hover:bg-[#fff8f1]"
-                              }`}
-                            >
-                              {option}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SurfaceCard>
-            ) : null}
-
-            {addOnSections.length ? (
-              <SurfaceCard className="p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-primary-900">
-                      Add finishing options
-                    </h3>
-                    <p className="mt-1 text-sm text-primary-600">
-                      General fields add per-kg price. Extras stay as one fixed charge.
-                    </p>
-                  </div>
-                  <StatusChip tone="info">Optional</StatusChip>
-                </div>
-
-                <div className="mt-5 grid gap-4">
-                  {addOnSections.map((section) => (
-                    <div
-                      key={section.key}
-                      className="rounded-[28px] border border-[rgba(201,168,76,0.18)] bg-white/80 p-4"
-                    >
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-primary-900">
-                            {section.title}
-                          </p>
-                          <p className="mt-1 text-xs text-primary-600">
-                            {section.area === "general"
-                              ? "This option adds a per-kg price."
-                              : "This option adds a fixed one-time price."}
-                          </p>
-                        </div>
-                        {selectedOptions[section.key] ? (
-                          <ActionButton
-                            type="button"
-                            variant="secondary"
-                            className="px-3 py-2 text-xs"
-                            onClick={() =>
-                              setSelectedOptions((current) => ({
-                                ...current,
-                                [section.key]: "",
-                              }))
-                            }
-                          >
-                            Clear
-                          </ActionButton>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {section.options.map((option) => {
-                          const isSelected = selectedOptions[section.key] === option;
-                          const optionPrice = findOptionPrice(
-                            sharedOptionPrices,
-                            section.key,
-                            option,
-                          );
-
-                          return (
-                            <button
-                              key={`${section.key}-${option}`}
-                              type="button"
-                              onClick={() =>
-                                setSelectedOptions((current) => ({
-                                  ...current,
-                                  [section.key]: option,
-                                }))
-                              }
-                              className={`rounded-2xl border px-4 py-3 text-left transition-all ${
-                                isSelected
-                                  ? "border-[#2f2319] bg-[#2f2319] text-white shadow-[0_16px_28px_rgba(31,23,17,0.22)]"
-                                  : "border-[rgba(42,31,14,0.12)] bg-[#fffaf1] text-primary-800 hover:border-[#c9a84c] hover:bg-white"
-                              }`}
-                            >
-                              <p className="text-sm font-semibold">{option}</p>
-                              <p
-                                className={`mt-1 text-xs ${
-                                  isSelected ? "text-white/75" : "text-primary-500"
-                                }`}
-                              >
-                                {section.area === "general"
-                                  ? `${formatPriceDelta(optionPrice)} / kg`
-                                  : `${formatPriceDelta(optionPrice)} fixed`}
-                              </p>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SurfaceCard>
-            ) : null}
-
-            {item.configurationNote ? (
-              <SurfaceCard className="p-4 sm:p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700">
-                  Bakery note
-                </p>
-                <p className="mt-3 text-sm leading-6 text-primary-700">
-                  {item.configurationNote}
-                </p>
-              </SurfaceCard>
-            ) : null}
+            {addOnFieldOptions.map((section) => (
+              <OptionField
+                key={section.key}
+                title={section.title}
+                options={section.options}
+                selectedValue={selectedOptions[section.key] || ""}
+                onSelect={(value) =>
+                  setSelectedOptions((current) => ({
+                    ...current,
+                    [section.key]: current[section.key] === value ? "" : value,
+                  }))
+                }
+              />
+            ))}
 
             {estimatedRange ? (
               <SurfaceCard className="overflow-hidden">
                 <div className="bg-[linear-gradient(180deg,#2f2319_0%,#1f1711_100%)] p-5 text-white sm:p-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-                    Final estimate
-                  </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl bg-white/8 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
-                        1kg subtotal
-                      </p>
-                      <p className="mt-2 text-lg font-bold">
-                        {formatCurrency(priceBreakdown.perKgSubtotal)}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl bg-white/8 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
-                        Weight selected
-                      </p>
-                      <p className="mt-2 text-lg font-bold">
-                        {selectedWeight || "1"} {weightRange?.unit || "kg"}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl bg-white/8 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/60">
-                        Fixed extras
-                      </p>
-                      <p className="mt-2 text-lg font-bold">
-                        {formatCurrency(priceBreakdown.fixedAddOnPrice)}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-5 text-sm font-medium text-white/70">
+                  <p className="text-sm font-medium text-white/70">
                     Estimated price range
                   </p>
                   <p className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
@@ -922,23 +581,13 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
                     {formatCurrency(estimatedRange.max)}
                   </p>
                   <p className="mt-3 text-sm text-white/75">
-                    Current setup is around {formatCurrency(priceBreakdown.total)}.
-                    The main cake price is calculated from your selected weight using
-                    the 1kg base price.
+                    Current total {formatCurrency(priceBreakdown.total)}
                   </p>
                 </div>
               </SurfaceCard>
             ) : (
-              <SurfaceCard className="p-4 sm:p-5">
-                <p className="text-sm font-semibold text-primary-900">
-                  Final estimate will appear here after the required selections are
-                  completed.
-                </p>
-                {requiredSelectionKeys.length ? (
-                  <p className="mt-2 text-sm text-primary-600">
-                    Completed: {selectedRequiredCount} of {requiredSelectionKeys.length} required selections.
-                  </p>
-                ) : null}
+              <SurfaceCard className="p-4 sm:p-5 text-sm text-primary-600">
+                Select the available fields to see the estimate.
               </SurfaceCard>
             )}
           </div>

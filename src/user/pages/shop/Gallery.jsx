@@ -1,6 +1,5 @@
 import React, { useDeferredValue, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import GalleryHero from "@/user/components/gallery/GalleryHero";
 import GalleryGrid from "@/user/components/gallery/GalleryGrid";
 import GalleryCalculatorModal from "@/user/components/gallery/GalleryCalculatorModal";
 import GalleryLightbox from "@/user/components/gallery/GalleryLightbox";
@@ -67,11 +66,6 @@ const Gallery = () => {
     [safeGalleryItems, featuredProductItems],
   );
 
-  const totalLikes = useMemo(
-    () =>
-      safeGalleryItems.reduce((sum, item) => sum + Number(item.likes || 0), 0),
-    [safeGalleryItems],
-  );
   const cakeTypeOptions = useMemo(
     () =>
       Array.from(
@@ -187,12 +181,6 @@ const Gallery = () => {
         title="Gallery | Hindumatha's Cake World"
         description="Browse our cake gallery featuring birthdays, weddings, custom designs, and customer favorites from Hindumatha's Cake World."
         path="/gallery"
-      />
-      <GalleryHero
-        businessInfo={businessInfo}
-        galleryItems={allItems}
-        categories={categories}
-        totalLikes={totalLikes}
       />
 
       <div className="gallery-shell">
