@@ -20,6 +20,9 @@ export const getPaymentStatus = () =>
 export const postGalleryItem = (galleryItemData) =>
   apiClient.post("/site/gallery", galleryItemData).then((res) => res.data);
 
+export const putGalleryItem = (itemId, galleryItemData) =>
+  apiClient.put(`/site/gallery/${itemId}`, galleryItemData).then((res) => res.data);
+
 export const removeGalleryItem = (itemId) =>
   apiClient.delete(`/site/gallery/${itemId}`).then((res) => res.data);
 

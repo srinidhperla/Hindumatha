@@ -7,6 +7,7 @@ import {
   postTestAlertEmail,
   getPaymentStatus,
   postGalleryItem,
+  putGalleryItem,
   removeGalleryItem,
 } from "@/services/siteAPI";
 
@@ -113,6 +114,19 @@ export const deleteGalleryItem = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         toRejectPayload(error, "Failed to delete gallery item"),
+      );
+    }
+  },
+);
+
+export const updateGalleryItem = createAsyncThunk(
+  "site/updateGalleryItem",
+  async ({ itemId, galleryItemData }, { rejectWithValue }) => {
+    try {
+      return await putGalleryItem(itemId, galleryItemData);
+    } catch (error) {
+      return rejectWithValue(
+        toRejectPayload(error, "Failed to update gallery item"),
       );
     }
   },

@@ -28,6 +28,7 @@ const SITE_REFRESH_SCOPES = new Set([
 
 const AdminAnalyticsPage = lazy(() => import("./AdminAnalyticsPage"));
 const AdminDeliveryTimingPage = lazy(() => import("./AdminDeliveryTimingPage"));
+const AdminGalleryPage = lazy(() => import("./AdminGalleryPage"));
 const AdminInventoryPage = lazy(() => import("./AdminInventoryPage"));
 const AdminOrdersPage = lazy(() => import("./AdminOrdersPage"));
 const AdminOverviewPage = lazy(() => import("./AdminOverviewPage"));
@@ -38,6 +39,7 @@ const tabs = [
   { name: "Overview", href: "/admin/overview" },
   { name: "Orders", href: "/admin/orders" },
   { name: "Products", href: "/admin/products" },
+  { name: "Gallery", href: "/admin/gallery" },
   { name: "Inventory", href: "/admin/inventory" },
   { name: "Delivery Timing", href: "/admin/delivery-timing" },
   { name: "Analytics", href: "/admin/analytics" },
@@ -193,6 +195,12 @@ const AdminDashboard = () => {
               path="products"
               element={
                 <AdminProductsPage onToast={showToast} syncVersion={syncVersion} />
+              }
+            />
+            <Route
+              path="gallery"
+              element={
+                <AdminGalleryPage onToast={showToast} syncVersion={syncVersion} />
               }
             />
             <Route

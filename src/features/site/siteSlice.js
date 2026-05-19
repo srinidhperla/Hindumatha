@@ -9,6 +9,7 @@ import {
   fetchPaymentStatus,
   fetchSiteContent,
   sendTestAlertEmail,
+  updateGalleryItem,
   updateSiteCategoryOrder,
   updateSiteSettings,
 } from "./siteThunks";
@@ -54,6 +55,8 @@ const siteSlice = createSlice({
           normalizedSiteContent.categoryOrder || state.categoryOrder;
         state.categorySettings =
           normalizedSiteContent.categorySettings || state.categorySettings;
+        state.galleryFieldConfig =
+          normalizedSiteContent.galleryFieldConfig || state.galleryFieldConfig;
         state.galleryItems =
           normalizedSiteContent.galleryItems || state.galleryItems;
       })
@@ -80,17 +83,26 @@ const siteSlice = createSlice({
         state.error = null;
       })
       .addCase(updateSiteSettings.fulfilled, (state, action) => {
-        state.saving = false;
-        state.businessInfo = action.payload.businessInfo || state.businessInfo;
-        state.storeHours = action.payload.storeHours || state.storeHours;
-        state.deliverySettings = normalizeDeliverySettings(
-          action.payload.deliverySettings || state.deliverySettings,
+        const normalizedSiteContent = normalizeSiteImageFields(
+          action.payload || {},
         );
-        state.socialLinks = action.payload.socialLinks || state.socialLinks;
-        state.coupons = action.payload.coupons || state.coupons;
-        state.categoryOrder = action.payload.categoryOrder || state.categoryOrder;
+        state.saving = false;
+        state.businessInfo =
+          normalizedSiteContent.businessInfo || state.businessInfo;
+        state.storeHours = normalizedSiteContent.storeHours || state.storeHours;
+        state.deliverySettings = normalizeDeliverySettings(
+          normalizedSiteContent.deliverySettings || state.deliverySettings,
+        );
+        state.socialLinks = normalizedSiteContent.socialLinks || state.socialLinks;
+        state.coupons = normalizedSiteContent.coupons || state.coupons;
+        state.categoryOrder =
+          normalizedSiteContent.categoryOrder || state.categoryOrder;
         state.categorySettings =
-          action.payload.categorySettings || state.categorySettings;
+          normalizedSiteContent.categorySettings || state.categorySettings;
+        state.galleryFieldConfig =
+          normalizedSiteContent.galleryFieldConfig || state.galleryFieldConfig;
+        state.galleryItems =
+          normalizedSiteContent.galleryItems || state.galleryItems;
       })
       .addCase(updateSiteSettings.rejected, (state, action) => {
         state.saving = false;
@@ -118,11 +130,13 @@ const siteSlice = createSlice({
       })
       .addCase(addGalleryItem.fulfilled, (state, action) => {
         state.saving = false;
-        state.galleryItems.unshift(
-          normalizeSiteImageFields({
-            galleryItems: [action.payload],
-          }).galleryItems[0],
+        const normalizedSiteContent = normalizeSiteImageFields(
+          action.payload || {},
         );
+        state.galleryFieldConfig =
+          normalizedSiteContent.galleryFieldConfig || state.galleryFieldConfig;
+        state.galleryItems =
+          normalizedSiteContent.galleryItems || state.galleryItems;
       })
       .addCase(addGalleryItem.rejected, (state, action) => {
         state.saving = false;
@@ -131,6 +145,25 @@ const siteSlice = createSlice({
       .addCase(deleteGalleryItem.pending, (state) => {
         state.saving = true;
         state.error = null;
+      })
+      .addCase(updateGalleryItem.pending, (state) => {
+        state.saving = true;
+        state.error = null;
+      })
+      .addCase(updateGalleryItem.fulfilled, (state, action) => {
+        state.saving = false;
+        const normalizedSiteContent = normalizeSiteImageFields(
+          action.payload || {},
+        );
+        state.galleryFieldConfig =
+          normalizedSiteContent.galleryFieldConfig || state.galleryFieldConfig;
+        state.galleryItems =
+          normalizedSiteContent.galleryItems || state.galleryItems;
+      })
+      .addCase(updateGalleryItem.rejected, (state, action) => {
+        state.saving = false;
+        state.error =
+          action.payload?.message || "Failed to update gallery item";
       })
       .addCase(deleteGalleryItem.fulfilled, (state, action) => {
         state.saving = false;
@@ -154,6 +187,7 @@ export {
   fetchPaymentStatus,
   fetchSiteContent,
   sendTestAlertEmail,
+  updateGalleryItem,
   updateSiteCategoryOrder,
   updateSiteSettings,
 };

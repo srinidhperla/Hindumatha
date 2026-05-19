@@ -1,4 +1,5 @@
 import { createDefaultWeeklySchedule } from "@/utils/deliverySettings";
+import { createDefaultGalleryFieldConfig } from "@/admin/pages/adminGalleryConfig";
 
 const defaultSiteContent = {
   businessInfo: {
@@ -99,6 +100,7 @@ const defaultSiteContent = {
     supportedMethods: ["upi", "card"],
     cashOnDeliveryEnabled: true,
   },
+  galleryFieldConfig: createDefaultGalleryFieldConfig(),
   galleryItems: [],
 };
 
