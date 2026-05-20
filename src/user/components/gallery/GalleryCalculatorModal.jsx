@@ -392,9 +392,7 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
               }
 
               if (isDirectToggleSection(section, catalogOptions)) {
-                return selectedSectionOptions.length
-                  ? selectedSectionOptions
-                  : toUniqueOptions([section.title]);
+                return selectedSectionOptions;
               }
 
               return selectedSectionOptions;
