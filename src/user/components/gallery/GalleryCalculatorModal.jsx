@@ -26,10 +26,29 @@ const getSectionPriceSource = (section = {}) =>
     ? "per_image"
     : "shared";
 
+const isDirectToggleSection = (section = {}, catalogOptions = []) =>
+  section?.area === "extras" &&
+  Boolean(section?.isCustom) &&
+  (!Array.isArray(catalogOptions) || catalogOptions.length === 0);
+
 const formatPriceDelta = (value, pricingMode = "fixed") =>
   Number(value || 0) > 0
     ? `+${formatCurrency(value)}${pricingMode === "per_kg" ? "/kg" : ""}`
     : "Included";
+
+const formatSummarySelectionValue = ({
+  price = 0,
+  isPerKg = false,
+  weightMultiplier = 1,
+}) => {
+  if (!isPerKg) {
+    return formatCurrency(price);
+  }
+
+  return `${formatCurrency(price)}/kg (${formatCurrency(
+    Number(price || 0) * Number(weightMultiplier || 1),
+  )})`;
+};
 
 const buildOptionCatalogMap = (galleryFieldConfig = {}, item = {}) => {
   const catalogMap = new Map();
@@ -360,14 +379,26 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
         ...section,
         options: COMBINATION_SECTION_KEYS.includes(section.key)
           ? toUniqueOptions(optionCatalogMap[section.key] || [])
-          : toUniqueOptions(sectionSelectionMap.get(section.key) || []).filter(
-              (option) => {
-                const catalogOptions = optionCatalogMap[section.key];
-                return Array.isArray(catalogOptions)
-                  ? catalogOptions.includes(option)
-                  : true;
-              },
-            ),
+          : (() => {
+              const selectedSectionOptions = toUniqueOptions(
+                sectionSelectionMap.get(section.key) || [],
+              );
+              const catalogOptions = optionCatalogMap[section.key];
+
+              if (Array.isArray(catalogOptions) && catalogOptions.length > 0) {
+                return selectedSectionOptions.filter((option) =>
+                  catalogOptions.includes(option),
+                );
+              }
+
+              if (isDirectToggleSection(section, catalogOptions)) {
+                return selectedSectionOptions.length
+                  ? selectedSectionOptions
+                  : toUniqueOptions([section.title]);
+              }
+
+              return selectedSectionOptions;
+            })(),
       }))
       .filter((section) => section.options.length > 0);
   }, [galleryFieldConfig, item]);
@@ -447,19 +478,34 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     ],
   );
 
+  const customerSelectableSections = useMemo(
+    () =>
+      selectableSections.filter((section) => section.area === "general"),
+    [selectableSections],
+  );
+
+  const automaticExtraSections = useMemo(
+    () =>
+      selectableSections.filter((section) => section.area === "extras"),
+    [selectableSections],
+  );
+
   useEffect(() => {
     setSelectedOptions((current) =>
       Object.fromEntries(
-        selectableSections.map((section) => {
+        customerSelectableSections.map((section) => {
           const currentValue = String(current[section.key] || "").trim();
+          const fallbackValue =
+            section.options.length === 1 ? section.options[0] || "" : "";
+
           return [
             section.key,
-            section.options.includes(currentValue) ? currentValue : "",
+            section.options.includes(currentValue) ? currentValue : fallbackValue,
           ];
         }),
       ),
     );
-  }, [selectableSections]);
+  }, [customerSelectableSections]);
 
   useEffect(() => {
     if (!weightChoices.length) {
@@ -483,18 +529,41 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
 
   const coreSections = useMemo(
     () =>
-      selectableSections.filter((section) =>
+      customerSelectableSections.filter((section) =>
         COMBINATION_SECTION_KEYS.includes(section.key),
       ),
-    [selectableSections],
+    [customerSelectableSections],
   );
 
-  const addOnSections = useMemo(
+  const customerAddOnSections = useMemo(
     () =>
-      selectableSections.filter(
+      customerSelectableSections.filter(
         (section) => !COMBINATION_SECTION_KEYS.includes(section.key),
       ),
-    [selectableSections],
+    [customerSelectableSections],
+  );
+
+  const automaticAddOnEntries = useMemo(
+    () =>
+      automaticExtraSections.flatMap((section) => {
+        const pricingMode = getSectionPricingMode(section);
+
+        return section.options.map((option) => ({
+          sectionKey: section.key,
+          sectionTitle: section.title,
+          option,
+          price: resolveOptionPrice({
+            sharedEntries: sharedOptionPrices,
+            itemEntries: itemOptionPrices,
+            section,
+            option,
+          }),
+          pricingMode,
+          isPerKg: pricingMode === "per_kg",
+          isAutomatic: true,
+        }));
+      }),
+    [automaticExtraSections, itemOptionPrices, sharedOptionPrices],
   );
 
   const isEstimateReady = useMemo(() => {
@@ -511,11 +580,13 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     return (
       hasWeightSelection &&
       (Boolean(weightRange) ||
+        automaticAddOnEntries.length > 0 ||
         Object.values(selectedOptions).some((value) =>
           String(value || "").trim(),
         ))
     );
   }, [
+    automaticAddOnEntries.length,
     coreSections,
     hasCombinationPricing,
     hasWeightSelection,
@@ -563,9 +634,9 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     );
   }, [enabledCombinationPrices, hasCombinationPricing, isEstimateReady, selectedOptions]);
 
-  const selectedAddOnEntries = useMemo(
+  const selectedCustomerAddOnEntries = useMemo(
     () =>
-      addOnSections
+      customerAddOnSections
         .map((section) => {
           const selectedOption = String(selectedOptions[section.key] || "").trim();
           if (!selectedOption) {
@@ -586,10 +657,16 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
             }),
             pricingMode,
             isPerKg: pricingMode === "per_kg",
+            isAutomatic: false,
           };
         })
         .filter(Boolean),
-    [addOnSections, itemOptionPrices, selectedOptions, sharedOptionPrices],
+    [customerAddOnSections, itemOptionPrices, selectedOptions, sharedOptionPrices],
+  );
+
+  const allAddOnEntries = useMemo(
+    () => [...selectedCustomerAddOnEntries, ...automaticAddOnEntries],
+    [automaticAddOnEntries, selectedCustomerAddOnEntries],
   );
 
   const priceBreakdown = useMemo(() => {
@@ -613,7 +690,7 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
             },
           ]
         : []),
-      ...selectedAddOnEntries
+      ...allAddOnEntries
         .filter((entry) => entry.isPerKg)
         .map((entry) => ({
           label: `${entry.sectionTitle}: ${entry.option}`,
@@ -621,7 +698,7 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
         })),
     ];
 
-    const fixedSelections = selectedAddOnEntries
+    const fixedSelections = allAddOnEntries
       .filter((entry) => !entry.isPerKg)
       .map((entry) => ({
         label: `${entry.sectionTitle}: ${entry.option}`,
@@ -649,7 +726,7 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
       weightAdjustedSubtotal,
       total,
     };
-  }, [item, selectedAddOnEntries, selectedCombinationEntry, weightMultiplier]);
+  }, [allAddOnEntries, item, selectedCombinationEntry, weightMultiplier]);
 
   const coreFieldOptions = useMemo(
     () =>
@@ -665,7 +742,7 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
 
   const addOnFieldOptions = useMemo(
     () =>
-      addOnSections.map((section) => ({
+      customerAddOnSections.map((section) => ({
         ...section,
         options: section.options.map((option) => ({
           value: option,
@@ -680,7 +757,7 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
           )}`,
         })),
       })),
-    [addOnSections, itemOptionPrices, sharedOptionPrices],
+    [customerAddOnSections, itemOptionPrices, sharedOptionPrices],
   );
 
   const estimatedRange = useMemo(() => {
@@ -714,12 +791,25 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
           const value = String(selectedOptions[section.key] || "").trim();
           return value ? { label: section.title, value } : null;
         }),
-        ...selectedAddOnEntries.map((entry) => ({
+        ...selectedCustomerAddOnEntries.map((entry) => ({
           label: entry.sectionTitle,
           value: entry.option,
         })),
       ].filter(Boolean),
-    [coreSections, selectedAddOnEntries, selectedOptions, selectedWeightValue],
+    [coreSections, selectedCustomerAddOnEntries, selectedOptions, selectedWeightValue],
+  );
+
+  const estimateSummarySelections = useMemo(
+    () =>
+      allAddOnEntries.map((entry) => ({
+        label: `${entry.sectionTitle}: ${entry.option}`,
+        value: formatSummarySelectionValue({
+          price: entry.price,
+          isPerKg: entry.isPerKg,
+          weightMultiplier,
+        }),
+      })),
+    [allAddOnEntries, weightMultiplier],
   );
 
   if (!item) {
@@ -876,10 +966,13 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
                                 priceBreakdown.weightAdjustedSubtotal,
                               )}
                             />
-                            <BreakdownRow
-                              label="Fixed extras"
-                              value={formatCurrency(priceBreakdown.fixedSubtotal)}
-                            />
+                            {estimateSummarySelections.map((entry) => (
+                              <BreakdownRow
+                                key={`summary-${entry.label}`}
+                                label={entry.label}
+                                value={entry.value}
+                              />
+                            ))}
                             <BreakdownRow
                               label="Estimated total"
                               value={formatCurrency(priceBreakdown.total)}
