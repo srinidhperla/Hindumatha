@@ -1,5 +1,6 @@
 import React from "react";
 import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
+import { formatGalleryCategoryLabel } from "@/utils/galleryItems";
 
 const AdminGalleryToolbar = ({
   galleryCategories,
@@ -27,7 +28,7 @@ const AdminGalleryToolbar = ({
             variant={selectedCategory === category ? "primary" : "soft"}
             className="rounded-full px-4 py-2 text-xs sm:text-sm"
           >
-            {category}
+            {formatGalleryCategoryLabel(category)}
           </ActionButton>
         ))}
       </div>

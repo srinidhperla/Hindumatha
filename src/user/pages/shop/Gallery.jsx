@@ -9,7 +9,9 @@ import { optimizeProductImageUrl } from "@/utils/imageOptimization";
 import {
   attachGalleryItemCodes,
   buildGalleryWeightFilterOptions,
+  getGalleryItemCategories,
   getGalleryItemSelections,
+  matchesGalleryCategoryFilter,
   matchesGalleryOptionFilter,
   matchesGalleryWeightFilter,
   normalizeGallerySearchText,
@@ -44,6 +46,7 @@ const Gallery = () => {
           imageUrl: optimizeProductImageUrl(product.images?.[0] || product.image),
           title: product.name,
           category: "Featured",
+          categories: ["Featured"],
           likes: 0,
           isProduct: true,
           productId: product._id,
@@ -61,9 +64,9 @@ const Gallery = () => {
     () => [
       "All",
       ...(featuredProductItems.length > 0 ? ["Featured"] : []),
-      ...new Set(safeGalleryItems.map((item) => item.category).filter(Boolean)),
+      ...new Set(safeGalleryItems.flatMap((item) => getGalleryItemCategories(item))),
     ],
-    [safeGalleryItems, featuredProductItems],
+    [featuredProductItems, safeGalleryItems],
   );
 
   const cakeTypeOptions = useMemo(
@@ -96,8 +99,10 @@ const Gallery = () => {
       const normalizedSearch = normalizeGallerySearchText(deferredSearchTerm);
 
       const nextItems = allItems.filter((item) => {
-        const matchesCategory =
-          selectedCategory === "All" || item.category === selectedCategory;
+        const matchesCategory = matchesGalleryCategoryFilter(
+          item,
+          selectedCategory,
+        );
         const matchesCakeType = matchesGalleryOptionFilter(
           item,
           "cakeTypes",
@@ -111,7 +116,7 @@ const Gallery = () => {
         const matchesWeight = matchesGalleryWeightFilter(item, selectedWeight);
         const searchCandidates = [
           item.title,
-          item.category,
+          ...getGalleryItemCategories(item),
           item.cakeCode,
           item.cakeCodeSearch,
           String(item.cakeCodeSearch || "").split("-").pop() || "",

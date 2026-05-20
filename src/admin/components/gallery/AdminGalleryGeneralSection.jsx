@@ -12,15 +12,49 @@ const AdminGalleryGeneralSection = ({
   formData,
   titleInputRef,
   onFieldChange,
+  onCategoriesChange,
   galleryCategories = [],
   onCategoryDraftChange,
   onRenameCategory,
   onDeleteCategory,
 }) => {
-  const [useCustomCategory, setUseCustomCategory] = useState(
-    formData.category && !galleryCategories.includes(formData.category),
-  );
   const [managingCategories, setManagingCategories] = useState(false);
+  const [pendingCategory, setPendingCategory] = useState("");
+  const selectedCategories = Array.from(
+    new Set(
+      [
+        ...(Array.isArray(formData.categories) ? formData.categories : []),
+        formData.category,
+      ]
+        .map((category) => String(category || "").trim())
+        .filter(Boolean),
+    ),
+  );
+
+  const toggleCategory = (categoryName) => {
+    const normalizedCategory = String(categoryName || "").trim();
+    if (!normalizedCategory) {
+      return;
+    }
+
+    const isSelected = selectedCategories.includes(normalizedCategory);
+    onCategoriesChange?.(
+      isSelected
+        ? selectedCategories.filter((entry) => entry !== normalizedCategory)
+        : [...selectedCategories, normalizedCategory],
+    );
+  };
+
+  const addPendingCategory = () => {
+    const normalizedCategory = String(pendingCategory || "").trim();
+
+    if (!normalizedCategory) {
+      return;
+    }
+
+    onCategoriesChange?.([...selectedCategories, normalizedCategory]);
+    setPendingCategory("");
+  };
 
   return (
   <SurfaceCard className="p-4 sm:p-5">
@@ -50,29 +84,64 @@ const AdminGalleryGeneralSection = ({
         />
       </label>
 
-      <div className="text-sm font-medium text-primary-700">
-        Category
-        <select
-          value={useCustomCategory ? "__new__" : formData.category}
-          onChange={(e) => {
-            if (e.target.value === "__new__") {
-              setUseCustomCategory(true);
-              onFieldChange({ target: { name: "category", value: "" } });
-            } else {
-              setUseCustomCategory(false);
-              onFieldChange({ target: { name: "category", value: e.target.value } });
-            }
-          }}
-          className={inputClassName}
-        >
-          <option value="" disabled>Select a category</option>
-          {galleryCategories.map((cat) => (
-            <option key={cat} value={cat}>
-              {formatCategoryLabel(cat)}
-            </option>
-          ))}
-          <option value="__new__">Add New Category</option>
-        </select>
+      <div className="text-sm font-medium text-primary-700 md:col-span-2">
+        Categories
+        <div className="mt-2 rounded-2xl border border-gold-200/70 bg-white/85 p-3">
+          <div className="flex flex-wrap gap-2">
+            {galleryCategories.map((cat) => {
+              const isSelected = selectedCategories.includes(cat);
+
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => toggleCategory(cat)}
+                  className={`rounded-full border px-3 py-2 text-sm font-semibold transition-all ${
+                    isSelected
+                      ? "border-primary-900 bg-primary-900 text-white"
+                      : "border-gold-200/80 bg-white text-primary-800 hover:border-gold-400 hover:bg-gold-50/70"
+                  }`}
+                >
+                  {formatCategoryLabel(cat)}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              value={pendingCategory}
+              onChange={(event) => setPendingCategory(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  addPendingCategory();
+                }
+              }}
+              placeholder="Add new category"
+              className={inputClassName.replace("mt-1 ", "")}
+            />
+            <ActionButton type="button" variant="secondary" onClick={addPendingCategory}>
+              Add Category
+            </ActionButton>
+          </div>
+          <div className="mt-3 rounded-xl bg-gold-50/60 px-3 py-2 text-xs text-primary-700">
+            Select one or more categories. The first selected category is used as the main gallery label.
+          </div>
+          {selectedCategories.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {selectedCategories.map((category, index) => (
+                <span
+                  key={`selected-${category}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#fff5d8] px-3 py-1.5 text-xs font-semibold text-primary-900"
+                >
+                  {formatCategoryLabel(category)}
+                  {index === 0 ? <span className="text-[10px] uppercase text-primary-700">Main</span> : null}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
         {onRenameCategory && onDeleteCategory ? (
           <div className="mt-2">
             <button
@@ -120,16 +189,6 @@ const AdminGalleryGeneralSection = ({
             ) : null}
           </div>
         ) : null}
-        {useCustomCategory && (
-          <input
-            type="text"
-            name="category"
-            value={formData.category}
-            onChange={onFieldChange}
-            placeholder="Type new category name"
-            className="mt-2 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
-          />
-        )}
       </div>
     </div>
   </SurfaceCard>

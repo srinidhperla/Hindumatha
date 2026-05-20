@@ -3,6 +3,7 @@ import { OptimizedImage } from "@/shared/ui";
 import {
   formatGalleryCategoryLabel,
   formatGalleryWeightRange,
+  getGalleryItemCategories,
 } from "@/utils/galleryItems";
 
 const sortOptions = [
@@ -271,9 +272,18 @@ const GalleryGrid = ({
             <div className="space-y-4 p-4 sm:p-5">
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7a5c0f] shadow-sm">
-                    {formatGalleryCategoryLabel(item.category)}
-                  </span>
+                  {getGalleryItemCategories(item).map((category, index) => (
+                    <span
+                      key={`${item._id}-${category}`}
+                      className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] shadow-sm ${
+                        index === 0
+                          ? "bg-white text-[#7a5c0f]"
+                          : "bg-[#fff5d8] text-primary-900"
+                      }`}
+                    >
+                      {formatGalleryCategoryLabel(category)}
+                    </span>
+                  ))}
                   {formatGalleryWeightRange(item) ? (
                     <span className="rounded-full bg-[#fff5d8] px-3 py-1 text-[11px] font-semibold text-primary-900 shadow-sm">
                       {formatGalleryWeightRange(item)}

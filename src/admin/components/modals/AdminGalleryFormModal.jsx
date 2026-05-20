@@ -29,10 +29,12 @@ const AdminGalleryFormModal = ({
   onCategoryDraftChange,
   onDeleteCategory,
   onClose,
+  onCategoriesChange,
   onOptionPriceChange,
   onCombinationEnabledChange,
   onCombinationPriceChange,
   onRenameCategory,
+  onSectionPricingModeChange,
   onSubmit,
   onFieldChange,
   onWeightRangeChange,
@@ -338,9 +340,22 @@ const AdminGalleryFormModal = ({
                         ? "Set price for this extra field."
                         : "Set price for each option in this field."}
                     </p>
+                    <label className="mt-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary-700">
+                      <input
+                        type="checkbox"
+                        checked={section.pricingMode === "per_kg"}
+                        onChange={(event) =>
+                          onSectionPricingModeChange?.(
+                            section.key,
+                            event.target.checked ? "per_kg" : "fixed",
+                          )
+                        }
+                      />
+                      Charge per kg
+                    </label>
                   </div>
                   <StatusChip tone={tone}>
-                    {section.pricedOptions.length} options
+                    {section.pricingMode === "per_kg" ? "Per kg" : "Fixed"}
                   </StatusChip>
                 </div>
 
@@ -363,12 +378,16 @@ const AdminGalleryFormModal = ({
                               {entry.option}
                             </p>
                             <p className="text-xs text-primary-600">
-                              {section.title} option
+                              {section.pricingMode === "per_kg"
+                                ? `${section.title} option, per kg`
+                                : `${section.title} option, fixed price`}
                             </p>
                           </div>
                         </div>
                         <label className="text-sm font-medium text-primary-700">
-                          Price
+                          {section.pricingMode === "per_kg"
+                            ? "Price per kg"
+                            : "Fixed price"}
                           <input
                             type="number"
                             min="0"
@@ -518,6 +537,7 @@ const AdminGalleryFormModal = ({
                   formData={formData}
                   titleInputRef={titleInputRef}
                   onFieldChange={onFieldChange}
+                  onCategoriesChange={onCategoriesChange}
                   galleryCategories={galleryCategories}
                   onCategoryDraftChange={onCategoryDraftChange}
                   onRenameCategory={onRenameCategory}

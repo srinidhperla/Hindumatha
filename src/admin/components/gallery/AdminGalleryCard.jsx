@@ -1,7 +1,11 @@
 import React from "react";
 import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 import { normalizeGalleryFormFromItem } from "@/admin/pages/adminGalleryConfig";
-import { formatGalleryWeightRange } from "@/utils/galleryItems";
+import {
+  formatGalleryCategoryLabel,
+  formatGalleryWeightRange,
+  getGalleryItemCategories,
+} from "@/utils/galleryItems";
 
 const formatPrice = (value) => {
   const numericValue = Number(value);
@@ -57,6 +61,7 @@ const AdminGalleryCard = ({
     ? normalizedItem.fieldSections
     : [];
   const weightLabel = formatGalleryWeightRange(item);
+  const categories = getGalleryItemCategories(item);
 
   return (
     <SurfaceCard className="overflow-hidden border-[rgba(201,168,76,0.28)]">
@@ -76,9 +81,17 @@ const AdminGalleryCard = ({
       <div className="space-y-4 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#9a7a2b]">
-              {item.category}
-            </p>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category, index) => (
+                <span
+                  key={`${item._id}-${category}`}
+                  className="rounded-full bg-[#fff5d8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a6630]"
+                >
+                  {formatGalleryCategoryLabel(category)}
+                  {index === 0 ? " • Main" : ""}
+                </span>
+              ))}
+            </div>
             <h3 className="mt-1 text-lg font-bold text-[#2a1f0e]">
               {item.title}
             </h3>

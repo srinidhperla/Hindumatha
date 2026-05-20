@@ -49,7 +49,7 @@ const AdminGalleryCombinationPricingSection = ({
             Combination Pricing
           </h3>
           <p className="mt-1 text-sm text-primary-600">
-            Set one price per Cake Type, Egg Type, and Flavor combination.
+            Set one base price per kg for each Cake Type, Egg Type, and Flavor combination.
           </p>
         </div>
         <StatusChip tone="accent">
@@ -133,7 +133,7 @@ const AdminGalleryCombinationPricingSection = ({
                               </label>
 
                               <label className="mt-3 block text-xs font-medium uppercase tracking-[0.12em] text-primary-600">
-                                Price
+                                Price per kg
                                 <input
                                   type="number"
                                   min="0"

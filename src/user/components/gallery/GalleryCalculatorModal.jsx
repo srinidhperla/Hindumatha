@@ -18,8 +18,13 @@ const toUniqueOptions = (items = []) =>
 const formatCurrency = (value) =>
   `Rs.${Number(value || 0).toLocaleString("en-IN")}`;
 
-const formatPriceDelta = (value) =>
-  Number(value || 0) > 0 ? `+${formatCurrency(value)}` : "Included";
+const getSectionPricingMode = (section = {}) =>
+  section?.pricingMode === "fixed" ? "fixed" : "per_kg";
+
+const formatPriceDelta = (value, pricingMode = "fixed") =>
+  Number(value || 0) > 0
+    ? `+${formatCurrency(value)}${pricingMode === "per_kg" ? "/kg" : ""}`
+    : "Included";
 
 const buildOptionCatalogMap = (galleryFieldConfig = {}, item = {}) => {
   const catalogMap = new Map();
@@ -56,24 +61,22 @@ const buildFieldSections = (galleryFieldConfig = {}, item = {}) => {
     ? galleryFieldConfig.fieldSections
     : [];
 
+  const normalizeSection = (section = {}) => ({
+    key: String(section?.key || "").trim(),
+    title: String(section?.title || "").trim(),
+    area: section?.area === "extras" ? "extras" : "general",
+    isCustom: Boolean(section?.isCustom),
+    pricingMode: getSectionPricingMode(section),
+  });
+
   if (sharedSections.length) {
     return sharedSections
-      .map((section) => ({
-        key: String(section?.key || "").trim(),
-        title: String(section?.title || "").trim(),
-        area: section?.area === "extras" ? "extras" : "general",
-        isCustom: Boolean(section?.isCustom),
-      }))
+      .map((section) => normalizeSection(section))
       .filter((section) => section.key && section.title);
   }
 
   return (Array.isArray(item?.fieldSections) ? item.fieldSections : [])
-    .map((section) => ({
-      key: String(section?.key || "").trim(),
-      title: String(section?.title || "").trim(),
-      area: section?.area === "extras" ? "extras" : "general",
-      isCustom: Boolean(section?.isCustom),
-    }))
+    .map((section) => normalizeSection(section))
     .filter((section) => section.key && section.title);
 };
 
@@ -187,8 +190,116 @@ const OptionField = ({
   </SurfaceCard>
 );
 
+const WeightSliderField = ({
+  title,
+  options = [],
+  selectedValue = "",
+  onSelect,
+  note = "",
+}) => {
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((option) => option.value === selectedValue),
+  );
+  const activeOption = options[selectedIndex] || options[0] || null;
+  const fillWidth =
+    options.length <= 1 ? 100 : (selectedIndex / (options.length - 1)) * 100;
+  const minWidth = Math.max(options.length * 72, 320);
+
+  if (!options.length) {
+    return null;
+  }
+
+  return (
+    <SurfaceCard className="p-4 sm:p-5">
+      <div className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-primary-900">{title}</p>
+            {note ? <p className="mt-1 text-xs text-primary-600">{note}</p> : null}
+          </div>
+          <div className="rounded-full bg-[#fff5d8] px-4 py-2 text-sm font-semibold text-primary-900">
+            {activeOption?.label}
+          </div>
+        </div>
+
+        <div className="overflow-x-auto pb-1">
+          <div className="relative pt-4" style={{ minWidth }}>
+            <div className="absolute left-0 right-0 top-7 h-1 rounded-full bg-[rgba(42,31,14,0.12)]" />
+            <div
+              className="absolute left-0 top-7 h-1 rounded-full bg-[#b45f40]"
+              style={{ width: `${fillWidth}%` }}
+            />
+            <input
+              type="range"
+              min="0"
+              max={Math.max(options.length - 1, 0)}
+              step="1"
+              value={selectedIndex}
+              onChange={(event) =>
+                onSelect(options[Number(event.target.value)]?.value || "")
+              }
+              className="absolute left-0 right-0 top-[6px] h-10 w-full cursor-grab opacity-0"
+              aria-label="Select cake weight"
+            />
+            <div
+              className="relative grid"
+              style={{
+                gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {options.map((option, index) => {
+                const isSelected = option.value === selectedValue;
+
+                return (
+                  <button
+                    key={`weight-${option.value}`}
+                    type="button"
+                    onClick={() => onSelect(option.value)}
+                    className="flex flex-col items-center gap-2 text-center"
+                  >
+                    <span
+                      className={`relative z-10 h-5 w-5 rounded-full border-4 transition-all ${
+                        isSelected
+                          ? "border-[#b45f40] bg-white shadow-[0_0_0_6px_rgba(180,95,64,0.18)]"
+                          : "border-white bg-[#d8c4ae] shadow-[0_0_0_2px_rgba(42,31,14,0.12)]"
+                      }`}
+                    />
+                    <span
+                      className={`text-[11px] font-semibold sm:text-xs ${
+                        isSelected ? "text-primary-900" : "text-primary-500"
+                      }`}
+                    >
+                      {option.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </SurfaceCard>
+  );
+};
+
+const BreakdownRow = ({ label, value, strong = false }) => (
+  <div className="flex items-start justify-between gap-4 py-2 text-sm">
+    <span className={strong ? "font-semibold text-primary-900" : "text-primary-700"}>
+      {label}
+    </span>
+    <span className={strong ? "font-semibold text-primary-900" : "text-primary-900"}>
+      {value}
+    </span>
+  </div>
+);
+
 const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
   const [selectedWeight, setSelectedWeight] = useState("");
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [breakdownTab, setBreakdownTab] = useState("summary");
+
   const sharedOptionPrices = useMemo(
     () => buildSharedOptionPrices(galleryFieldConfig, item),
     [galleryFieldConfig, item],
@@ -234,8 +345,6 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
       }))
       .filter((section) => section.options.length > 0);
   }, [galleryFieldConfig, item]);
-
-  const [selectedOptions, setSelectedOptions] = useState({});
 
   const selectableSections = useMemo(
     () =>
@@ -341,6 +450,11 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     });
   }, [weightChoices]);
 
+  useEffect(() => {
+    setShowBreakdown(false);
+    setBreakdownTab("summary");
+  }, [item?._id]);
+
   const coreSections = useMemo(
     () =>
       selectableSections.filter((section) =>
@@ -382,6 +496,12 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     selectedOptions,
     weightRange,
   ]);
+
+  useEffect(() => {
+    if (!isEstimateReady) {
+      setShowBreakdown(false);
+    }
+  }, [isEstimateReady]);
 
   const selectedCombinationEntry = useMemo(() => {
     if (!hasCombinationPricing || !isEstimateReady) {
@@ -426,12 +546,15 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
             return null;
           }
 
+          const pricingMode = getSectionPricingMode(section);
+
           return {
             sectionKey: section.key,
             sectionTitle: section.title,
             option: selectedOption,
             price: findOptionPrice(sharedOptionPrices, section.key, selectedOption),
-            isPerKg: section.area === "general",
+            pricingMode,
+            isPerKg: pricingMode === "per_kg",
           };
         })
         .filter(Boolean),
@@ -441,28 +564,62 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
   const priceBreakdown = useMemo(() => {
     const basePricePerKg = Number(item?.price) || 0;
     const combinationPricePerKg = Number(selectedCombinationEntry?.price || 0);
-    const perKgAddOnPrice = selectedAddOnEntries.reduce(
-      (sum, entry) => sum + (entry.isPerKg ? Number(entry.price || 0) : 0),
+
+    const perKgSelections = [
+      {
+        label: item?.priceLabel
+          ? `${item.priceLabel} base price`
+          : "Base cake price",
+        value: basePricePerKg,
+      },
+      ...(combinationPricePerKg > 0
+        ? [
+            {
+              label:
+                selectedCombinationEntry?.label ||
+                "Cake type, egg type, and flavor combination",
+              value: combinationPricePerKg,
+            },
+          ]
+        : []),
+      ...selectedAddOnEntries
+        .filter((entry) => entry.isPerKg)
+        .map((entry) => ({
+          label: `${entry.sectionTitle}: ${entry.option}`,
+          value: Number(entry.price || 0),
+        })),
+    ];
+
+    const fixedSelections = selectedAddOnEntries
+      .filter((entry) => !entry.isPerKg)
+      .map((entry) => ({
+        label: `${entry.sectionTitle}: ${entry.option}`,
+        value: Number(entry.price || 0),
+      }));
+
+    const perKgSubtotal = perKgSelections.reduce(
+      (sum, entry) => sum + Number(entry.value || 0),
       0,
     );
-    const fixedAddOnPrice = selectedAddOnEntries.reduce(
-      (sum, entry) => sum + (!entry.isPerKg ? Number(entry.price || 0) : 0),
+    const fixedSubtotal = fixedSelections.reduce(
+      (sum, entry) => sum + Number(entry.value || 0),
       0,
     );
-    const perKgSubtotal =
-      basePricePerKg + combinationPricePerKg + perKgAddOnPrice;
-    const scaledTotal = perKgSubtotal * weightMultiplier;
-    const total = scaledTotal + fixedAddOnPrice;
+    const weightAdjustedSubtotal = perKgSubtotal * weightMultiplier;
+    const total = weightAdjustedSubtotal + fixedSubtotal;
 
     return {
       basePricePerKg,
       combinationPricePerKg,
-      perKgAddOnPrice,
-      fixedAddOnPrice,
+      perKgSelections,
+      fixedSelections,
       perKgSubtotal,
+      fixedSubtotal,
+      weightAdjustedSubtotal,
       total,
     };
   }, [item, selectedAddOnEntries, selectedCombinationEntry, weightMultiplier]);
+
   const coreFieldOptions = useMemo(
     () =>
       coreSections.map((section) => ({
@@ -474,20 +631,17 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
       })),
     [coreSections],
   );
+
   const addOnFieldOptions = useMemo(
     () =>
       addOnSections.map((section) => ({
         ...section,
         options: section.options.map((option) => ({
           value: option,
-          label:
-            section.area === "general"
-              ? `${option} ${formatPriceDelta(
-                  findOptionPrice(sharedOptionPrices, section.key, option),
-                )}/kg`
-              : `${option} ${formatPriceDelta(
-                  findOptionPrice(sharedOptionPrices, section.key, option),
-                )}`,
+          label: `${option} ${formatPriceDelta(
+            findOptionPrice(sharedOptionPrices, section.key, option),
+            getSectionPricingMode(section),
+          )}`,
         })),
       })),
     [addOnSections, sharedOptionPrices],
@@ -503,6 +657,34 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
       max: priceBreakdown.total + PRICE_RANGE_OFFSET,
     };
   }, [isEstimateReady, priceBreakdown.total]);
+
+  const breakdownTabs = useMemo(
+    () =>
+      [
+        { key: "summary", label: "Summary" },
+        { key: "perkg", label: "Per kg" },
+        priceBreakdown.fixedSelections.length
+          ? { key: "extras", label: "Extras" }
+          : null,
+      ].filter(Boolean),
+    [priceBreakdown.fixedSelections.length],
+  );
+
+  const selectionSummary = useMemo(
+    () =>
+      [
+        selectedWeightValue > 0 ? { label: "Weight", value: `${selectedWeightValue} kg` } : null,
+        ...coreSections.map((section) => {
+          const value = String(selectedOptions[section.key] || "").trim();
+          return value ? { label: section.title, value } : null;
+        }),
+        ...selectedAddOnEntries.map((entry) => ({
+          label: entry.sectionTitle,
+          value: entry.option,
+        })),
+      ].filter(Boolean),
+    [coreSections, selectedAddOnEntries, selectedOptions, selectedWeightValue],
+  );
 
   if (!item) {
     return null;
@@ -531,12 +713,12 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
         ) : (
           <div className="space-y-5">
             {weightChoices.length ? (
-              <OptionField
+              <WeightSliderField
                 title="Weight"
                 options={weightChoices}
                 selectedValue={selectedWeight}
                 onSelect={setSelectedWeight}
-                compact
+                note="Drag the slider or tap a point to choose your cake weight."
               />
             ) : null}
 
@@ -567,23 +749,159 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
                     [section.key]: current[section.key] === value ? "" : value,
                   }))
                 }
+                note={
+                  getSectionPricingMode(section) === "per_kg"
+                    ? "This field is charged per kg."
+                    : "This field is added as a fixed amount."
+                }
               />
             ))}
 
             {estimatedRange ? (
               <SurfaceCard className="overflow-hidden">
                 <div className="bg-[linear-gradient(180deg,#2f2319_0%,#1f1711_100%)] p-5 text-white sm:p-6">
-                  <p className="text-sm font-medium text-white/70">
-                    Estimated price range
-                  </p>
-                  <p className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
-                    {formatCurrency(estimatedRange.min)} -{" "}
-                    {formatCurrency(estimatedRange.max)}
-                  </p>
-                  <p className="mt-3 text-sm text-white/75">
-                    Current total {formatCurrency(priceBreakdown.total)}
-                  </p>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-white/70">
+                        Estimated price range
+                      </p>
+                      <p className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">
+                        {formatCurrency(estimatedRange.min)} -{" "}
+                        {formatCurrency(estimatedRange.max)}
+                      </p>
+                      <p className="mt-3 max-w-2xl text-sm text-white/75">
+                        Estimated price only. Final price may vary after design
+                        confirmation, custom decoration, and finishing details.
+                      </p>
+                    </div>
+                    <ActionButton
+                      type="button"
+                      variant="secondary"
+                      className="border-white/20 bg-white/10 text-white hover:bg-white/15"
+                      onClick={() => setShowBreakdown((current) => !current)}
+                    >
+                      {showBreakdown ? "Hide Price Details" : "View Price Details"}
+                    </ActionButton>
+                  </div>
                 </div>
+
+                {showBreakdown ? (
+                  <div className="space-y-4 bg-[#fffaf2] p-4 sm:p-6">
+                    <div className="flex flex-wrap gap-2">
+                      {breakdownTabs.map((tab) => (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          onClick={() => setBreakdownTab(tab.key)}
+                          className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                            breakdownTab === tab.key
+                              ? "border-primary-900 bg-primary-900 text-white"
+                              : "border-[rgba(42,31,14,0.14)] bg-white text-primary-800"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {breakdownTab === "summary" ? (
+                      <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+                        <SurfaceCard className="p-4 sm:p-5">
+                          <p className="text-sm font-semibold text-primary-900">
+                            Selected cake plan
+                          </p>
+                          <div className="mt-3 divide-y divide-[rgba(42,31,14,0.08)]">
+                            {selectionSummary.map((entry) => (
+                              <BreakdownRow
+                                key={`${entry.label}-${entry.value}`}
+                                label={entry.label}
+                                value={entry.value}
+                              />
+                            ))}
+                          </div>
+                        </SurfaceCard>
+
+                        <SurfaceCard className="p-4 sm:p-5">
+                          <p className="text-sm font-semibold text-primary-900">
+                            Estimate summary
+                          </p>
+                          <div className="mt-3 divide-y divide-[rgba(42,31,14,0.08)]">
+                            <BreakdownRow
+                              label="Per kg subtotal"
+                              value={formatCurrency(priceBreakdown.perKgSubtotal)}
+                            />
+                            <BreakdownRow
+                              label={`Weight x ${selectedWeightValue || 1} kg`}
+                              value={formatCurrency(
+                                priceBreakdown.weightAdjustedSubtotal,
+                              )}
+                            />
+                            <BreakdownRow
+                              label="Fixed extras"
+                              value={formatCurrency(priceBreakdown.fixedSubtotal)}
+                            />
+                            <BreakdownRow
+                              label="Estimated total"
+                              value={formatCurrency(priceBreakdown.total)}
+                              strong
+                            />
+                          </div>
+                        </SurfaceCard>
+                      </div>
+                    ) : null}
+
+                    {breakdownTab === "perkg" ? (
+                      <SurfaceCard className="p-4 sm:p-5">
+                        <p className="text-sm font-semibold text-primary-900">
+                          Per kg calculation
+                        </p>
+                        <div className="mt-3 divide-y divide-[rgba(42,31,14,0.08)]">
+                          {priceBreakdown.perKgSelections.map((entry) => (
+                            <BreakdownRow
+                              key={`perkg-${entry.label}`}
+                              label={entry.label}
+                              value={formatCurrency(entry.value)}
+                            />
+                          ))}
+                          <BreakdownRow
+                            label="Per kg subtotal"
+                            value={formatCurrency(priceBreakdown.perKgSubtotal)}
+                            strong
+                          />
+                          <BreakdownRow
+                            label={`Per kg subtotal x ${selectedWeightValue || 1} kg`}
+                            value={formatCurrency(
+                              priceBreakdown.weightAdjustedSubtotal,
+                            )}
+                            strong
+                          />
+                        </div>
+                      </SurfaceCard>
+                    ) : null}
+
+                    {breakdownTab === "extras" ? (
+                      <SurfaceCard className="p-4 sm:p-5">
+                        <p className="text-sm font-semibold text-primary-900">
+                          Fixed extras
+                        </p>
+                        <div className="mt-3 divide-y divide-[rgba(42,31,14,0.08)]">
+                          {priceBreakdown.fixedSelections.map((entry) => (
+                            <BreakdownRow
+                              key={`fixed-${entry.label}`}
+                              label={entry.label}
+                              value={formatCurrency(entry.value)}
+                            />
+                          ))}
+                          <BreakdownRow
+                            label="Fixed extras subtotal"
+                            value={formatCurrency(priceBreakdown.fixedSubtotal)}
+                            strong
+                          />
+                        </div>
+                      </SurfaceCard>
+                    ) : null}
+                  </div>
+                ) : null}
               </SurfaceCard>
             ) : (
               <SurfaceCard className="p-4 sm:p-5 text-sm text-primary-600">

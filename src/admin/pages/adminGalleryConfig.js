@@ -65,6 +65,7 @@ export const DEFAULT_GALLERY_FIELD_SECTIONS =
     area: section.area,
     title: section.title,
     isCustom: false,
+    pricingMode: section.area === "general" ? "per_kg" : "fixed",
   }));
 
 const SECTION_METADATA_BY_KEY = Object.fromEntries(
@@ -86,8 +87,26 @@ const cloneFieldSections = (items = []) =>
       area: section?.area === "extras" ? "extras" : "general",
       title: String(section?.title || "").trim(),
       isCustom: Boolean(section?.isCustom),
+      pricingMode:
+        section?.pricingMode === "per_kg" ||
+        (section?.pricingMode !== "fixed" &&
+          section?.area !== "extras")
+          ? "per_kg"
+          : "fixed",
     }))
     .filter((section) => section.key && section.title);
+
+const normalizeCategoryList = (items = [], fallbackCategory = "") =>
+  Array.from(
+    new Set(
+      [
+        ...(Array.isArray(items) ? items : []),
+        String(fallbackCategory || "").trim(),
+      ]
+        .map((item) => String(item || "").trim())
+        .filter(Boolean),
+    ),
+  );
 
 const cloneOptionCatalogEntries = (items = []) =>
   items
@@ -389,6 +408,7 @@ export const createEmptyGalleryForm = (
   return {
     title: "",
     category: "",
+    categories: [],
     likes: 0,
     price: 0,
     priceLabel: "Starting at",
@@ -423,7 +443,11 @@ export const normalizeGalleryFormFromItem = (
 
   return {
     title: item?.title || "",
-    category: item?.category || "",
+    category:
+      normalizeCategoryList(item?.categories, item?.category)[0] ||
+      item?.category ||
+      "",
+    categories: normalizeCategoryList(item?.categories, item?.category),
     likes: Number(item?.likes) || 0,
     price: Number(item?.price) || 0,
     priceLabel: item?.priceLabel || "Starting at",

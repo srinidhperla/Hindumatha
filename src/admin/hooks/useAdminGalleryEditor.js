@@ -63,9 +63,19 @@ const buildGalleryPayload = ({
     formData,
     optionCatalogs,
   );
+  const categories = Array.from(
+    new Set(
+      (Array.isArray(formData.categories) ? formData.categories : [])
+        .map((entry) => String(entry || "").trim())
+        .filter(Boolean),
+    ),
+  );
+  const primaryCategory =
+    categories[0] || String(formData.category || "").trim();
 
   payload.append("title", String(formData.title || "").trim());
-  payload.append("category", String(formData.category || "").trim());
+  payload.append("category", primaryCategory);
+  payload.append("categories", JSON.stringify(categories));
   payload.append("price", Number(formData.price) || 0);
   payload.append(
     "priceLabel",
@@ -176,7 +186,12 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
       Array.from(
         new Set(
           galleryItems
-            .map((item) => String(item?.category || "").trim())
+            .flatMap((item) =>
+              Array.isArray(item?.categories) && item.categories.length > 0
+                ? item.categories
+                : [item?.category],
+            )
+            .map((category) => String(category || "").trim())
             .filter(Boolean),
         ),
       ).sort((left, right) => left.localeCompare(right)),
@@ -199,13 +214,20 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
     return galleryItems.filter((item) => {
       const title = String(item?.title || "").toLowerCase();
-      const category = String(item?.category || "").toLowerCase();
+      const categories = (
+        Array.isArray(item?.categories) && item.categories.length > 0
+          ? item.categories
+          : [item?.category]
+      )
+        .map((category) => String(category || "").toLowerCase())
+        .filter(Boolean);
       const matchesSearch =
         !normalizedSearch ||
         title.includes(normalizedSearch) ||
-        category.includes(normalizedSearch);
+        categories.some((category) => category.includes(normalizedSearch));
       const matchesCategory =
-        selectedCategory === "all" || item?.category === selectedCategory;
+        selectedCategory === "all" ||
+        categories.includes(String(selectedCategory || "").toLowerCase());
 
       return matchesSearch && matchesCategory;
     });
@@ -268,6 +290,16 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     }));
   };
 
+  const handleCategoriesChange = (nextCategories = []) => {
+    const normalizedCategories = toUniqueOptions(nextCategories);
+
+    setFormData((current) => ({
+      ...current,
+      categories: normalizedCategories,
+      category: normalizedCategories[0] || "",
+    }));
+  };
+
   const handleWeightRangeChange = (field, value) => {
     setFormData((current) => ({
       ...current,
@@ -310,6 +342,17 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
           : [...currentItems, normalizedOption],
       };
     });
+  };
+
+  const handleSectionPricingModeChange = (sectionKey, nextPricingMode) => {
+    const pricingMode = nextPricingMode === "fixed" ? "fixed" : "per_kg";
+
+    setFormData((current) => ({
+      ...current,
+      fieldSections: (current.fieldSections || []).map((section) =>
+        section.key === sectionKey ? { ...section, pricingMode } : section,
+      ),
+    }));
   };
 
   const toggleAllSectionOptions = (sectionKey, options = [], forceState) => {
@@ -535,6 +578,7 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
           title: normalizedTitle,
           area: area === "extras" ? "extras" : "general",
           isCustom: true,
+          pricingMode: area === "extras" ? "fixed" : "per_kg",
         },
       ],
       customSections: [
@@ -543,6 +587,7 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
           key: sectionKey,
           title: normalizedTitle,
           area: area === "extras" ? "extras" : "general",
+          pricingMode: area === "extras" ? "fixed" : "per_kg",
         },
       ],
       [sectionKey]: [],
@@ -817,24 +862,48 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
     try {
       const matchingItems = galleryItems.filter(
-        (item) => String(item?.category || "").trim() === sourceCategory,
+        (item) =>
+          (
+            Array.isArray(item?.categories) && item.categories.length > 0
+              ? item.categories
+              : [item?.category]
+          )
+            .map((entry) => String(entry || "").trim())
+            .includes(sourceCategory),
       );
 
       await Promise.all(
         matchingItems.map((item) =>
+          {
+            const nextCategories = toUniqueOptions(
+              (
+                Array.isArray(item?.categories) && item.categories.length > 0
+                  ? item.categories
+                  : [item?.category]
+              ).map((entry) =>
+                String(entry || "").trim() === sourceCategory
+                  ? targetCategory
+                  : String(entry || "").trim(),
+              ),
+            );
+
+            return (
           dispatch(
             updateGalleryItem({
               itemId: item._id,
               galleryItemData: buildGalleryPayload({
                 formData: {
                   ...normalizeGalleryFormFromItem(item, sharedGalleryFieldConfig),
-                  category: targetCategory,
+                  categories: nextCategories,
+                  category: nextCategories[0] || targetCategory,
                 },
                 optionCatalogs: sharedOptionCatalogs,
                 existingImageUrl: item.imageUrl,
               }),
             }),
-          ).unwrap(),
+          ).unwrap()
+            );
+          },
         ),
       );
 
@@ -864,24 +933,49 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
     try {
       const matchingItems = galleryItems.filter(
-        (item) => String(item?.category || "").trim() === normalizedCategory,
+        (item) =>
+          (
+            Array.isArray(item?.categories) && item.categories.length > 0
+              ? item.categories
+              : [item?.category]
+          )
+            .map((entry) => String(entry || "").trim())
+            .includes(normalizedCategory),
       );
 
       await Promise.all(
         matchingItems.map((item) =>
+          {
+            const remainingCategories = toUniqueOptions(
+              (
+                Array.isArray(item?.categories) && item.categories.length > 0
+                  ? item.categories
+                  : [item?.category]
+              ).filter(
+                (entry) => String(entry || "").trim() !== normalizedCategory,
+              ),
+            );
+            const nextCategories = remainingCategories.length
+              ? remainingCategories
+              : [DEFAULT_DELETED_CATEGORY];
+
+            return (
           dispatch(
             updateGalleryItem({
               itemId: item._id,
               galleryItemData: buildGalleryPayload({
                 formData: {
                   ...normalizeGalleryFormFromItem(item, sharedGalleryFieldConfig),
-                  category: DEFAULT_DELETED_CATEGORY,
+                  categories: nextCategories,
+                  category: nextCategories[0] || DEFAULT_DELETED_CATEGORY,
                 },
                 optionCatalogs: sharedOptionCatalogs,
                 existingImageUrl: item.imageUrl,
               }),
             }),
-          ).unwrap(),
+          ).unwrap()
+            );
+          },
         ),
       );
 
@@ -937,10 +1031,10 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     }
 
     const title = String(formData.title || "").trim();
-    const category = String(formData.category || "").trim();
+    const categories = toUniqueOptions(formData.categories || []);
 
-    if (!title || !category) {
-      onToast("Please enter a gallery title and category.", "error");
+    if (!title || !categories.length) {
+      onToast("Please enter a gallery title and at least one category.", "error");
       return;
     }
 
@@ -993,10 +1087,12 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     handleCategoryDraftChange,
     handleDeleteItem,
     handleFieldChange,
+    handleCategoriesChange,
     handleImageChange,
     handleOptionPriceChange,
     handleCombinationEnabledChange,
     handleCombinationPriceChange,
+    handleSectionPricingModeChange,
     handleSubmit,
     handleWeightRangeChange,
     imageFile,

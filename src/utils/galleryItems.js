@@ -25,6 +25,15 @@ export const formatGalleryCategoryLabel = (value = "") =>
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 
+export const getGalleryItemCategories = (item = {}) =>
+  toUniqueOptions([
+    ...(Array.isArray(item?.categories) ? item.categories : []),
+    item?.category,
+  ]);
+
+export const getPrimaryGalleryCategory = (item = {}) =>
+  getGalleryItemCategories(item)[0] || "";
+
 export const buildGalleryCodePrefix = (value = "") => {
   const normalizedValue = toTrimmedString(value)
     .toLowerCase()
@@ -47,7 +56,7 @@ export const attachGalleryItemCodes = (items = []) => {
   const categoryCounts = new Map();
 
   return items.map((item) => {
-    const categoryKey = buildGalleryCodePrefix(item?.category);
+    const categoryKey = buildGalleryCodePrefix(getPrimaryGalleryCategory(item));
     const nextCount = (categoryCounts.get(categoryKey) || 0) + 1;
     const codeNumber = String(nextCount).padStart(2, "0");
     categoryCounts.set(categoryKey, nextCount);
@@ -193,4 +202,14 @@ export const buildGalleryWeightFilterOptions = (items = []) => {
   return Array.from(optionMap.values()).sort(
     (left, right) => Number(left.value) - Number(right.value),
   );
+};
+
+export const matchesGalleryCategoryFilter = (item = {}, selectedCategory = "") => {
+  const normalizedValue = toTrimmedString(selectedCategory);
+
+  if (!normalizedValue || normalizedValue === "All") {
+    return true;
+  }
+
+  return getGalleryItemCategories(item).includes(normalizedValue);
 };

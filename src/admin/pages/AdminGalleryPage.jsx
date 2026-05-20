@@ -24,10 +24,12 @@ const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
     handleCategoryDraftChange,
     handleDeleteItem,
     handleFieldChange,
+    handleCategoriesChange,
     handleImageChange,
     handleOptionPriceChange,
     handleCombinationEnabledChange,
     handleCombinationPriceChange,
+    handleSectionPricingModeChange,
     handleSubmit,
     handleWeightRangeChange,
     imageFile,
@@ -129,10 +131,12 @@ const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
           onClose={closeModal}
           onCategoryDraftChange={handleCategoryDraftChange}
           onDeleteCategory={deleteCategory}
+          onCategoriesChange={handleCategoriesChange}
           onOptionPriceChange={handleOptionPriceChange}
           onCombinationEnabledChange={handleCombinationEnabledChange}
           onCombinationPriceChange={handleCombinationPriceChange}
           onRenameCategory={renameCategory}
+          onSectionPricingModeChange={handleSectionPricingModeChange}
           onSubmit={handleSubmit}
           onFieldChange={handleFieldChange}
           onWeightRangeChange={handleWeightRangeChange}
