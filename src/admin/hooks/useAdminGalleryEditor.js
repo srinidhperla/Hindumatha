@@ -355,6 +355,17 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     }));
   };
 
+  const handleSectionPriceSourceChange = (sectionKey, nextPriceSource) => {
+    const priceSource = nextPriceSource === "per_image" ? "per_image" : "shared";
+
+    setFormData((current) => ({
+      ...current,
+      fieldSections: (current.fieldSections || []).map((section) =>
+        section.key === sectionKey ? { ...section, priceSource } : section,
+      ),
+    }));
+  };
+
   const toggleAllSectionOptions = (sectionKey, options = [], forceState) => {
     const normalizedOptions = toUniqueOptions(options);
 
@@ -579,6 +590,7 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
           area: area === "extras" ? "extras" : "general",
           isCustom: true,
           pricingMode: area === "extras" ? "fixed" : "per_kg",
+          priceSource: "shared",
         },
       ],
       customSections: [
@@ -588,6 +600,7 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
           title: normalizedTitle,
           area: area === "extras" ? "extras" : "general",
           pricingMode: area === "extras" ? "fixed" : "per_kg",
+          priceSource: "shared",
         },
       ],
       [sectionKey]: [],
@@ -1092,6 +1105,7 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     handleOptionPriceChange,
     handleCombinationEnabledChange,
     handleCombinationPriceChange,
+    handleSectionPriceSourceChange,
     handleSectionPricingModeChange,
     handleSubmit,
     handleWeightRangeChange,

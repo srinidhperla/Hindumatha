@@ -66,6 +66,7 @@ export const DEFAULT_GALLERY_FIELD_SECTIONS =
     title: section.title,
     isCustom: false,
     pricingMode: section.area === "general" ? "per_kg" : "fixed",
+    priceSource: "shared",
   }));
 
 const SECTION_METADATA_BY_KEY = Object.fromEntries(
@@ -73,6 +74,8 @@ const SECTION_METADATA_BY_KEY = Object.fromEntries(
 );
 
 const BUILT_IN_SECTION_KEYS = Object.keys(DEFAULT_GALLERY_EDITOR_OPTIONS);
+const buildOptionPriceKey = (sectionKey = "", option = "") =>
+  `${String(sectionKey || "").trim()}::${String(option || "").trim()}`;
 
 const cloneOptionList = (items = []) =>
   items.map((item) => String(item || "").trim()).filter(Boolean);
@@ -93,6 +96,10 @@ const cloneFieldSections = (items = []) =>
           section?.area !== "extras")
           ? "per_kg"
           : "fixed",
+      priceSource:
+        section?.area === "extras" && section?.priceSource === "per_image"
+          ? "per_image"
+          : "shared",
     }))
     .filter((section) => section.key && section.title);
 
@@ -125,6 +132,17 @@ const cloneOptionPriceEntries = (items = []) =>
       price: Math.max(0, Number(entry?.price) || 0),
     }))
     .filter((entry) => entry.sectionKey && entry.option);
+
+const buildFieldSectionMap = (items = []) =>
+  new Map(cloneFieldSections(items).map((section) => [section.key, section]));
+
+const buildOptionPriceEntryMap = (items = []) =>
+  new Map(
+    cloneOptionPriceEntries(items).map((entry) => [
+      buildOptionPriceKey(entry.sectionKey, entry.option),
+      entry,
+    ]),
+  );
 
 const cloneCombinationPriceEntries = (items = []) =>
   items
@@ -174,6 +192,55 @@ const getAllowedSectionOptions = (section = {}, optionCatalogMap = {}) => {
   }
 
   return [];
+};
+
+export const isGallerySectionPriceSetPerImage = (section = {}) =>
+  section?.area === "extras" && section?.priceSource === "per_image";
+
+const mergeOptionPricesBySectionSource = ({
+  fieldSections = [],
+  sharedOptionPrices = [],
+  itemOptionPrices = [],
+}) => {
+  const fieldSectionMap = buildFieldSectionMap(fieldSections);
+  const sharedMap = buildOptionPriceEntryMap(sharedOptionPrices);
+  const itemMap = buildOptionPriceEntryMap(itemOptionPrices);
+  const allKeys = Array.from(new Set([...sharedMap.keys(), ...itemMap.keys()]));
+
+  return allKeys
+    .map((key) => {
+      const sharedEntry = sharedMap.get(key) || null;
+      const itemEntry = itemMap.get(key) || null;
+      const baseEntry = sharedEntry || itemEntry;
+
+      if (!baseEntry) {
+        return null;
+      }
+
+      const section = fieldSectionMap.get(baseEntry.sectionKey) || {};
+      const resolvedEntry = isGallerySectionPriceSetPerImage(section)
+        ? itemEntry
+        : sharedEntry || itemEntry;
+
+      if (!resolvedEntry) {
+        return null;
+      }
+
+      return {
+        ...resolvedEntry,
+        sectionTitle: section.title || resolvedEntry.sectionTitle,
+      };
+    })
+    .filter(Boolean);
+};
+
+const filterSharedOptionPrices = (optionPrices = [], fieldSections = []) => {
+  const fieldSectionMap = buildFieldSectionMap(fieldSections);
+
+  return cloneOptionPriceEntries(optionPrices).filter((entry) => {
+    const section = fieldSectionMap.get(entry.sectionKey) || {};
+    return !isGallerySectionPriceSetPerImage(section);
+  });
 };
 
 const buildLegacySectionOptionsMap = (item = {}) => {
@@ -364,7 +431,7 @@ export const createGalleryFieldConfigFromForm = (formData = {}, optionCatalogs =
       sectionKey: section.key,
       options: toUniqueOptions(optionCatalogs[section.key] || []),
     })),
-    optionPrices: cloneOptionPriceEntries(formData.optionPrices || []),
+    optionPrices: filterSharedOptionPrices(formData.optionPrices || [], fieldSections),
     combinationPrices: cloneCombinationPriceEntries(formData.combinationPrices || []),
   };
 };
@@ -413,7 +480,11 @@ export const createEmptyGalleryForm = (
     price: 0,
     priceLabel: "Starting at",
     configurationNote: "",
-    optionPrices: cloneOptionPriceEntries(normalizedConfig.optionPrices || []),
+    optionPrices: mergeOptionPricesBySectionSource({
+      fieldSections: normalizedConfig.fieldSections,
+      sharedOptionPrices: normalizedConfig.optionPrices || [],
+      itemOptionPrices: [],
+    }),
     combinationPrices: cloneCombinationPriceEntries(
       normalizedConfig.combinationPrices || [],
     ),
@@ -452,10 +523,11 @@ export const normalizeGalleryFormFromItem = (
     price: Number(item?.price) || 0,
     priceLabel: item?.priceLabel || "Starting at",
     configurationNote: item?.configurationNote || "",
-    optionPrices:
-      normalizedConfig.optionPrices?.length > 0
-        ? cloneOptionPriceEntries(normalizedConfig.optionPrices)
-        : cloneOptionPriceEntries(item?.optionPrices || []),
+    optionPrices: mergeOptionPricesBySectionSource({
+      fieldSections: normalizedConfig.fieldSections,
+      sharedOptionPrices: normalizedConfig.optionPrices || [],
+      itemOptionPrices: item?.optionPrices || [],
+    }),
     combinationPrices: cloneCombinationPriceEntries(
       normalizedConfig.combinationPrices || [],
     ),

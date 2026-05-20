@@ -29,6 +29,7 @@ const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
     handleOptionPriceChange,
     handleCombinationEnabledChange,
     handleCombinationPriceChange,
+    handleSectionPriceSourceChange,
     handleSectionPricingModeChange,
     handleSubmit,
     handleWeightRangeChange,
@@ -136,6 +137,7 @@ const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
           onCombinationEnabledChange={handleCombinationEnabledChange}
           onCombinationPriceChange={handleCombinationPriceChange}
           onRenameCategory={renameCategory}
+          onSectionPriceSourceChange={handleSectionPriceSourceChange}
           onSectionPricingModeChange={handleSectionPricingModeChange}
           onSubmit={handleSubmit}
           onFieldChange={handleFieldChange}

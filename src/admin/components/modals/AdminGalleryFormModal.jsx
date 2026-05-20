@@ -6,7 +6,10 @@ import AdminGalleryOptionSection from "@/admin/components/gallery/AdminGalleryOp
 import AdminGalleryPreviewPanel from "@/admin/components/gallery/AdminGalleryPreviewPanel";
 import AdminGalleryGeneralSection from "@/admin/components/gallery/AdminGalleryGeneralSection";
 import AdminGalleryWeightRangeSection from "@/admin/components/gallery/AdminGalleryWeightRangeSection";
-import { getGallerySectionMeta } from "@/admin/pages/adminGalleryConfig";
+import {
+  getGallerySectionMeta,
+  isGallerySectionPriceSetPerImage,
+} from "@/admin/pages/adminGalleryConfig";
 import {
   buildGalleryPriceCombinations,
   mergeGalleryCombinationPrices,
@@ -34,6 +37,7 @@ const AdminGalleryFormModal = ({
   onCombinationEnabledChange,
   onCombinationPriceChange,
   onRenameCategory,
+  onSectionPriceSourceChange,
   onSectionPricingModeChange,
   onSubmit,
   onFieldChange,
@@ -325,11 +329,14 @@ const AdminGalleryFormModal = ({
           </div>
         ) : (
           <div className="grid gap-4">
-            {sections.map((section) => (
-              <div
-                key={`pricing-${section.key}`}
-                className="rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/75 p-3"
-              >
+            {sections.map((section) => {
+              const pricesComeFromImage = isGallerySectionPriceSetPerImage(section);
+
+              return (
+                <div
+                  key={`pricing-${section.key}`}
+                  className="rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/75 p-3"
+                >
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-primary-900">
@@ -353,9 +360,28 @@ const AdminGalleryFormModal = ({
                       />
                       Charge per kg
                     </label>
+                    {section.area === "extras" ? (
+                      <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary-700">
+                        <input
+                          type="checkbox"
+                          checked={pricesComeFromImage}
+                          onChange={(event) =>
+                            onSectionPriceSourceChange?.(
+                              section.key,
+                              event.target.checked ? "per_image" : "shared",
+                            )
+                          }
+                        />
+                        Set in Add Image
+                      </label>
+                    ) : null}
                   </div>
                   <StatusChip tone={tone}>
-                    {section.pricingMode === "per_kg" ? "Per kg" : "Fixed"}
+                    {pricesComeFromImage
+                      ? "Set in image"
+                      : section.pricingMode === "per_kg"
+                        ? "Per kg"
+                        : "Fixed"}
                   </StatusChip>
                 </div>
 
@@ -364,6 +390,10 @@ const AdminGalleryFormModal = ({
                     {section.usesFieldToggle
                       ? "This extra uses the field name directly. Set its price here."
                       : "No options here yet. Add values in Add Gallery Image first."}
+                  </div>
+                ) : isGallerySectionPriceSetPerImage(section) ? (
+                  <div className="rounded-2xl border border-dashed border-gold-200/80 bg-gold-50/40 p-4 text-sm text-primary-600">
+                    Price for this extra will be set while adding or editing each gallery image.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -406,8 +436,9 @@ const AdminGalleryFormModal = ({
                     ))}
                   </div>
                 )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </SurfaceCard>
@@ -695,7 +726,22 @@ const AdminGalleryFormModal = ({
                 </div>
 
                 <div className="grid gap-5">
-                  {groupedSections.extras.map((section) => (
+                  {groupedSections.extras.map((section) => {
+                    const pricesComeFromImage = isGallerySectionPriceSetPerImage(section);
+                    const selectedPriceEntries = pricesComeFromImage
+                      ? (formData[section.key] || []).map((option) => ({
+                          option,
+                          price:
+                            (formData.optionPrices || []).find(
+                              (entry) =>
+                                entry.sectionKey === section.key &&
+                                String(entry.option || "").trim() ===
+                                  String(option || "").trim(),
+                            )?.price ?? 0,
+                        }))
+                      : [];
+
+                    return (
                     <AdminGalleryOptionSection
                       key={section.key}
                       title={section.title}
@@ -707,11 +753,26 @@ const AdminGalleryFormModal = ({
                       fieldToggleValue={section.title}
                       canDeleteSection
                       pendingValue={pendingValues[section.key] || ""}
+                      priceEntries={selectedPriceEntries}
+                      priceInputHeading="Set in Add Image"
+                      priceInputHint={
+                        pricesComeFromImage
+                          ? section.pricingMode === "per_kg"
+                            ? "Selected options in this section will use a per-kg price for this cake image."
+                            : "Selected options in this section will use a fixed price for this cake image."
+                          : ""
+                      }
                       onPendingValueChange={(value) =>
                         setPendingValues((current) => ({
                           ...current,
                           [section.key]: value,
                         }))
+                      }
+                      onPriceChange={
+                        pricesComeFromImage
+                          ? (option, value) =>
+                              onOptionPriceChange(section, option, value)
+                          : undefined
                       }
                       onToggleOption={(option) => onToggleOption(section.key, option)}
                       onToggleAllOptions={(forceState) =>
@@ -744,7 +805,8 @@ const AdminGalleryFormModal = ({
                       }
                       onDeleteSection={() => onDeleteFieldSection(section.key)}
                     />
-                  ))}
+                    );
+                  })}
                 </div>
               </SurfaceCard>
               ) : null}

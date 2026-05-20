@@ -14,7 +14,11 @@ const AdminGalleryOptionSection = ({
   fieldToggleValue = "",
   canDeleteSection = false,
   pendingValue,
+  priceEntries = [],
+  priceInputHeading = "",
+  priceInputHint = "",
   onPendingValueChange,
+  onPriceChange,
   onToggleOption,
   onToggleAllOptions,
   onAddOption,
@@ -143,6 +147,52 @@ const AdminGalleryOptionSection = ({
           );
         })}
       </div>
+
+      {onPriceChange ? (
+        <div className="mt-4 rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/75 p-3">
+          <div className="mb-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700">
+              {priceInputHeading || "Set price for this cake"}
+            </p>
+            {priceInputHint ? (
+              <p className="mt-1 text-xs text-primary-600">{priceInputHint}</p>
+            ) : null}
+          </div>
+
+          {!priceEntries.length ? (
+            <p className="text-sm text-primary-600">
+              Select an option above to enter its price for this image.
+            </p>
+          ) : (
+            <div className="grid gap-3">
+              {priceEntries.map((entry) => (
+                <label
+                  key={`${title}-price-${entry.option}`}
+                  className="grid gap-2 rounded-2xl border border-[rgba(201,168,76,0.18)] bg-[#fffaf0] p-3 sm:grid-cols-[1fr,180px] sm:items-center"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-primary-900">
+                      {entry.option}
+                    </p>
+                    <p className="text-xs text-primary-600">
+                      Price for this cake image
+                    </p>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={entry.price}
+                    onChange={(event) =>
+                      onPriceChange(entry.option, event.target.value)
+                    }
+                    className={inputClassName}
+                  />
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {isEditing ? (
         <>

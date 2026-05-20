@@ -21,6 +21,11 @@ const formatCurrency = (value) =>
 const getSectionPricingMode = (section = {}) =>
   section?.pricingMode === "fixed" ? "fixed" : "per_kg";
 
+const getSectionPriceSource = (section = {}) =>
+  section?.area === "extras" && section?.priceSource === "per_image"
+    ? "per_image"
+    : "shared";
+
 const formatPriceDelta = (value, pricingMode = "fixed") =>
   Number(value || 0) > 0
     ? `+${formatCurrency(value)}${pricingMode === "per_kg" ? "/kg" : ""}`
@@ -67,6 +72,7 @@ const buildFieldSections = (galleryFieldConfig = {}, item = {}) => {
     area: section?.area === "extras" ? "extras" : "general",
     isCustom: Boolean(section?.isCustom),
     pricingMode: getSectionPricingMode(section),
+    priceSource: getSectionPriceSource(section),
   });
 
   if (sharedSections.length) {
@@ -142,6 +148,22 @@ const findOptionPrice = (entries = [], sectionKey, option) =>
         String(entry.option || "").trim() === String(option || "").trim(),
     )?.price || 0,
   );
+
+const resolveOptionPrice = ({
+  sharedEntries = [],
+  itemEntries = [],
+  section = {},
+  option = "",
+}) => {
+  if (getSectionPriceSource(section) === "per_image") {
+    return findOptionPrice(itemEntries, section.key, option);
+  }
+
+  return (
+    findOptionPrice(sharedEntries, section.key, option) ||
+    findOptionPrice(itemEntries, section.key, option)
+  );
+};
 
 const getCombinationOption = (entry, sectionKey) =>
   String(
@@ -303,6 +325,10 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
   const sharedOptionPrices = useMemo(
     () => buildSharedOptionPrices(galleryFieldConfig, item),
     [galleryFieldConfig, item],
+  );
+  const itemOptionPrices = useMemo(
+    () => (Array.isArray(item?.optionPrices) ? item.optionPrices : []),
+    [item],
   );
 
   const enabledCombinationPrices = useMemo(
@@ -552,13 +578,18 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
             sectionKey: section.key,
             sectionTitle: section.title,
             option: selectedOption,
-            price: findOptionPrice(sharedOptionPrices, section.key, selectedOption),
+            price: resolveOptionPrice({
+              sharedEntries: sharedOptionPrices,
+              itemEntries: itemOptionPrices,
+              section,
+              option: selectedOption,
+            }),
             pricingMode,
             isPerKg: pricingMode === "per_kg",
           };
         })
         .filter(Boolean),
-    [addOnSections, selectedOptions, sharedOptionPrices],
+    [addOnSections, itemOptionPrices, selectedOptions, sharedOptionPrices],
   );
 
   const priceBreakdown = useMemo(() => {
@@ -639,12 +670,17 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
         options: section.options.map((option) => ({
           value: option,
           label: `${option} ${formatPriceDelta(
-            findOptionPrice(sharedOptionPrices, section.key, option),
+            resolveOptionPrice({
+              sharedEntries: sharedOptionPrices,
+              itemEntries: itemOptionPrices,
+              section,
+              option,
+            }),
             getSectionPricingMode(section),
           )}`,
         })),
       })),
-    [addOnSections, sharedOptionPrices],
+    [addOnSections, itemOptionPrices, sharedOptionPrices],
   );
 
   const estimatedRange = useMemo(() => {
@@ -750,9 +786,13 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
                   }))
                 }
                 note={
-                  getSectionPricingMode(section) === "per_kg"
-                    ? "This field is charged per kg."
-                    : "This field is added as a fixed amount."
+                  getSectionPriceSource(section) === "per_image"
+                    ? getSectionPricingMode(section) === "per_kg"
+                      ? "This extra uses the price set for this cake image, per kg."
+                      : "This extra uses the price set for this cake image."
+                    : getSectionPricingMode(section) === "per_kg"
+                      ? "This field is charged per kg."
+                      : "This field is added as a fixed amount."
                 }
               />
             ))}
