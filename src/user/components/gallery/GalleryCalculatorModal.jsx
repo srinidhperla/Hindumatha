@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@/shared/ui/Modal";
+import { OptimizedImage } from "@/shared/ui";
 import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 import { buildGalleryCombinationKey } from "@/admin/pages/adminGalleryPricingUtils";
 import {
@@ -245,14 +246,13 @@ const WeightSliderField = ({
   const activeOption = options[selectedIndex] || options[0] || null;
   const fillWidth =
     options.length <= 1 ? 100 : (selectedIndex / (options.length - 1)) * 100;
-  const minWidth = Math.max(options.length * 72, 320);
 
   if (!options.length) {
     return null;
   }
 
   return (
-    <SurfaceCard className="p-4 sm:p-5">
+    <SurfaceCard className="overflow-hidden p-4 sm:p-5">
       <div className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -264,12 +264,12 @@ const WeightSliderField = ({
           </div>
         </div>
 
-        <div className="overflow-x-auto pb-1">
-          <div className="relative pt-4" style={{ minWidth }}>
-            <div className="absolute left-0 right-0 top-7 h-1 rounded-full bg-[rgba(42,31,14,0.12)]" />
+        <div className="rounded-3xl border border-[rgba(201,168,76,0.22)] bg-[#fffaf0] p-3 sm:p-4">
+          <div className="relative px-1">
+            <div className="absolute left-1 right-1 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[rgba(42,31,14,0.12)]" />
             <div
-              className="absolute left-0 top-7 h-1 rounded-full bg-[#b45f40]"
-              style={{ width: `${fillWidth}%` }}
+              className="pointer-events-none absolute left-1 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[#b45f40]"
+              style={{ width: `calc(${fillWidth}% - 0.25rem)` }}
             />
             <input
               type="range"
@@ -280,43 +280,40 @@ const WeightSliderField = ({
               onChange={(event) =>
                 onSelect(options[Number(event.target.value)]?.value || "")
               }
-              className="absolute left-0 right-0 top-[6px] h-10 w-full cursor-grab opacity-0"
+              className="relative z-10 h-8 w-full cursor-grab appearance-none bg-transparent accent-[#b45f40] active:cursor-grabbing"
               aria-label="Select cake weight"
             />
-            <div
-              className="relative grid"
-              style={{
-                gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
-              }}
-            >
-              {options.map((option, index) => {
-                const isSelected = option.value === selectedValue;
+          </div>
 
-                return (
-                  <button
-                    key={`weight-${option.value}`}
-                    type="button"
-                    onClick={() => onSelect(option.value)}
-                    className="flex flex-col items-center gap-2 text-center"
+          <div
+            className="mt-3 grid gap-1"
+            style={{
+              gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
+            }}
+          >
+            {options.map((option) => {
+              const isSelected = option.value === selectedValue;
+
+              return (
+                <div
+                  key={`weight-${option.value}`}
+                  className="flex min-w-0 flex-col items-center gap-1 text-center"
+                >
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      isSelected ? "bg-[#b45f40]" : "bg-[#d8c4ae]"
+                    }`}
+                  />
+                  <span
+                    className={`block min-w-0 break-words text-[10px] font-semibold leading-tight sm:text-[11px] ${
+                      isSelected ? "text-primary-900" : "text-primary-500"
+                    }`}
                   >
-                    <span
-                      className={`relative z-10 h-5 w-5 rounded-full border-4 transition-all ${
-                        isSelected
-                          ? "border-[#b45f40] bg-white shadow-[0_0_0_6px_rgba(180,95,64,0.18)]"
-                          : "border-white bg-[#d8c4ae] shadow-[0_0_0_2px_rgba(42,31,14,0.12)]"
-                      }`}
-                    />
-                    <span
-                      className={`text-[11px] font-semibold sm:text-xs ${
-                        isSelected ? "text-primary-900" : "text-primary-500"
-                      }`}
-                    >
-                      {option.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                    {option.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -836,6 +833,37 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
           </SurfaceCard>
         ) : (
           <div className="space-y-5">
+            <SurfaceCard className="overflow-hidden p-3 sm:p-4">
+              <div className="grid gap-4 sm:grid-cols-[220px,1fr] sm:items-center">
+                <div className="overflow-hidden rounded-2xl bg-[#fff5dd]">
+                  <OptimizedImage
+                    src={item.imageUrl}
+                    alt={item.title}
+                    width={720}
+                    height={720}
+                    className="h-52 w-full object-contain sm:h-56"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-600">
+                    Cake Preview
+                  </p>
+                  <h3 className="text-xl font-bold text-primary-900">
+                    {item.title}
+                  </h3>
+                  {item.price > 0 ? (
+                    <p className="text-sm font-medium text-primary-700">
+                      {item.priceLabel || "Starting at"} {formatCurrency(item.price)}
+                      /kg
+                    </p>
+                  ) : null}
+                  <p className="text-sm text-primary-600">
+                    Review the design first, then adjust weight and the available cake options below.
+                  </p>
+                </div>
+              </div>
+            </SurfaceCard>
+
             {weightChoices.length ? (
               <WeightSliderField
                 title="Weight"

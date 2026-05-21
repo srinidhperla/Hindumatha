@@ -10,9 +10,7 @@ import {
   attachGalleryItemCodes,
   buildGalleryWeightFilterOptions,
   getGalleryItemCategories,
-  getGalleryItemSelections,
   matchesGalleryCategoryFilter,
-  matchesGalleryOptionFilter,
   matchesGalleryWeightFilter,
   normalizeGallerySearchText,
 } from "@/utils/galleryItems";
@@ -22,8 +20,6 @@ const Gallery = () => {
   const [calculatorItem, setCalculatorItem] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCakeType, setSelectedCakeType] = useState("");
-  const [selectedFondant, setSelectedFondant] = useState("");
   const [selectedWeight, setSelectedWeight] = useState("");
   const [sortBy, setSortBy] = useState("latest");
   const { businessInfo, galleryFieldConfig, galleryItems, socialLinks } =
@@ -69,26 +65,6 @@ const Gallery = () => {
     [featuredProductItems, safeGalleryItems],
   );
 
-  const cakeTypeOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          safeGalleryItems.flatMap((item) => getGalleryItemSelections(item, "cakeTypes")),
-        ),
-      ).sort((left, right) => left.localeCompare(right)),
-    [safeGalleryItems],
-  );
-  const fondantOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          safeGalleryItems.flatMap((item) =>
-            getGalleryItemSelections(item, "fondantOptions"),
-          ),
-        ),
-      ).sort((left, right) => left.localeCompare(right)),
-    [safeGalleryItems],
-  );
   const weightOptions = useMemo(
     () => buildGalleryWeightFilterOptions(safeGalleryItems),
     [safeGalleryItems],
@@ -103,16 +79,6 @@ const Gallery = () => {
           item,
           selectedCategory,
         );
-        const matchesCakeType = matchesGalleryOptionFilter(
-          item,
-          "cakeTypes",
-          selectedCakeType,
-        );
-        const matchesFondant = matchesGalleryOptionFilter(
-          item,
-          "fondantOptions",
-          selectedFondant,
-        );
         const matchesWeight = matchesGalleryWeightFilter(item, selectedWeight);
         const searchCandidates = [
           item.title,
@@ -120,8 +86,6 @@ const Gallery = () => {
           item.cakeCode,
           item.cakeCodeSearch,
           String(item.cakeCodeSearch || "").split("-").pop() || "",
-          ...getGalleryItemSelections(item, "cakeTypes"),
-          ...getGalleryItemSelections(item, "fondantOptions"),
         ];
         const normalizedHaystack = normalizeGallerySearchText(
           searchCandidates.join(" "),
@@ -131,8 +95,6 @@ const Gallery = () => {
 
         return (
           matchesCategory &&
-          matchesCakeType &&
-          matchesFondant &&
           matchesWeight &&
           matchesSearch
         );
@@ -164,9 +126,7 @@ const Gallery = () => {
     [
       allItems,
       deferredSearchTerm,
-      selectedCakeType,
       selectedCategory,
-      selectedFondant,
       selectedWeight,
       sortBy,
     ],
@@ -175,8 +135,6 @@ const Gallery = () => {
   const hasActiveFilters =
     selectedCategory !== "All" ||
     Boolean(searchTerm.trim()) ||
-    Boolean(selectedCakeType) ||
-    Boolean(selectedFondant) ||
     Boolean(selectedWeight) ||
     sortBy !== "latest";
 
@@ -195,12 +153,6 @@ const Gallery = () => {
           onCategoryChange={setSelectedCategory}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
-          cakeTypeOptions={cakeTypeOptions}
-          selectedCakeType={selectedCakeType}
-          onCakeTypeChange={setSelectedCakeType}
-          fondantOptions={fondantOptions}
-          selectedFondant={selectedFondant}
-          onFondantChange={setSelectedFondant}
           weightOptions={weightOptions}
           selectedWeight={selectedWeight}
           onWeightChange={setSelectedWeight}
@@ -210,8 +162,6 @@ const Gallery = () => {
           onClearFilters={() => {
             setSelectedCategory("All");
             setSearchTerm("");
-            setSelectedCakeType("");
-            setSelectedFondant("");
             setSelectedWeight("");
             setSortBy("latest");
           }}

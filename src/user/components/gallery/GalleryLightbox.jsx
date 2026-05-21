@@ -18,26 +18,45 @@ const GalleryLightbox = ({ item, onClose }) => {
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-4 top-4 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20"
+        className="absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white transition hover:bg-black/65"
+        aria-label="Close image preview"
       >
-        Close
+        <svg
+          viewBox="0 0 24 24"
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.25"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
       </button>
 
-      <div className="relative max-h-[88vh] w-auto max-w-[96vw] overflow-hidden rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-[90vw] rounded-2xl border border-white/10 bg-[rgba(14,10,8,0.65)] p-3 shadow-2xl sm:max-w-[82vw] lg:max-w-[74vw]">
         {item.cakeCode ? (
-          <div className="absolute left-4 top-4 z-10 rounded-full bg-[rgba(18,12,2,0.86)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fff7e3] shadow-lg">
+          <div className="absolute left-5 top-5 z-10 rounded-full bg-[rgba(18,12,2,0.82)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#fff7e3] shadow-lg">
             {item.cakeCode}
           </div>
         ) : null}
-        <OptimizedImage
-          src={item.imageUrl}
-          alt={item.title}
-          width={1400}
-          height={1400}
-          loading="lazy"
-          maxWidth={1600}
-          className="max-h-[88vh] w-auto max-w-[96vw] object-contain"
-        />
+        <div className="flex max-h-[78vh] items-center justify-center overflow-hidden rounded-xl">
+          <OptimizedImage
+            src={item.imageUrl}
+            alt={item.title}
+            width={1400}
+            height={1400}
+            loading="lazy"
+            maxWidth={1600}
+            className="max-h-[72vh] w-auto max-w-full object-contain"
+          />
+        </div>
+        <div className="mt-3 px-1 text-center">
+          <p className="text-sm font-semibold text-white/90 sm:text-base">
+            {item.title}
+          </p>
+        </div>
       </div>
     </div>
   );

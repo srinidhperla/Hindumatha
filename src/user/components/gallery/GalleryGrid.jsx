@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { OptimizedImage } from "@/shared/ui";
 import {
-  formatGalleryCategoryLabel,
   formatGalleryWeightRange,
-  getGalleryItemCategories,
 } from "@/utils/galleryItems";
 
 const sortOptions = [
@@ -43,12 +41,6 @@ const FilterSheet = ({
   categories,
   selectedCategory,
   onCategoryChange,
-  cakeTypeOptions,
-  selectedCakeType,
-  onCakeTypeChange,
-  fondantOptions,
-  selectedFondant,
-  onFondantChange,
   weightOptions,
   selectedWeight,
   onWeightChange,
@@ -121,40 +113,6 @@ const FilterSheet = ({
         )}
       </FilterSection>
 
-      <FilterSection title="Cake Type">
-        {renderChoiceChip(
-          "All",
-          !selectedCakeType,
-          () => onCakeTypeChange(""),
-          true,
-        )}
-        {cakeTypeOptions.map((option) =>
-          renderChoiceChip(
-            option,
-            selectedCakeType === option,
-            () => onCakeTypeChange(option),
-            true,
-          ),
-        )}
-      </FilterSection>
-
-      <FilterSection title="Fondant">
-        {renderChoiceChip(
-          "All",
-          !selectedFondant,
-          () => onFondantChange(""),
-          true,
-        )}
-        {fondantOptions.map((option) =>
-          renderChoiceChip(
-            option,
-            selectedFondant === option,
-            () => onFondantChange(option),
-            true,
-          ),
-        )}
-      </FilterSection>
-
       <FilterSection title="Weight">
         {renderChoiceChip("All", !selectedWeight, () => onWeightChange(""), true)}
         {weightOptions.map((option) =>
@@ -176,12 +134,6 @@ const GalleryGrid = ({
   onCategoryChange,
   searchTerm,
   onSearchChange,
-  cakeTypeOptions,
-  selectedCakeType,
-  onCakeTypeChange,
-  fondantOptions,
-  selectedFondant,
-  onFondantChange,
   weightOptions,
   selectedWeight,
   onWeightChange,
@@ -252,7 +204,7 @@ const GalleryGrid = ({
             <button
               type="button"
               onClick={() => onSelectImage(item)}
-              className="relative block aspect-[4/5] w-full overflow-hidden text-left"
+              className="relative block aspect-[3/4] w-full overflow-hidden text-left sm:aspect-[4/5]"
             >
               <OptimizedImage
                 src={item.imageUrl}
@@ -263,49 +215,29 @@ const GalleryGrid = ({
                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
               {item.cakeCode ? (
-                <div className="absolute left-3 top-3 rounded-full bg-[rgba(18,12,2,0.86)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fff7e3] shadow-lg">
+                <div className="absolute left-2 top-2 rounded-full bg-[rgba(18,12,2,0.86)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#fff7e3] shadow-lg sm:left-3 sm:top-3 sm:px-3 sm:py-1.5 sm:text-[11px]">
                   {item.cakeCode}
                 </div>
               ) : null}
             </button>
 
-            <div className="space-y-4 p-4 sm:p-5">
+            <div className="space-y-3 p-3 sm:p-4">
               <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  {getGalleryItemCategories(item).map((category, index) => (
-                    <span
-                      key={`${item._id}-${category}`}
-                      className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] shadow-sm ${
-                        index === 0
-                          ? "bg-white text-[#7a5c0f]"
-                          : "bg-[#fff5d8] text-primary-900"
-                      }`}
-                    >
-                      {formatGalleryCategoryLabel(category)}
-                    </span>
-                  ))}
-                  {formatGalleryWeightRange(item) ? (
-                    <span className="rounded-full bg-[#fff5d8] px-3 py-1 text-[11px] font-semibold text-primary-900 shadow-sm">
-                      {formatGalleryWeightRange(item)}
-                    </span>
-                  ) : null}
-                </div>
-                <h3 className="text-lg font-semibold text-primary-900">
+                {formatGalleryWeightRange(item) ? (
+                  <span className="inline-flex rounded-full bg-[#fff5d8] px-3 py-1 text-[11px] font-semibold text-primary-900 shadow-sm">
+                    {formatGalleryWeightRange(item)}
+                  </span>
+                ) : null}
+                <h3 className="line-clamp-2 text-base font-semibold text-primary-900 sm:text-lg">
                   {item.title}
                 </h3>
-                {!item.isProduct && item.price > 0 ? (
-                  <p className="text-sm font-medium text-primary-700">
-                    {item.priceLabel || "Starting at"} Rs.
-                    {Number(item.price || 0).toLocaleString("en-IN")} per kg
-                  </p>
-                ) : null}
               </div>
 
               {!item.isProduct ? (
                 <button
                   type="button"
                   onClick={() => onOpenCalculator(item)}
-                  className="w-full rounded-xl bg-[#fff5d8] px-3 py-2.5 text-sm font-semibold text-primary-900 transition hover:bg-[#ffe9b3]"
+                  className="w-full rounded-2xl bg-[#ffe29a] px-3 py-2.5 text-sm font-semibold text-primary-900 transition hover:bg-[#ffd97d]"
                 >
                   Calculate
                 </button>
@@ -321,7 +253,7 @@ const GalleryGrid = ({
             No cakes match these filters.
           </p>
           <p className="mt-2 text-sm text-primary-600">
-            Try another cake type, weight, fondant style, or clear the search.
+            Try another category, weight, or clear the search.
           </p>
         </div>
       ) : null}
@@ -334,12 +266,6 @@ const GalleryGrid = ({
               categories={categories}
               selectedCategory={selectedCategory}
               onCategoryChange={onCategoryChange}
-              cakeTypeOptions={cakeTypeOptions}
-              selectedCakeType={selectedCakeType}
-              onCakeTypeChange={onCakeTypeChange}
-              fondantOptions={fondantOptions}
-              selectedFondant={selectedFondant}
-              onFondantChange={onFondantChange}
               weightOptions={weightOptions}
               selectedWeight={selectedWeight}
               onWeightChange={onWeightChange}
