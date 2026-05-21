@@ -669,18 +669,18 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     const combinationPricePerKg = Number(selectedCombinationEntry?.price || 0);
 
     const perKgSelections = [
-      {
-        label: item?.priceLabel
-          ? `${item.priceLabel} base price`
-          : "Base cake price",
-        value: basePricePerKg,
-      },
+      ...(basePricePerKg > 0 || combinationPricePerKg <= 0
+        ? [
+            {
+              label: "Cake",
+              value: basePricePerKg,
+            },
+          ]
+        : []),
       ...(combinationPricePerKg > 0
         ? [
             {
-              label:
-                selectedCombinationEntry?.label ||
-                "Cake type, egg type, and flavor combination",
+              label: "Cake",
               value: combinationPricePerKg,
             },
           ]
@@ -796,15 +796,23 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
 
   const estimateSummarySelections = useMemo(
     () =>
-      allAddOnEntries.map((entry) => ({
-        label: `${entry.sectionTitle}: ${entry.option}`,
-        value: formatSummarySelectionValue({
-          price: entry.price,
-          isPerKg: entry.isPerKg,
-          weightMultiplier,
-        }),
+      [
+        ...priceBreakdown.perKgSelections.map((entry) => ({
+          label: entry.label,
+          value: formatSummarySelectionValue({
+            price: entry.value,
+            isPerKg: true,
+            weightMultiplier,
+          }),
+        })),
+        ...priceBreakdown.fixedSelections.map((entry) => ({
+          label: entry.label,
+          value: formatCurrency(entry.value),
+        })),
+      ].map((entry) => ({
+        ...entry,
       })),
-    [allAddOnEntries, weightMultiplier],
+    [priceBreakdown.fixedSelections, priceBreakdown.perKgSelections, weightMultiplier],
   );
 
   if (!item) {
@@ -982,16 +990,6 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
                             Estimate summary
                           </p>
                           <div className="mt-3 divide-y divide-[rgba(42,31,14,0.08)]">
-                            <BreakdownRow
-                              label="Per kg subtotal"
-                              value={formatCurrency(priceBreakdown.perKgSubtotal)}
-                            />
-                            <BreakdownRow
-                              label={`Weight x ${selectedWeightValue || 1} kg`}
-                              value={formatCurrency(
-                                priceBreakdown.weightAdjustedSubtotal,
-                              )}
-                            />
                             {estimateSummarySelections.map((entry) => (
                               <BreakdownRow
                                 key={`summary-${entry.label}`}
@@ -1019,19 +1017,16 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
                             <BreakdownRow
                               key={`perkg-${entry.label}`}
                               label={entry.label}
-                              value={formatCurrency(entry.value)}
+                              value={formatSummarySelectionValue({
+                                price: entry.value,
+                                isPerKg: true,
+                                weightMultiplier,
+                              })}
                             />
                           ))}
                           <BreakdownRow
-                            label="Per kg subtotal"
-                            value={formatCurrency(priceBreakdown.perKgSubtotal)}
-                            strong
-                          />
-                          <BreakdownRow
-                            label={`Per kg subtotal x ${selectedWeightValue || 1} kg`}
-                            value={formatCurrency(
-                              priceBreakdown.weightAdjustedSubtotal,
-                            )}
+                            label="Per kg total"
+                            value={formatCurrency(priceBreakdown.weightAdjustedSubtotal)}
                             strong
                           />
                         </div>

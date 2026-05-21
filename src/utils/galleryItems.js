@@ -247,6 +247,20 @@ export const buildGalleryWeightFilterOptions = (items = []) => {
 };
 
 export const matchesGalleryCategoryFilter = (item = {}, selectedCategory = "") => {
+  if (Array.isArray(selectedCategory)) {
+    const normalizedValues = selectedCategory
+      .map((entry) => toTrimmedString(entry))
+      .filter(Boolean)
+      .filter((entry) => entry !== "All");
+
+    if (!normalizedValues.length) {
+      return true;
+    }
+
+    const itemCategories = getGalleryItemCategories(item);
+    return normalizedValues.some((value) => itemCategories.includes(value));
+  }
+
   const normalizedValue = toTrimmedString(selectedCategory);
 
   if (!normalizedValue || normalizedValue === "All") {

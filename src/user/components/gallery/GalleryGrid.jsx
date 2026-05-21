@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { OptimizedImage } from "@/shared/ui";
 import {
   formatGalleryCategoryLabel,
@@ -40,15 +40,19 @@ const FilterSection = ({ title, children }) => (
 
 const FilterSheet = ({
   categories,
-  selectedCategory,
-  onCategoryChange,
+  selectedCategories,
+  onToggleCategory,
+  fondantOptions,
+  selectedFondant,
+  onFondantChange,
   weightOptions,
   selectedWeight,
   onWeightChange,
   sortBy,
   onSortChange,
-  hasActiveFilters,
-  onClearFilters,
+  hasDraftFilters,
+  onClearDrafts,
+  onApply,
   onClose,
 }) => (
   <div className="flex h-full flex-col bg-[#fffaf1]">
@@ -62,10 +66,10 @@ const FilterSheet = ({
         </h3>
       </div>
       <div className="flex items-center gap-2">
-        {hasActiveFilters ? (
+        {hasDraftFilters ? (
           <button
             type="button"
-            onClick={onClearFilters}
+            onClick={onClearDrafts}
             className="rounded-full border border-[rgba(122,92,15,0.24)] bg-white px-4 py-2 text-sm font-semibold text-[#7a5c0f] transition hover:bg-[#fff6e3]"
           >
             Clear
@@ -99,23 +103,39 @@ const FilterSheet = ({
           renderChoiceChip(
             option.label,
             sortBy === option.value,
-            () => {
-              onSortChange(option.value);
-              onClose();
-            },
+            () => onSortChange(option.value),
           ),
         )}
       </FilterSection>
 
       <FilterSection title="Category">
+        {renderChoiceChip(
+          "All",
+          selectedCategories.length === 0,
+          () => onToggleCategory("All"),
+        )}
         {categories.map((category) =>
           renderChoiceChip(
             formatGalleryCategoryLabel(category),
-            selectedCategory === category,
-            () => {
-              onCategoryChange(category);
-              onClose();
-            },
+            selectedCategories.includes(category),
+            () => onToggleCategory(category),
+          ),
+        )}
+      </FilterSection>
+
+      <FilterSection title="Fondant">
+        {renderChoiceChip(
+          "All",
+          !selectedFondant,
+          () => onFondantChange(""),
+          true,
+        )}
+        {fondantOptions.map((option) =>
+          renderChoiceChip(
+            option,
+            selectedFondant === option,
+            () => onFondantChange(option),
+            true,
           ),
         )}
       </FilterSection>
@@ -124,46 +144,88 @@ const FilterSheet = ({
         {renderChoiceChip(
           "All",
           !selectedWeight,
-          () => {
-            onWeightChange("");
-            onClose();
-          },
+          () => onWeightChange(""),
           true,
         )}
         {weightOptions.map((option) =>
           renderChoiceChip(
             option.label,
             selectedWeight === option.value,
-            () => {
-              onWeightChange(option.value);
-              onClose();
-            },
+            () => onWeightChange(option.value),
             true,
           ),
         )}
       </FilterSection>
+    </div>
+
+    <div className="border-t border-[rgba(201,168,76,0.18)] px-4 py-4 sm:px-6">
+      <button
+        type="button"
+        onClick={onApply}
+        className="w-full rounded-2xl bg-[#2f2319] px-4 py-3 text-sm font-semibold text-[#fff7e3] shadow-md transition hover:bg-[#433224]"
+      >
+        Apply Filters
+      </button>
     </div>
   </div>
 );
 
 const GalleryGrid = ({
   categories,
-  selectedCategory,
-  onCategoryChange,
+  selectedCategories,
+  selectedFondant,
   searchTerm,
   onSearchChange,
+  fondantOptions,
   weightOptions,
   selectedWeight,
-  onWeightChange,
   sortBy,
-  onSortChange,
-  hasActiveFilters,
-  onClearFilters,
+  onApplyFilters,
   filteredItems,
   onOpenCalculator,
   onSelectImage,
 }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [draftSelectedCategories, setDraftSelectedCategories] = useState([]);
+  const [draftSelectedFondant, setDraftSelectedFondant] = useState("");
+  const [draftSelectedWeight, setDraftSelectedWeight] = useState("");
+  const [draftSortBy, setDraftSortBy] = useState("latest");
+
+  useEffect(() => {
+    if (!isFilterOpen) {
+      return;
+    }
+
+    setDraftSelectedCategories(selectedCategories || []);
+    setDraftSelectedFondant(selectedFondant || "");
+    setDraftSelectedWeight(selectedWeight || "");
+    setDraftSortBy(sortBy || "latest");
+  }, [
+    isFilterOpen,
+    selectedCategories,
+    selectedFondant,
+    selectedWeight,
+    sortBy,
+  ]);
+
+  const hasDraftFilters =
+    draftSelectedCategories.length > 0 ||
+    Boolean(draftSelectedFondant) ||
+    Boolean(draftSelectedWeight) ||
+    draftSortBy !== "latest";
+
+  const toggleDraftCategory = (category) => {
+    if (category === "All") {
+      setDraftSelectedCategories([]);
+      return;
+    }
+
+    setDraftSelectedCategories((current) =>
+      current.includes(category)
+        ? current.filter((entry) => entry !== category)
+        : [...current, category],
+    );
+  };
 
   return (
     <>
@@ -282,15 +344,32 @@ const GalleryGrid = ({
           <div className="absolute inset-x-0 bottom-0 top-0 bg-[#fffaf1] sm:left-auto sm:right-0 sm:w-full sm:max-w-lg">
             <FilterSheet
               categories={categories}
-              selectedCategory={selectedCategory}
-              onCategoryChange={onCategoryChange}
+              selectedCategories={draftSelectedCategories}
+              onToggleCategory={toggleDraftCategory}
+              fondantOptions={fondantOptions}
+              selectedFondant={draftSelectedFondant}
+              onFondantChange={setDraftSelectedFondant}
               weightOptions={weightOptions}
-              selectedWeight={selectedWeight}
-              onWeightChange={onWeightChange}
-              sortBy={sortBy}
-              onSortChange={onSortChange}
-              hasActiveFilters={hasActiveFilters}
-              onClearFilters={onClearFilters}
+              selectedWeight={draftSelectedWeight}
+              onWeightChange={setDraftSelectedWeight}
+              sortBy={draftSortBy}
+              onSortChange={setDraftSortBy}
+              hasDraftFilters={hasDraftFilters}
+              onClearDrafts={() => {
+                setDraftSelectedCategories([]);
+                setDraftSelectedFondant("");
+                setDraftSelectedWeight("");
+                setDraftSortBy("latest");
+              }}
+              onApply={() => {
+                onApplyFilters?.({
+                  selectedCategories: draftSelectedCategories,
+                  selectedFondant: draftSelectedFondant,
+                  selectedWeight: draftSelectedWeight,
+                  sortBy: draftSortBy,
+                });
+                setIsFilterOpen(false);
+              }}
               onClose={() => setIsFilterOpen(false)}
             />
           </div>

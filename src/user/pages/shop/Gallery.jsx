@@ -10,7 +10,9 @@ import {
   attachGalleryItemCodes,
   buildGalleryWeightFilterOptions,
   getGalleryItemCategories,
+  getGalleryItemSelections,
   matchesGalleryCategoryFilter,
+  matchesGalleryOptionFilter,
   matchesGalleryWeightFilter,
   normalizeGallerySearchText,
 } from "@/utils/galleryItems";
@@ -18,7 +20,8 @@ import {
 const Gallery = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [calculatorItem, setCalculatorItem] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedFondant, setSelectedFondant] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWeight, setSelectedWeight] = useState("");
   const [sortBy, setSortBy] = useState("latest");
@@ -83,7 +86,6 @@ const Gallery = () => {
 
   const categories = useMemo(
     () => [
-      "All",
       ...(featuredProductItems.length > 0 ? ["Featured"] : []),
       ...new Set(visibleGalleryItems.flatMap((item) => getGalleryItemCategories(item))),
     ],
@@ -94,6 +96,17 @@ const Gallery = () => {
     () => buildGalleryWeightFilterOptions(visibleGalleryItems),
     [visibleGalleryItems],
   );
+  const fondantOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          visibleGalleryItems.flatMap((item) =>
+            getGalleryItemSelections(item, "fondantOptions"),
+          ),
+        ),
+      ).sort((left, right) => left.localeCompare(right)),
+    [visibleGalleryItems],
+  );
 
   const filteredItems = useMemo(
     () => {
@@ -102,7 +115,12 @@ const Gallery = () => {
       const nextItems = allItems.filter((item) => {
         const matchesCategory = matchesGalleryCategoryFilter(
           item,
-          selectedCategory,
+          selectedCategories,
+        );
+        const matchesFondant = matchesGalleryOptionFilter(
+          item,
+          "fondantOptions",
+          selectedFondant,
         );
         const matchesWeight = matchesGalleryWeightFilter(item, selectedWeight);
         const searchCandidates = [
@@ -111,6 +129,7 @@ const Gallery = () => {
           item.cakeCode,
           item.cakeCodeSearch,
           String(item.cakeCodeSearch || "").split("-").pop() || "",
+          ...getGalleryItemSelections(item, "fondantOptions"),
         ];
         const normalizedHaystack = normalizeGallerySearchText(
           searchCandidates.join(" "),
@@ -120,6 +139,7 @@ const Gallery = () => {
 
         return (
           matchesCategory &&
+          matchesFondant &&
           matchesWeight &&
           matchesSearch
         );
@@ -151,17 +171,12 @@ const Gallery = () => {
     [
       allItems,
       deferredSearchTerm,
-      selectedCategory,
+      selectedCategories,
+      selectedFondant,
       selectedWeight,
       sortBy,
     ],
   );
-
-  const hasActiveFilters =
-    selectedCategory !== "All" ||
-    Boolean(searchTerm.trim()) ||
-    Boolean(selectedWeight) ||
-    sortBy !== "latest";
 
   return (
     <div className="gallery-page">
@@ -174,21 +189,24 @@ const Gallery = () => {
       <div className="gallery-shell">
         <GalleryGrid
           categories={categories}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
+          selectedCategories={selectedCategories}
+          selectedFondant={selectedFondant}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
+          fondantOptions={fondantOptions}
           weightOptions={weightOptions}
           selectedWeight={selectedWeight}
-          onWeightChange={setSelectedWeight}
           sortBy={sortBy}
-          onSortChange={setSortBy}
-          hasActiveFilters={hasActiveFilters}
-          onClearFilters={() => {
-            setSelectedCategory("All");
-            setSearchTerm("");
-            setSelectedWeight("");
-            setSortBy("latest");
+          onApplyFilters={({
+            selectedCategories: nextSelectedCategories = [],
+            selectedFondant: nextSelectedFondant = "",
+            selectedWeight: nextSelectedWeight = "",
+            sortBy: nextSortBy = "latest",
+          }) => {
+            setSelectedCategories(nextSelectedCategories);
+            setSelectedFondant(nextSelectedFondant);
+            setSelectedWeight(nextSelectedWeight);
+            setSortBy(nextSortBy);
           }}
           totalItems={allItems.length}
           filteredItems={filteredItems}
