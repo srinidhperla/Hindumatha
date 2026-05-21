@@ -31,6 +31,31 @@ const Gallery = () => {
   const safeGalleryItems = Array.isArray(galleryItems) ? galleryItems : [];
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
+  const visibleGalleryItems = useMemo(() => {
+    const seenKeys = new Set();
+
+    return [...safeGalleryItems]
+      .sort(
+        (left, right) =>
+          new Date(right?.createdAt || 0).getTime() -
+          new Date(left?.createdAt || 0).getTime(),
+      )
+      .filter((item) => {
+        const signature = [
+          String(item?.title || "").trim().toLowerCase(),
+          String(item?.imageUrl || "").trim().toLowerCase(),
+          getGalleryItemCategories(item).join("|").toLowerCase(),
+        ].join("::");
+
+        if (seenKeys.has(signature)) {
+          return false;
+        }
+
+        seenKeys.add(signature);
+        return true;
+      });
+  }, [safeGalleryItems]);
+
   // Get featured products images
   const featuredProductItems = useMemo(
     () =>
@@ -52,22 +77,22 @@ const Gallery = () => {
 
   // Combine gallery items with featured products
   const allItems = useMemo(
-    () => attachGalleryItemCodes([...featuredProductItems, ...safeGalleryItems]),
-    [featuredProductItems, safeGalleryItems],
+    () => attachGalleryItemCodes([...featuredProductItems, ...visibleGalleryItems]),
+    [featuredProductItems, visibleGalleryItems],
   );
 
   const categories = useMemo(
     () => [
       "All",
       ...(featuredProductItems.length > 0 ? ["Featured"] : []),
-      ...new Set(safeGalleryItems.flatMap((item) => getGalleryItemCategories(item))),
+      ...new Set(visibleGalleryItems.flatMap((item) => getGalleryItemCategories(item))),
     ],
-    [featuredProductItems, safeGalleryItems],
+    [featuredProductItems, visibleGalleryItems],
   );
 
   const weightOptions = useMemo(
-    () => buildGalleryWeightFilterOptions(safeGalleryItems),
-    [safeGalleryItems],
+    () => buildGalleryWeightFilterOptions(visibleGalleryItems),
+    [visibleGalleryItems],
   );
 
   const filteredItems = useMemo(

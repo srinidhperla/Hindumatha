@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { OptimizedImage } from "@/shared/ui";
 import {
+  formatGalleryCategoryLabel,
   formatGalleryWeightRange,
 } from "@/utils/galleryItems";
 
@@ -98,7 +99,10 @@ const FilterSheet = ({
           renderChoiceChip(
             option.label,
             sortBy === option.value,
-            () => onSortChange(option.value),
+            () => {
+              onSortChange(option.value);
+              onClose();
+            },
           ),
         )}
       </FilterSection>
@@ -108,18 +112,32 @@ const FilterSheet = ({
           renderChoiceChip(
             formatGalleryCategoryLabel(category),
             selectedCategory === category,
-            () => onCategoryChange(category),
+            () => {
+              onCategoryChange(category);
+              onClose();
+            },
           ),
         )}
       </FilterSection>
 
       <FilterSection title="Weight">
-        {renderChoiceChip("All", !selectedWeight, () => onWeightChange(""), true)}
+        {renderChoiceChip(
+          "All",
+          !selectedWeight,
+          () => {
+            onWeightChange("");
+            onClose();
+          },
+          true,
+        )}
         {weightOptions.map((option) =>
           renderChoiceChip(
             option.label,
             selectedWeight === option.value,
-            () => onWeightChange(option.value),
+            () => {
+              onWeightChange(option.value);
+              onClose();
+            },
             true,
           ),
         )}

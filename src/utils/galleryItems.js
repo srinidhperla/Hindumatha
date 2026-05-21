@@ -53,20 +53,62 @@ export const normalizeGallerySearchText = (value = "") =>
     .trim();
 
 export const attachGalleryItemCodes = (items = []) => {
-  const categoryCounts = new Map();
+  const indexedItems = items.map((item, index) => ({
+    item,
+    index,
+    categoryKey: buildGalleryCodePrefix(getPrimaryGalleryCategory(item)),
+  }));
+  const categoryGroups = new Map();
 
-  return items.map((item) => {
-    const categoryKey = buildGalleryCodePrefix(getPrimaryGalleryCategory(item));
-    const nextCount = (categoryCounts.get(categoryKey) || 0) + 1;
-    const codeNumber = String(nextCount).padStart(2, "0");
-    categoryCounts.set(categoryKey, nextCount);
+  indexedItems.forEach((entry) => {
+    if (!categoryGroups.has(entry.categoryKey)) {
+      categoryGroups.set(entry.categoryKey, []);
+    }
 
-    return {
-      ...item,
-      cakeCode: `${categoryKey}-#${codeNumber}`,
-      cakeCodeSearch: `${categoryKey}-${codeNumber}`,
-    };
+    categoryGroups.get(entry.categoryKey).push(entry);
   });
+
+  const codeByIndex = new Map();
+
+  categoryGroups.forEach((entries, categoryKey) => {
+    const sortedEntries = [...entries].sort((left, right) => {
+      const leftTime = new Date(
+        left.item?.createdAt || left.item?.updatedAt || 0,
+      ).getTime();
+      const rightTime = new Date(
+        right.item?.createdAt || right.item?.updatedAt || 0,
+      ).getTime();
+
+      if (leftTime !== rightTime) {
+        return leftTime - rightTime;
+      }
+
+      const leftId = String(left.item?._id || "");
+      const rightId = String(right.item?._id || "");
+
+      if (leftId && rightId && leftId !== rightId) {
+        return leftId.localeCompare(rightId);
+      }
+
+      return left.index - right.index;
+    });
+
+    sortedEntries.forEach((entry, orderIndex) => {
+      const codeNumber = String(orderIndex + 1).padStart(2, "0");
+      codeByIndex.set(entry.index, {
+        cakeCode: `${categoryKey}-#${codeNumber}`,
+        cakeCodeSearch: `${categoryKey}-${codeNumber}`,
+      });
+    });
+  });
+
+  return indexedItems.map((entry) => ({
+    ...entry.item,
+    ...(codeByIndex.get(entry.index) || {
+      cakeCode: `${entry.categoryKey}-#01`,
+      cakeCodeSearch: `${entry.categoryKey}-01`,
+    }),
+  }));
 };
 
 export const getGalleryItemSelections = (item = {}, sectionKey = "") => {
