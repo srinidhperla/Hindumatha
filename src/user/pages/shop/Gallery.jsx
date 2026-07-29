@@ -1,13 +1,12 @@
 import React, { useDeferredValue, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import GalleryGrid from "@/user/components/gallery/GalleryGrid";
 import GalleryCalculatorModal from "@/user/components/gallery/GalleryCalculatorModal";
-import GalleryLightbox from "@/user/components/gallery/GalleryLightbox";
 import GalleryCta from "@/user/components/gallery/GalleryCta";
 import SeoMeta from "@/shared/seo/SeoMeta";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
+import useGalleryItems from "@/user/hooks/useGalleryItems";
 import {
-  attachGalleryItemCodes,
   buildGalleryWeightFilterOptions,
   getGalleryItemCategories,
   getGalleryItemSelections,
@@ -18,74 +17,19 @@ import {
 } from "@/utils/galleryItems";
 
 const Gallery = () => {
-  const [selectedImage, setSelectedImage] = useState(null);
+  const navigate = useNavigate();
   const [calculatorItem, setCalculatorItem] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedFondant, setSelectedFondant] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWeight, setSelectedWeight] = useState("");
   const [sortBy, setSortBy] = useState("latest");
-  const {
-    businessInfo,
-    galleryFieldConfig,
-    galleryItems,
-    socialLinks,
-    loaded: isSiteLoaded,
-  } = useSelector((state) => state.site);
-  const { products } = useSelector((state) => state.products);
-  const safeProducts = Array.isArray(products) ? products : [];
-  const safeGalleryItems = Array.isArray(galleryItems) ? galleryItems : [];
+  const { businessInfo, galleryFieldConfig, socialLinks } = useSelector(
+    (state) => state.site,
+  );
   const deferredSearchTerm = useDeferredValue(searchTerm);
-
-  const visibleGalleryItems = useMemo(() => {
-    const seenKeys = new Set();
-
-    return [...safeGalleryItems]
-      .sort(
-        (left, right) =>
-          new Date(right?.createdAt || 0).getTime() -
-          new Date(left?.createdAt || 0).getTime(),
-      )
-      .filter((item) => {
-        const signature = [
-          String(item?.title || "").trim().toLowerCase(),
-          String(item?.imageUrl || "").trim().toLowerCase(),
-          getGalleryItemCategories(item).join("|").toLowerCase(),
-        ].join("::");
-
-        if (seenKeys.has(signature)) {
-          return false;
-        }
-
-        seenKeys.add(signature);
-        return true;
-      });
-  }, [safeGalleryItems]);
-
-  // Get featured products images
-  const featuredProductItems = useMemo(
-    () =>
-      safeProducts
-        .filter((product) => product.isFeatured)
-        .filter((product) => product.isAddon !== true)
-        .map((product) => ({
-          _id: `product-${product._id}`,
-          imageUrl: optimizeProductImageUrl(product.images?.[0] || product.image),
-          title: product.name,
-          category: "Featured",
-          categories: ["Featured"],
-          likes: 0,
-          isProduct: true,
-          productId: product._id,
-        })),
-    [safeProducts],
-  );
-
-  // Combine gallery items with featured products
-  const allItems = useMemo(
-    () => attachGalleryItemCodes([...featuredProductItems, ...visibleGalleryItems]),
-    [featuredProductItems, visibleGalleryItems],
-  );
+  const { allItems, visibleGalleryItems, featuredProductItems, isSiteLoaded } =
+    useGalleryItems();
 
   const categories = useMemo(
     () => [
@@ -215,12 +159,11 @@ const Gallery = () => {
           filteredItems={filteredItems}
           isLoading={!isSiteLoaded}
           onOpenCalculator={setCalculatorItem}
-          onSelectImage={setSelectedImage}
-        />
-
-        <GalleryLightbox
-          item={selectedImage}
-          onClose={() => setSelectedImage(null)}
+          onSelectImage={(item) => {
+            if (item?.cakeCodeSearch) {
+              navigate(`/gallery/photo/${item.cakeCodeSearch}`);
+            }
+          }}
         />
 
         <GalleryCalculatorModal

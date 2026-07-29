@@ -44,6 +44,7 @@ const SITE_REFRESH_SCOPES = new Set([
 const Home = lazy(() => import("@/user/pages/shop/Home"));
 const Menu = lazy(() => import("@/user/pages/shop/Menu"));
 const Gallery = lazy(() => import("@/user/pages/shop/Gallery"));
+const GalleryPhoto = lazy(() => import("@/user/pages/shop/GalleryPhoto"));
 const Contact = lazy(() => import("@/user/pages/shop/Contact"));
 const Cart = lazy(() => import("@/user/pages/checkout/Cart"));
 const Login = lazy(() => import("@/user/pages/account/Login"));
@@ -214,6 +215,7 @@ function App() {
               <Route path="/menu" element={<Menu />} />
               <Route path="/products/:id" element={<ProductRouteRedirect />} />
               <Route path="/gallery" element={<Gallery />} />
+              <Route path="/gallery/photo/:code" element={<GalleryPhoto />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/login" element={<Login />} />

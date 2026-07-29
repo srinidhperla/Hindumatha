@@ -929,9 +929,16 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-600">
-                    Cake Preview
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-600">
+                      Cake Preview
+                    </p>
+                    {item.cakeCode ? (
+                      <span className="inline-flex rounded-full bg-primary-900/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-900">
+                        {item.cakeCode}
+                      </span>
+                    ) : null}
+                  </div>
                   <h3 className="text-xl font-bold text-primary-900">
                     {item.title}
                   </h3>
