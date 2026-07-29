@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
+import ImageBackupButtons from "@/admin/components/common/ImageBackupButtons";
 import { formatCategoryLabel } from "@/utils/productOptions";
 
 const AdminProductsToolbar = ({
@@ -11,6 +12,7 @@ const AdminProductsToolbar = ({
   onSearch,
   onAddProduct,
   onAddAddon,
+  imageBackup,
 }) => (
   <SurfaceCard className="mb-4 sm:mb-6 p-3 sm:p-5">
     <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -62,6 +64,16 @@ const AdminProductsToolbar = ({
             Add Addon
           </ActionButton>
         </div>
+        {imageBackup ? (
+          <ImageBackupButtons
+            restoreInputRef={imageBackup.restoreInputRef}
+            isBackingUp={imageBackup.isBackingUp}
+            isRestoring={imageBackup.isRestoring}
+            onBackup={imageBackup.handleBackup}
+            onRestore={imageBackup.handleRestore}
+            openRestorePicker={imageBackup.openRestorePicker}
+          />
+        ) : null}
       </div>
     </div>
   </SurfaceCard>

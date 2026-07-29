@@ -26,10 +26,23 @@ import ProductFormModal from "../components/modals/ProductFormModal";
 import AddOnFormModal from "../components/modals/AddOnFormModal";
 import AdminProductsToolbar from "../components/products/AdminProductsToolbar";
 import AdminProductsGrid from "../components/products/AdminProductsGrid";
+import useImageBackup from "@/admin/hooks/useImageBackup";
+import {
+  getProductImagesBackup,
+  postProductImagesRestore,
+} from "@/services/productAPI";
 
 const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
   const dispatch = useDispatch();
   const { products, loading } = useSelector((state) => state.products);
+  const imageBackup = useImageBackup({
+    label: "product",
+    fileNamePrefix: "products",
+    downloadBackup: getProductImagesBackup,
+    uploadRestore: postProductImagesRestore,
+    onToast,
+    onRestored: () => dispatch(fetchProducts()).unwrap(),
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddOnModalOpen, setIsAddOnModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -789,6 +802,7 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
           resetForm();
           setIsModalOpen(true);
         }}
+        imageBackup={imageBackup}
         onAddAddon={() => {
           resetAddOnForm();
           setIsAddOnModalOpen(true);

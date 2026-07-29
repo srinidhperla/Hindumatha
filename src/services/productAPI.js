@@ -31,3 +31,20 @@ export const deleteCategoryAPI = (name) =>
   apiClient
     .delete(`/products/batch/category/${encodeURIComponent(name)}`)
     .then((res) => res.data);
+
+// Image uploads/downloads run through Cloudinary and can far exceed the
+// default client timeout.
+const BACKUP_TIMEOUT_MS = 180000;
+
+export const getProductImagesBackup = () =>
+  apiClient
+    .get("/products/backup", {
+      responseType: "blob",
+      timeout: BACKUP_TIMEOUT_MS,
+    })
+    .then((res) => res.data);
+
+export const postProductImagesRestore = (archiveFormData) =>
+  apiClient
+    .post("/products/restore", archiveFormData, { timeout: BACKUP_TIMEOUT_MS })
+    .then((res) => res.data);

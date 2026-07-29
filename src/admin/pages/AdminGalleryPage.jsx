@@ -9,6 +9,13 @@ import {
 } from "@/admin/components/ui/AdminUi";
 import { SurfaceCard } from "@/shared/ui/Primitives";
 import useAdminGalleryEditor from "@/admin/hooks/useAdminGalleryEditor";
+import useImageBackup from "@/admin/hooks/useImageBackup";
+import { useDispatch } from "react-redux";
+import { fetchSiteContent } from "@/features/site/siteSlice";
+import {
+  getGalleryImagesBackup,
+  postGalleryImagesRestore,
+} from "@/services/siteAPI";
 import { attachGalleryItemCodes } from "@/utils/galleryItems";
 
 const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
@@ -59,6 +66,16 @@ const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
     editingItem,
   } = useAdminGalleryEditor({ onToast, syncVersion });
 
+  const dispatch = useDispatch();
+  const imageBackup = useImageBackup({
+    label: "gallery",
+    fileNamePrefix: "gallery",
+    downloadBackup: getGalleryImagesBackup,
+    uploadRestore: postGalleryImagesRestore,
+    onToast,
+    onRestored: () => dispatch(fetchSiteContent()).unwrap(),
+  });
+
   const codedFilteredItems = useMemo(() => {
     const codedGalleryItems = attachGalleryItemCodes(galleryItems);
     const visibleIds = new Set(filteredItems.map((item) => item._id));
@@ -98,6 +115,7 @@ const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
         onSearch={setSearchTerm}
         onAddImage={() => openCreateModal("general")}
         onConfigurePrice={() => openCreateModal("pricing")}
+        imageBackup={imageBackup}
       />
 
       {!filteredItems.length ? (

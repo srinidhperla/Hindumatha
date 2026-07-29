@@ -1,5 +1,6 @@
 import React from "react";
 import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
+import ImageBackupButtons from "@/admin/components/common/ImageBackupButtons";
 import { formatGalleryCategoryLabel } from "@/utils/galleryItems";
 
 const AdminGalleryToolbar = ({
@@ -10,6 +11,7 @@ const AdminGalleryToolbar = ({
   onSearch,
   onAddImage,
   onConfigurePrice,
+  imageBackup,
 }) => (
   <SurfaceCard className="p-4 sm:p-5">
     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -51,6 +53,16 @@ const AdminGalleryToolbar = ({
         <ActionButton onClick={onConfigurePrice} className="text-xs sm:text-sm">
           Set Price & Configure
         </ActionButton>
+        {imageBackup ? (
+          <ImageBackupButtons
+            restoreInputRef={imageBackup.restoreInputRef}
+            isBackingUp={imageBackup.isBackingUp}
+            isRestoring={imageBackup.isRestoring}
+            onBackup={imageBackup.handleBackup}
+            onRestore={imageBackup.handleRestore}
+            openRestorePicker={imageBackup.openRestorePicker}
+          />
+        ) : null}
       </div>
     </div>
   </SurfaceCard>

@@ -337,6 +337,7 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [breakdownTab, setBreakdownTab] = useState("summary");
+  const [isSharing, setIsSharing] = useState(false);
 
   const sharedOptionPrices = useMemo(
     () => buildSharedOptionPrices(galleryFieldConfig, item),
@@ -815,6 +816,81 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
     [priceBreakdown.fixedSelections, priceBreakdown.perKgSelections, weightMultiplier],
   );
 
+  const orderDetailsText = useMemo(() => {
+    const lines = [
+      `Cake: ${item?.title || "Cake"}`,
+      item?.cakeCode ? `Code: ${item.cakeCode}` : null,
+      "",
+      ...(selectionSummary.length
+        ? ["Selected options:", ...selectionSummary.map((entry) => `* ${entry.label}: ${entry.value}`)]
+        : []),
+    ].filter((line) => line !== null);
+
+    return lines.join("\n");
+  }, [item, selectionSummary]);
+
+  const handleShareOrderDetails = async () => {
+    if (isSharing) {
+      return;
+    }
+
+    setIsSharing(true);
+
+    try {
+      let shareFiles = [];
+
+      if (item?.imageUrl && navigator.canShare) {
+        try {
+          const response = await fetch(item.imageUrl);
+          const blob = await response.blob();
+          const extension = (blob.type.split("/")[1] || "jpg").split("+")[0];
+          const file = new File(
+            [blob],
+            `${item.cakeCode || item.title || "cake"}.${extension}`.replace(/\s+/g, "-"),
+            { type: blob.type },
+          );
+
+          if (navigator.canShare({ files: [file] })) {
+            shareFiles = [file];
+          }
+        } catch {
+          shareFiles = [];
+        }
+      }
+
+      if (navigator.share) {
+        await navigator.share(
+          shareFiles.length
+            ? { files: shareFiles, text: orderDetailsText, title: item?.title || "Cake order" }
+            : { text: orderDetailsText, title: item?.title || "Cake order" },
+        );
+        return;
+      }
+
+      throw new Error("Web Share not supported");
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+
+      try {
+        await navigator.clipboard?.writeText(orderDetailsText);
+      } catch {
+        // clipboard access may be unavailable; the alert below still guides the user
+      }
+
+      if (item?.imageUrl) {
+        window.open(item.imageUrl, "_blank", "noopener,noreferrer");
+      }
+
+      window.alert(
+        "Direct sharing isn't supported in this browser. The order details were copied to your clipboard and the cake image opened in a new tab — save the image and send both to your staff group manually.",
+      );
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   if (!item) {
     return null;
   }
@@ -938,14 +1014,40 @@ const GalleryCalculatorModal = ({ item, galleryFieldConfig, onClose }) => {
                         confirmation, custom decoration, and finishing details.
                       </p>
                     </div>
-                    <ActionButton
-                      type="button"
-                      variant="secondary"
-                      className="border-white/20 bg-white/10 text-white hover:bg-white/15"
-                      onClick={() => setShowBreakdown((current) => !current)}
-                    >
-                      {showBreakdown ? "Hide Price Details" : "View Price Details"}
-                    </ActionButton>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <ActionButton
+                        type="button"
+                        variant="secondary"
+                        className="border-white/20 bg-white/10 text-white hover:bg-white/15"
+                        onClick={() => setShowBreakdown((current) => !current)}
+                      >
+                        {showBreakdown ? "Hide Price Details" : "View Price Details"}
+                      </ActionButton>
+                      <ActionButton
+                        type="button"
+                        disabled={isSharing}
+                        onClick={handleShareOrderDetails}
+                        className="inline-flex items-center justify-center gap-2 bg-[#b45f40] text-white hover:brightness-105"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <circle cx="18" cy="5" r="3" />
+                          <circle cx="6" cy="12" r="3" />
+                          <circle cx="18" cy="19" r="3" />
+                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        </svg>
+                        {isSharing ? "Preparing..." : "Share Order Details"}
+                      </ActionButton>
+                    </div>
                   </div>
                 </div>
 

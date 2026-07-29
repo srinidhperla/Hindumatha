@@ -25,10 +25,13 @@ const Gallery = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWeight, setSelectedWeight] = useState("");
   const [sortBy, setSortBy] = useState("latest");
-  const { businessInfo, galleryFieldConfig, galleryItems, socialLinks } =
-    useSelector(
-    (state) => state.site,
-    );
+  const {
+    businessInfo,
+    galleryFieldConfig,
+    galleryItems,
+    socialLinks,
+    loaded: isSiteLoaded,
+  } = useSelector((state) => state.site);
   const { products } = useSelector((state) => state.products);
   const safeProducts = Array.isArray(products) ? products : [];
   const safeGalleryItems = Array.isArray(galleryItems) ? galleryItems : [];
@@ -210,6 +213,7 @@ const Gallery = () => {
           }}
           totalItems={allItems.length}
           filteredItems={filteredItems}
+          isLoading={!isSiteLoaded}
           onOpenCalculator={setCalculatorItem}
           onSelectImage={setSelectedImage}
         />

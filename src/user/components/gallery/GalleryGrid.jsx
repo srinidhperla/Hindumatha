@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { OptimizedImage } from "@/shared/ui";
+import { OptimizedImage, Skeleton } from "@/shared/ui";
 import {
   formatGalleryCategoryLabel,
   formatGalleryWeightRange,
@@ -184,6 +184,7 @@ const GalleryGrid = ({
   filteredItems,
   onOpenCalculator,
   onSelectImage,
+  isLoading = false,
 }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [draftSelectedCategories, setDraftSelectedCategories] = useState([]);
@@ -279,6 +280,21 @@ const GalleryGrid = ({
       </div>
 
       <div className="gallery-grid">
+        {isLoading
+          ? Array.from({ length: 8 }).map((_, index) => (
+              <div key={`gallery-skeleton-${index}`} className="gallery-card">
+                <Skeleton
+                  variant="image"
+                  className="aspect-[3/4] h-auto w-full rounded-none sm:aspect-[4/5]"
+                />
+                <div className="space-y-3 p-3 sm:p-4">
+                  <Skeleton variant="text" className="w-20" />
+                  <Skeleton variant="text" className="w-3/4" />
+                  <Skeleton className="h-10 w-full rounded-2xl" />
+                </div>
+              </div>
+            ))
+          : null}
         {filteredItems.map((item) => (
           <div key={item._id} className="gallery-card group">
             <button
@@ -327,7 +343,7 @@ const GalleryGrid = ({
         ))}
       </div>
 
-      {!filteredItems.length ? (
+      {!isLoading && !filteredItems.length ? (
         <div className="mt-8 rounded-[28px] border border-dashed border-[rgba(201,168,76,0.45)] bg-white/75 p-8 text-center shadow-sm">
           <p className="text-lg font-semibold text-primary-900">
             No cakes match these filters.
