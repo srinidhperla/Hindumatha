@@ -69,8 +69,9 @@ const useImageBackup = ({
 
     const confirmed = window.confirm(
       `Restore ${label} images from "${file.name}"?\n\n` +
-        "Each matching image will be re-uploaded and will REPLACE the current " +
-        "image on that item. This cannot be undone.",
+        "Only images that are MISSING from Cloudinary will be re-uploaded. " +
+        "Images that still work are left untouched, so nothing good is " +
+        "overwritten and no extra Cloudinary usage is spent.",
     );
 
     if (!confirmed) {
@@ -82,16 +83,19 @@ const useImageBackup = ({
     try {
       const archiveFormData = new FormData();
       archiveFormData.append("archive", file);
+      archiveFormData.append("mode", "missing");
       const result = await uploadRestore(archiveFormData);
 
       await onRestored?.();
 
-      const skippedNote = result.skipped?.length
-        ? ` ${result.skipped.length} file(s) skipped.`
-        : "";
-      onToast(
-        `Restored ${result.updated?.length || 0} ${label} image(s).${skippedNote}`,
-      );
+      const parts = [`Restored ${result.updated?.length || 0} missing ${label} image(s).`];
+      if (result.alreadyHealthy?.length) {
+        parts.push(`${result.alreadyHealthy.length} already fine (left as is).`);
+      }
+      if (result.skipped?.length) {
+        parts.push(`${result.skipped.length} skipped.`);
+      }
+      onToast(parts.join(" "));
     } catch (error) {
       onToast(
         await readErrorMessage(error, `Failed to restore ${label} images.`),

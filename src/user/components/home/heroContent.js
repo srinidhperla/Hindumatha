@@ -1,12 +1,12 @@
 export const heroSlides = [
   {
     image:
-      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1775544953/1775544600140-24908349-hero-page-image1_scrcd3.webp",
+      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1774845917/product_images/gallery/cake4.jpg",
     alt: "Signature cake",
   },
   {
     image:
-      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1775545083/product_images/1775545082831-706313507-cake1.webp",
+      "https://res.cloudinary.com/dh39jlcy0/image/upload/v1774845916/product_images/gallery/cake3.jpg",
     alt: "Chocolate cake",
   },
   {
