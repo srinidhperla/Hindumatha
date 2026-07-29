@@ -1,7 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import AddressPickerModal from "@/user/components/address/AddressPickerModal";
 import { formatAddressText } from "@/utils/mapsLinks";
 
+/**
+ * Shows only the address being delivered to. Every other saved address lives
+ * behind "Change", so the checkout list stays short on phones.
+ */
 const OrderAddressStep = ({
   savedAddresses,
   addressMode,
@@ -18,12 +22,10 @@ const OrderAddressStep = ({
   onDeleteSavedAddress,
   onSaveAddress,
   onCancelAddressModal,
-  onBack,
-  hideBackAction = false,
 }) => {
   const isAddressModalOpen = addressMode === "new" || addressMode === "edit";
-
   const hasDistanceFromStore = Number.isFinite(distanceFromStoreKm);
+  const [isChooserOpen, setIsChooserOpen] = useState(false);
 
   const editingAddress = useMemo(() => {
     if (addressMode === "edit" && editingAddressId) {
@@ -32,141 +34,192 @@ const OrderAddressStep = ({
     return null;
   }, [addressMode, editingAddressId, savedAddresses]);
 
-  return (
-    <div className="commerce-section-body">
-      <h2 className="commerce-section-title">Contact and address</h2>
-      <p className="commerce-section-copy">
-        Pick a saved address, or add a new one. We verify the location and
-        delivery radius before saving.
-      </p>
+  // Falls back to the default address so the page always shows one target.
+  const activeAddress = useMemo(() => {
+    if (!Array.isArray(savedAddresses) || savedAddresses.length === 0) {
+      return null;
+    }
 
-      <div id="checkout-address-section" className="commerce-form-stack">
-        <div>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <p className="commerce-field-label">Delivery addresses</p>
+    return (
+      savedAddresses.find((address) => address.id === selectedAddressId) ||
+      savedAddresses.find((address) => address.isDefault) ||
+      savedAddresses[0]
+    );
+  }, [savedAddresses, selectedAddressId]);
+
+  const handleChooseAddress = (address) => {
+    onSavedAddressSelect(address);
+    setIsChooserOpen(false);
+  };
+
+  return (
+    <>
+      <div id="checkout-address-section" className="checkout-group">
+        <div className="checkout-group-head">
+          <p className="checkout-group-label">Deliver to</p>
+          {activeAddress ? (
+            <button
+              type="button"
+              onClick={() =>
+                savedAddresses.length > 1
+                  ? setIsChooserOpen(true)
+                  : onEditSavedAddress(activeAddress)
+              }
+              className="checkout-group-action"
+            >
+              {savedAddresses.length > 1 ? "Change" : "Edit"}
+            </button>
+          ) : null}
+        </div>
+
+        {activeAddress ? (
+          <>
+            <div className="checkout-addr">
+              <div className="min-w-0">
+                <p className="checkout-addr-label">
+                  {activeAddress.label}
+                  {activeAddress.isDefault ? (
+                    <span className="checkout-chip ml-2 bg-sage-100 text-sage-700">
+                      Default
+                    </span>
+                  ) : null}
+                </p>
+                <p className="checkout-addr-text">
+                  {formatAddressText(activeAddress)}
+                </p>
+              </div>
+            </div>
+
+            <div className="checkout-status">
+              <span
+                className={
+                  isAddressVerified ? "text-sage-700" : "text-caramel-700"
+                }
+              >
+                {isAddressVerified ? "✓ Verified" : "! Not verified"}
+              </span>
+              <span className="text-primary-300">·</span>
+              <span
+                className={
+                  isAddressServiceable ? "text-sage-700" : "text-rose-600"
+                }
+              >
+                {isAddressServiceable
+                  ? "Within delivery area"
+                  : `Outside ${maxDeliveryRadiusKm} km delivery area`}
+              </span>
+              {hasDistanceFromStore ? (
+                <>
+                  <span className="text-primary-300">·</span>
+                  <span className="text-primary-600">
+                    {distanceFromStoreKm.toFixed(1)} km away
+                  </span>
+                </>
+              ) : null}
+            </div>
+
             <button
               type="button"
               onClick={onStartNewAddress}
-              className="btn-secondary"
+              className="mt-2.5 text-xs font-bold text-caramel-700 underline underline-offset-2"
             >
-              + Add New Address
+              + Add new address
             </button>
-          </div>
-          {savedAddresses.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {savedAddresses.map((address) => {
-                const isSelected = selectedAddressId === address.id;
-                const isEditing = editingAddressId === address.id;
-                return (
-                  <article
-                    key={address.id}
-                    className={`rounded-2xl border p-4 transition ${
-                      isSelected
-                        ? "border-primary-400 bg-primary-50"
-                        : "border-cream-200 bg-white"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-primary-800">
-                          {address.label}
-                          {address.isDefault && (
-                            <span className="ml-2 rounded-full bg-sage-100 px-2 py-0.5 text-xs font-semibold text-sage-700">
-                              Default
-                            </span>
-                          )}
-                        </p>
-                        <p className="mt-1 text-sm text-primary-600">
-                          {formatAddressText(address)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onSavedAddressSelect(address)}
-                        className="rounded-xl border border-primary-200 px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100"
-                      >
-                        {isSelected ? "Selected" : "Deliver Here"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onEditSavedAddress(address)}
-                        className={`rounded-xl border px-3 py-1.5 text-xs font-semibold ${
-                          isEditing
-                            ? "border-caramel-300 bg-caramel-50 text-caramel-700"
-                            : "border-cream-300 text-primary-700 hover:bg-cream-100"
-                        }`}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDeleteSavedAddress(address.id)}
-                        className="rounded-xl border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-cream-200 bg-cream-50 p-4 text-sm text-primary-600">
-              No saved addresses yet. Add your first address.
-            </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={onStartNewAddress}
+            className="w-full rounded-xl border border-dashed border-caramel-400 bg-caramel-50/50 px-3 py-3 text-sm font-bold text-caramel-800 transition active:scale-[0.99]"
+          >
+            + Add delivery address
+          </button>
+        )}
 
-        {/* Delivery status badges */}
-        <div className="rounded-2xl border border-cream-200 bg-white p-4">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span
-              className={`rounded-full px-3 py-1 font-semibold ${
-                isAddressVerified
-                  ? "bg-sage-100 text-sage-700"
-                  : "bg-caramel-100 text-caramel-700"
-              }`}
-            >
-              {isAddressVerified
-                ? "Verified location"
-                : "Location not verified"}
-            </span>
-            <span
-              className={`rounded-full px-3 py-1 font-semibold ${
-                isAddressServiceable
-                  ? "bg-sage-100 text-sage-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {isAddressServiceable
-                ? "Within delivery area"
-                : "Outside delivery area"}
-            </span>
-            {hasDistanceFromStore && (
-              <span className="rounded-full bg-cream-100 px-3 py-1 font-semibold text-primary-700">
-                {distanceFromStoreKm.toFixed(2)} km away
-              </span>
-            )}
-          </div>
-          <p className="mt-2 text-xs text-primary-500">
-            Delivery radius: {maxDeliveryRadiusKm} km from store location.
-          </p>
-        </div>
+        {error ? <p className="checkout-inline-note">{error}</p> : null}
       </div>
 
-      {error && (
-        <div className="commerce-alert commerce-alert--danger">{error}</div>
-      )}
+      {isChooserOpen ? (
+        <div
+          className="checkout-sheet"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setIsChooserOpen(false);
+            }
+          }}
+        >
+          <div className="checkout-sheet-card">
+            <div className="checkout-sheet-head">
+              <p className="text-sm font-bold text-primary-900">
+                Choose delivery address
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsChooserOpen(false)}
+                className="text-xs font-bold text-primary-500"
+              >
+                Close
+              </button>
+            </div>
 
-      {!hideBackAction && (
-        <div className="commerce-inline-actions">
-          <button type="button" onClick={onBack} className="btn-secondary">
-            ← Back to Review
-          </button>
+            <div className="checkout-sheet-body">
+              {savedAddresses.map((address) => (
+                <div key={address.id} className="checkout-sheet-row">
+                  <button
+                    type="button"
+                    onClick={() => handleChooseAddress(address)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <p className="checkout-addr-label">
+                      {address.label}
+                      {address.id === activeAddress?.id ? (
+                        <span className="checkout-chip ml-2 bg-caramel-100 text-caramel-800">
+                          Selected
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="checkout-addr-text">
+                      {formatAddressText(address)}
+                    </p>
+                  </button>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsChooserOpen(false);
+                        onEditSavedAddress(address);
+                      }}
+                      className="text-xs font-bold text-caramel-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteSavedAddress(address.id)}
+                      className="text-xs font-bold text-rose-600"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-primary-100 p-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsChooserOpen(false);
+                  onStartNewAddress();
+                }}
+                className="w-full rounded-xl border border-dashed border-caramel-400 bg-caramel-50/50 px-3 py-2.5 text-sm font-bold text-caramel-800"
+              >
+                + Add new address
+              </button>
+            </div>
+          </div>
         </div>
-      )}
+      ) : null}
 
       <AddressPickerModal
         isOpen={isAddressModalOpen}
@@ -174,7 +227,7 @@ const OrderAddressStep = ({
         onSave={onSaveAddress}
         initialAddress={editingAddress}
       />
-    </div>
+    </>
   );
 };
 

@@ -4,6 +4,8 @@ import { FiArrowUp, FiMessageCircle } from "react-icons/fi";
 import SeoMeta from "@/shared/seo/SeoMeta";
 import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
 
+import HomeOrderOnlineCta from "@/user/components/home/HomeOrderOnlineCta";
+
 const HeroSection = lazy(() => import("@/user/components/home/HeroSection"));
 const HomeCategoryGrid = lazy(
   () => import("@/user/components/home/HomeCategoryGrid"),
@@ -151,6 +153,8 @@ const Home = () => {
           products={storefrontProducts}
         />
       </Suspense>
+
+      <HomeOrderOnlineCta />
 
       <Suspense fallback={null}>
         <HomeCategoryGrid products={storefrontProducts} />

@@ -2602,3 +2602,393 @@
     @apply w-full max-w-lg rounded-[2rem] bg-white p-8 text-center shadow-warm;
   }
 }
+
+/* ==========================================
+   MOBILE-FIRST CART
+   Compact list rows + sticky pay bar on phones,
+   two-column with sticky summary from lg up.
+   ========================================== */
+@layer components {
+  .cart-page {
+    @apply min-h-screen pb-28 pt-4 lg:pb-16 lg:pt-10;
+    background: linear-gradient(180deg, #fdf8f6 0%, #fefdfb 40%, #faf4ea 100%);
+  }
+
+  .cart-shell {
+    @apply mx-auto w-full max-w-6xl px-3 sm:px-5 lg:px-8;
+  }
+
+  .cart-head {
+    @apply mb-3 flex items-center justify-between gap-3 lg:mb-6;
+  }
+
+  .cart-head-title {
+    @apply text-lg font-black text-primary-900 sm:text-xl lg:text-3xl;
+  }
+
+  .cart-head-sub {
+    @apply mt-0.5 text-xs text-primary-600 sm:text-sm;
+  }
+
+  .cart-clear {
+    @apply shrink-0 rounded-full border border-primary-200 bg-white px-3 py-1.5
+      text-xs font-semibold text-primary-700 transition hover:bg-cream-100
+      active:scale-95 sm:px-4 sm:py-2 sm:text-sm;
+  }
+
+  .cart-layout {
+    @apply lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-6;
+  }
+
+  .cart-main {
+    @apply space-y-3 lg:space-y-4;
+  }
+
+  .cart-panel {
+    @apply overflow-hidden rounded-2xl border border-primary-100 bg-white
+      shadow-[0_2px_12px_rgba(120,58,48,0.06)] sm:rounded-3xl;
+  }
+
+  .cart-panel-head {
+    @apply flex items-center justify-between gap-3 border-b border-primary-100
+      px-3.5 py-3 sm:px-5 sm:py-3.5;
+  }
+
+  .cart-panel-title {
+    @apply text-sm font-bold text-primary-900 sm:text-base;
+  }
+
+  /* ---------- item row ---------- */
+  .cart-row {
+    @apply flex gap-3 border-b border-primary-100/70 px-3.5 py-3 last:border-b-0
+      sm:gap-4 sm:px-5 sm:py-4;
+  }
+
+  .cart-row-thumb {
+    @apply h-16 w-16 shrink-0 rounded-xl border border-primary-100 bg-cream-100
+      object-cover sm:h-20 sm:w-20 sm:rounded-2xl;
+  }
+
+  .cart-row-body {
+    @apply flex min-w-0 flex-1 flex-col;
+  }
+
+  .cart-row-name {
+    @apply line-clamp-2 text-sm font-bold leading-snug text-primary-900 sm:text-base;
+  }
+
+  .cart-row-meta {
+    @apply mt-1 line-clamp-1 text-xs text-primary-600 sm:text-[13px];
+  }
+
+  .cart-row-actions {
+    @apply mt-auto flex items-center gap-3 pt-2;
+  }
+
+  .cart-row-edit {
+    @apply rounded-lg px-0 text-xs font-semibold text-caramel-700 underline
+      underline-offset-2 transition hover:text-caramel-800 sm:text-[13px];
+  }
+
+  .cart-row-remove {
+    @apply text-xs font-semibold text-primary-400 transition hover:text-berry-600
+      sm:text-[13px];
+  }
+
+  .cart-row-side {
+    @apply flex shrink-0 flex-col items-end justify-between gap-2;
+  }
+
+  .cart-row-price {
+    @apply text-sm font-black text-primary-900 sm:text-base;
+  }
+
+  .cart-row-unit {
+    @apply text-[11px] font-medium text-primary-500;
+  }
+
+  /* ---------- stepper ---------- */
+  .cart-stepper {
+    @apply inline-flex items-center overflow-hidden rounded-lg border
+      border-caramel-300 bg-caramel-50;
+  }
+
+  .cart-stepper-btn {
+    @apply flex h-8 w-8 items-center justify-center text-base font-bold
+      text-caramel-800 transition active:scale-90 disabled:opacity-40
+      sm:h-9 sm:w-9;
+  }
+
+  .cart-stepper-value {
+    @apply min-w-[1.75rem] text-center text-sm font-bold text-primary-900;
+  }
+
+  /* ---------- inline option editor ---------- */
+  .cart-options {
+    @apply mt-2.5 grid gap-2.5 rounded-xl border border-primary-100
+      bg-cream-100/70 p-3 sm:grid-cols-2;
+  }
+
+  .cart-option-label {
+    @apply mb-1 block text-[11px] font-semibold uppercase tracking-wide
+      text-primary-500;
+  }
+
+  .cart-option-select {
+    @apply w-full rounded-lg border border-primary-200 bg-white px-2.5 py-2
+      text-sm text-primary-900 outline-none transition
+      focus:border-caramel-400 focus:ring-2 focus:ring-caramel-200;
+  }
+
+  /* ---------- add-ons strip ---------- */
+  .cart-addon-strip {
+    @apply flex gap-2.5 overflow-x-auto px-3.5 pb-3.5 sm:px-5
+      [-ms-overflow-style:none] [scrollbar-width:none];
+  }
+
+  .cart-addon-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cart-addon-card {
+    @apply flex w-[8.5rem] shrink-0 flex-col gap-1.5 rounded-xl border
+      border-primary-100 bg-cream-50 p-2.5 sm:w-40;
+  }
+
+  .cart-addon-img {
+    @apply h-16 w-full rounded-lg bg-white object-cover sm:h-20;
+  }
+
+  .cart-addon-name {
+    @apply line-clamp-2 text-xs font-semibold leading-tight text-primary-900;
+  }
+
+  .cart-addon-add {
+    @apply mt-auto rounded-lg border border-caramel-400 bg-white py-1.5
+      text-xs font-bold text-caramel-800 transition hover:bg-caramel-50
+      active:scale-95;
+  }
+
+  /* ---------- bill summary ---------- */
+  .cart-aside {
+    @apply mt-3 lg:sticky lg:top-24 lg:mt-0;
+  }
+
+  .cart-bill-row {
+    @apply flex items-center justify-between py-1.5 text-sm text-primary-700;
+  }
+
+  .cart-bill-total {
+    @apply mt-2 flex items-center justify-between border-t border-dashed
+      border-primary-200 pt-3 text-base font-black text-primary-900;
+  }
+
+  /* ---------- sticky mobile pay bar ---------- */
+  .cart-paybar {
+    @apply fixed inset-x-0 bottom-0 z-40 border-t border-primary-100 bg-white/95
+      px-3 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-2.5
+      shadow-[0_-6px_20px_rgba(120,58,48,0.10)] backdrop-blur lg:hidden;
+  }
+
+  .cart-paybar-inner {
+    @apply mx-auto flex max-w-6xl items-center gap-3;
+  }
+
+  .cart-cta {
+    @apply flex-1 rounded-xl bg-gradient-to-r from-primary-700 to-primary-800
+      px-5 py-3 text-center text-sm font-bold text-cream-50 shadow-md
+      transition active:scale-[0.98] disabled:cursor-not-allowed
+      disabled:opacity-50;
+  }
+
+  .cart-note {
+    @apply rounded-xl px-3 py-2 text-xs font-medium sm:text-[13px];
+  }
+}
+
+/* ==========================================
+   MOBILE-FIRST CHECKOUT (Order + Payment)
+   Reuses the cart shell. `.checkout-compact` tightens the shared
+   commerce-* form styles on phones without touching other pages.
+   ========================================== */
+@layer components {
+  .checkout-head {
+    @apply mb-3 flex items-start justify-between gap-3 lg:mb-6;
+  }
+
+  .checkout-back {
+    @apply shrink-0 rounded-full border border-primary-200 bg-white px-3 py-1.5
+      text-xs font-semibold text-primary-700 transition hover:bg-cream-100
+      active:scale-95 sm:px-4 sm:py-2 sm:text-sm;
+  }
+
+  /* Scoped down-sizing of the shared checkout form chrome. */
+  .checkout-compact .commerce-section-body {
+    @apply p-3.5 sm:p-5 lg:p-6;
+  }
+
+  .checkout-compact .commerce-section-title {
+    @apply text-base sm:text-lg lg:text-xl;
+  }
+
+  .checkout-compact .commerce-section-copy {
+    @apply mt-1 text-xs sm:text-sm;
+  }
+
+  .checkout-compact .commerce-form-stack {
+    @apply mt-4 space-y-4 sm:mt-5 sm:space-y-5;
+  }
+
+  .checkout-compact .commerce-note {
+    @apply mt-3 px-3 py-2 text-xs sm:text-sm;
+  }
+
+  .checkout-compact .commerce-actions {
+    @apply mt-5;
+  }
+
+  /* ---------- payment review row ---------- */
+  .checkout-review-row {
+    @apply flex items-start gap-3 border-b border-primary-100/70 px-3.5 py-3
+      last:border-b-0 sm:px-5 sm:py-3.5;
+  }
+
+  .checkout-review-thumb {
+    @apply flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden
+      rounded-xl border border-primary-100 bg-cream-100 sm:h-16 sm:w-16;
+  }
+
+  .checkout-review-name {
+    @apply line-clamp-2 text-sm font-bold leading-snug text-primary-900 sm:text-[15px];
+  }
+
+  .checkout-review-meta {
+    @apply mt-1 line-clamp-2 text-xs text-primary-600;
+  }
+
+  .checkout-review-qty {
+    @apply mt-1 text-xs font-medium text-primary-500;
+  }
+
+  .checkout-review-price {
+    @apply shrink-0 text-sm font-black text-primary-900 sm:text-base;
+  }
+
+  /* ---------- coupon ---------- */
+  .checkout-coupon {
+    @apply rounded-xl border border-caramel-200 bg-caramel-50/60 p-3 sm:p-4;
+  }
+
+  .checkout-coupon-input {
+    @apply min-w-0 flex-1 rounded-lg border border-primary-200 bg-white px-3 py-2
+      text-sm text-primary-900 outline-none transition
+      focus:border-caramel-400 focus:ring-2 focus:ring-caramel-200;
+  }
+
+  .checkout-coupon-apply {
+    @apply shrink-0 rounded-lg bg-primary-700 px-4 py-2 text-sm font-bold
+      text-cream-50 transition hover:bg-primary-800 active:scale-95;
+  }
+}
+
+/* ==========================================
+   FLAT CHECKOUT LIST
+   Replaces nested cards on the Order page with a single
+   divided list so the page stays short on phones.
+   ========================================== */
+@layer components {
+  .checkout-flat {
+    @apply overflow-hidden rounded-2xl border border-primary-100 bg-white
+      shadow-[0_2px_12px_rgba(120,58,48,0.06)] sm:rounded-3xl;
+  }
+
+  .checkout-group {
+    @apply border-b border-primary-100 px-3.5 py-3.5 last:border-b-0 sm:px-5 sm:py-4;
+  }
+
+  .checkout-group-head {
+    @apply mb-2.5 flex items-center justify-between gap-3;
+  }
+
+  .checkout-group-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-primary-500;
+  }
+
+  .checkout-group-action {
+    @apply shrink-0 text-xs font-bold text-caramel-700 underline underline-offset-2
+      transition hover:text-caramel-800;
+  }
+
+  /* Segmented choice: two flat pills instead of bordered cards. */
+  .checkout-choices {
+    @apply grid grid-cols-2 gap-2;
+  }
+
+  .checkout-pill {
+    @apply rounded-xl border border-primary-200 bg-white px-3 py-2.5 text-center
+      transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .checkout-pill--active {
+    @apply border-caramel-400 bg-caramel-50 ring-1 ring-caramel-300;
+  }
+
+  .checkout-pill-title {
+    @apply text-sm font-bold text-primary-900;
+  }
+
+  .checkout-pill-note {
+    @apply mt-0.5 text-[11px] leading-tight text-primary-500;
+  }
+
+  /* Single selected-address line. */
+  .checkout-addr {
+    @apply flex items-start gap-2.5;
+  }
+
+  .checkout-addr-label {
+    @apply text-sm font-bold text-primary-900;
+  }
+
+  .checkout-addr-text {
+    @apply mt-0.5 text-[13px] leading-snug text-primary-600;
+  }
+
+  .checkout-chip {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold
+      uppercase tracking-wide;
+  }
+
+  .checkout-status {
+    @apply mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium;
+  }
+
+  .checkout-inline-note {
+    @apply mt-1.5 text-xs font-medium text-rose-600;
+  }
+
+  /* Address chooser sheet */
+  .checkout-sheet {
+    @apply fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-0
+      sm:items-center sm:p-4;
+  }
+
+  .checkout-sheet-card {
+    @apply max-h-[80vh] w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl
+      sm:max-w-lg sm:rounded-2xl;
+  }
+
+  .checkout-sheet-head {
+    @apply flex items-center justify-between gap-3 border-b border-primary-100
+      px-4 py-3;
+  }
+
+  .checkout-sheet-body {
+    @apply max-h-[58vh] overflow-y-auto;
+  }
+
+  .checkout-sheet-row {
+    @apply flex w-full items-start gap-3 border-b border-primary-100/70 px-4 py-3
+      text-left last:border-b-0;
+  }
+}

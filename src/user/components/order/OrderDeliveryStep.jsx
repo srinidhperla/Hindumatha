@@ -17,11 +17,7 @@ const OrderDeliveryStep = ({
   availableScheduledSlots,
   scheduleAvailabilityReason,
   nowAvailabilityReason,
-  pauseUntilLabel,
-  pricing,
-  availableCoupons,
   onChange,
-  onBack,
 }) => {
   const isDeliveryTurnedOff = normalizedDeliverySettings?.enabled === false;
   const isScheduled = formData.deliveryMode === "scheduled";
@@ -34,6 +30,7 @@ const OrderDeliveryStep = ({
     ? "Delivery is currently turned off."
     : scheduleAvailabilityReason;
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [draftTimeParts, setDraftTimeParts] = useState(() =>
     to12HourParts(scheduledSlotStart),
   );
@@ -115,118 +112,78 @@ const OrderDeliveryStep = ({
   }, [isDraftTimeRejected, onChange, scheduleAvailabilityReason]);
 
   return (
-    <div className="commerce-section-body">
-      <h2 className="commerce-section-title">Delivery details</h2>
-      <p className="commerce-section-copy">
-        Choose instant delivery or schedule an exact delivery date and time.
-      </p>
-
-      <div className="commerce-form-stack">
-        <div
-          id="checkout-delivery-mode"
-          className="rounded-2xl border border-primary-200 bg-primary-50/70 p-3"
-        >
-          <p className="commerce-field-label mb-3">Delivery preference</p>
-          <div className="grid gap-3 md:grid-cols-2">
+    <>
+      <div id="checkout-delivery-mode" className="checkout-group">
+        <div className="checkout-group-head">
+          <p className="checkout-group-label">When</p>
+          {isScheduled ? (
             <button
               type="button"
-              onClick={() => {
-                if (isDeliveryTurnedOff) {
-                  return;
-                }
-                onChange({ target: { name: "deliveryMode", value: "now" } });
-              }}
-              disabled={isDeliveryTurnedOff}
-              className={`rounded-2xl border px-4 py-3 text-left transition ${
-                isNowSelected
-                  ? "border-sage-300 bg-sage-50"
-                  : "border-primary-200 bg-white"
-              } ${isDeliveryTurnedOff ? "cursor-not-allowed opacity-70" : ""}`}
+              onClick={() => setShowScheduleModal(true)}
+              className="checkout-group-action"
             >
-              <p className="text-sm font-semibold text-primary-800">
-                Deliver Now
-              </p>
-              <p className="text-xs text-primary-600">
-                Fastest possible delivery after prep.
-              </p>
-              {(isNowSelected || isDeliveryTurnedOff) && effectiveNowReason && (
-                <p className="mt-2 text-xs font-medium text-rose-600">
-                  {effectiveNowReason}
-                </p>
-              )}
+              {scheduledDate && scheduledSlotStart ? "Change time" : "Pick time"}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (isDeliveryTurnedOff) {
-                  return;
-                }
-                onChange({
-                  target: { name: "deliveryMode", value: "scheduled" },
-                });
-                setShowScheduleModal(true);
-              }}
-              disabled={isDeliveryTurnedOff}
-              className={`rounded-2xl border px-4 py-3 text-left transition ${
-                isScheduled
-                  ? "border-caramel-300 bg-caramel-50"
-                  : "border-primary-200 bg-white"
-              } ${isDeliveryTurnedOff ? "cursor-not-allowed opacity-70" : ""}`}
-            >
-              <p className="text-sm font-semibold text-primary-800">
-                Schedule Delivery
-              </p>
-              <p className="text-xs text-primary-600">
-                Choose exact date and time.
-              </p>
-              {(isScheduled || isDeliveryTurnedOff) &&
-                effectiveScheduleReason && (
-                  <p className="mt-2 text-xs font-medium text-rose-600">
-                    {effectiveScheduleReason}
-                  </p>
-                )}
-            </button>
-          </div>
-          {!hasSelectedDeliveryMode && (
-            <p className="mt-3 text-xs font-medium text-amber-700">
-              Please select one delivery option to continue.
-            </p>
-          )}
+          ) : null}
         </div>
 
-        {isScheduled && (
-          <div
-            id="checkout-schedule-section"
-            className="rounded-2xl border border-caramel-200 bg-caramel-50/50 p-3"
+        <div className="checkout-choices">
+          <button
+            type="button"
+            onClick={() => {
+              if (isDeliveryTurnedOff) {
+                return;
+              }
+              onChange({ target: { name: "deliveryMode", value: "now" } });
+            }}
+            disabled={isDeliveryTurnedOff}
+            className={`checkout-pill ${isNowSelected ? "checkout-pill--active" : ""}`}
           >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-primary-800">
-                  Scheduled delivery details
-                </p>
-                <p className="text-xs text-primary-600">
-                  Select exact date and time in hours and minutes.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowScheduleModal(true)}
-                className="rounded-xl border border-caramel-200 bg-white px-3 py-2 text-sm font-semibold text-caramel-700 hover:bg-caramel-50"
-              >
-                {scheduledDate && scheduledSlotStart
-                  ? "Edit schedule"
-                  : "Choose schedule"}
-              </button>
-            </div>
-            {scheduledDate && scheduledSlotStart && (
-              <p className="mt-3 text-sm font-medium text-primary-700">
-                Selected: {scheduledDate} at {scheduledSlotStart}
-              </p>
-            )}
-          </div>
-        )}
+            <p className="checkout-pill-title">Deliver Now</p>
+            <p className="checkout-pill-note">Fastest after prep</p>
+          </button>
 
-        <ScheduleDeliveryModal
+          <button
+            type="button"
+            onClick={() => {
+              if (isDeliveryTurnedOff) {
+                return;
+              }
+              onChange({ target: { name: "deliveryMode", value: "scheduled" } });
+              setShowScheduleModal(true);
+            }}
+            disabled={isDeliveryTurnedOff}
+            className={`checkout-pill ${isScheduled ? "checkout-pill--active" : ""}`}
+          >
+            <p className="checkout-pill-title">Schedule</p>
+            <p className="checkout-pill-note">Pick date &amp; time</p>
+          </button>
+        </div>
+
+        {isScheduled && scheduledDate && scheduledSlotStart ? (
+          <p className="mt-2 text-[13px] font-semibold text-primary-800">
+            {scheduledDate} at {scheduledSlotStart}
+          </p>
+        ) : null}
+
+        {isNowSelected || isDeliveryTurnedOff ? (
+          effectiveNowReason && (
+            <p className="checkout-inline-note">{effectiveNowReason}</p>
+          )
+        ) : null}
+        {isScheduled && effectiveScheduleReason ? (
+          <p className="checkout-inline-note">{effectiveScheduleReason}</p>
+        ) : null}
+        {!hasSelectedDeliveryMode ? (
+          <p className="mt-1.5 text-xs font-medium text-amber-700">
+            Select a delivery option to continue.
+          </p>
+        ) : null}
+      </div>
+
+      <div id="checkout-schedule-section" className="hidden" />
+
+      <ScheduleDeliveryModal
           isOpen={isScheduled && showScheduleModal}
           scheduledDate={scheduledDate}
           minimumScheduleDate={minimumScheduleDate}
@@ -241,65 +198,67 @@ const OrderDeliveryStep = ({
           onClose={() => setShowScheduleModal(false)}
         />
 
-        <div id="checkout-payment-method" className="block">
-          <p className="commerce-field-label mb-3">Payment Method</p>
-          <div className="grid gap-3 md:grid-cols-2">
-            <button
-              type="button"
-              onClick={() =>
-                onChange({ target: { name: "paymentMethod", value: "upi" } })
-              }
-              className={`rounded-2xl border px-4 py-3 text-left transition ${
-                formData.paymentMethod === "upi"
-                  ? "border-sage-300 bg-sage-50"
-                  : "border-primary-200 bg-white"
-              }`}
-            >
-              <p className="text-sm font-semibold text-primary-800">UPI</p>
-              <p className="mt-1 text-xs text-primary-600">
-                Pay securely online via UPI apps.
-              </p>
-            </button>
+      <div id="checkout-payment-method" className="checkout-group">
+        <p className="checkout-group-label mb-2.5">Payment</p>
+        <div className="checkout-choices">
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ target: { name: "paymentMethod", value: "upi" } })
+            }
+            className={`checkout-pill ${
+              formData.paymentMethod === "upi" ? "checkout-pill--active" : ""
+            }`}
+          >
+            <p className="checkout-pill-title">UPI</p>
+            <p className="checkout-pill-note">Pay online</p>
+          </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                onChange({ target: { name: "paymentMethod", value: "cash" } })
-              }
-              className={`rounded-2xl border px-4 py-3 text-left transition ${
-                formData.paymentMethod === "cash"
-                  ? "border-sage-300 bg-sage-50"
-                  : "border-primary-200 bg-white"
-              }`}
-            >
-              <p className="text-sm font-semibold text-primary-800">
-                Cash on Delivery
-              </p>
-              <p className="mt-1 text-xs text-primary-600">
-                Pay when your order is delivered.
-              </p>
-            </button>
-          </div>
-          {!formData.paymentMethod && (
-            <p className="mt-2 text-xs font-medium text-amber-700">
-              Please choose UPI or Cash on Delivery.
-            </p>
-          )}
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ target: { name: "paymentMethod", value: "cash" } })
+            }
+            className={`checkout-pill ${
+              formData.paymentMethod === "cash" ? "checkout-pill--active" : ""
+            }`}
+          >
+            <p className="checkout-pill-title">Cash</p>
+            <p className="checkout-pill-note">Pay on delivery</p>
+          </button>
         </div>
-
-        <label className="block">
-          <span className="commerce-field-label">Special Instructions</span>
-          <textarea
-            name="specialInstructions"
-            value={formData.specialInstructions}
-            onChange={onChange}
-            rows={4}
-            placeholder="Cake message, design notes, landmark, or anything the bakery should know"
-            className="commerce-input"
-          />
-        </label>
+        {!formData.paymentMethod && (
+          <p className="mt-1.5 text-xs font-medium text-amber-700">
+            Choose UPI or Cash on Delivery.
+          </p>
+        )}
       </div>
-    </div>
+
+      {/* Collapsed by default so the note field costs no vertical space. */}
+      <div className="checkout-group">
+        {isNoteOpen || formData.specialInstructions ? (
+          <label className="block">
+            <span className="checkout-group-label">Note for the bakery</span>
+            <textarea
+              name="specialInstructions"
+              value={formData.specialInstructions}
+              onChange={onChange}
+              rows={2}
+              placeholder="Cake message, design notes, landmark..."
+              className="mt-2 w-full rounded-xl border border-primary-200 bg-white px-3 py-2 text-sm text-primary-900 outline-none transition focus:border-caramel-400 focus:ring-2 focus:ring-caramel-200"
+            />
+          </label>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsNoteOpen(true)}
+            className="text-xs font-bold text-caramel-700 underline underline-offset-2"
+          >
+            + Add note for the bakery
+          </button>
+        )}
+      </div>
+    </>
   );
 };
 

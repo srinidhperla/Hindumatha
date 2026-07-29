@@ -482,195 +482,221 @@ const Payment = () => {
     return null;
   }
 
+  const payLabel =
+    loading || isLaunching
+      ? "Opening Payment..."
+      : checkoutData.orderData.paymentMethod === "cash"
+        ? "Place COD Order"
+        : `Pay ${formatINR(checkoutData.pricing.totalAmount)}`;
+
+  const couponSection = (
+    <div className="checkout-coupon">
+      <p className="text-xs font-bold uppercase tracking-wide text-caramel-800">
+        Coupon
+      </p>
+      {appliedCoupon ? (
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-emerald-800">
+              Applied {appliedCoupon.code}
+            </p>
+            {appliedCoupon.description && (
+              <p className="text-xs text-emerald-700">
+                {appliedCoupon.description}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={removeCoupon}
+            className="shrink-0 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+          >
+            Remove
+          </button>
+        </div>
+      ) : (
+        <div className="mt-2.5 flex gap-2">
+          <input
+            type="text"
+            value={couponInput}
+            onChange={(event) => {
+              setCouponInput(event.target.value.toUpperCase());
+              setCouponFeedback("");
+            }}
+            placeholder="Enter coupon code"
+            className="checkout-coupon-input"
+          />
+          <button
+            type="button"
+            onClick={applyCoupon}
+            className="checkout-coupon-apply"
+          >
+            Apply
+          </button>
+        </div>
+      )}
+      {couponFeedback && (
+        <p className="mt-2 text-xs font-medium text-primary-700">
+          {couponFeedback}
+        </p>
+      )}
+      {checkoutData?.pricing?.couponError && (
+        <p className="mt-2 text-xs font-semibold text-red-700">
+          {checkoutData.pricing.couponError}
+        </p>
+      )}
+    </div>
+  );
+
   return (
-    <div className="commerce-page">
-      <div className="commerce-shell max-w-5xl">
-        <div className="commerce-header">
-          <div>
-            <p className="commerce-kicker">Final Review</p>
-            <h1 className="commerce-title">Review order and place payment</h1>
-            <p className="commerce-copy">
-              Check items, apply coupon, verify bill details, and complete your
-              order.
+    <div className="cart-page checkout-compact">
+      <div className="cart-shell">
+        <header className="checkout-head">
+          <div className="min-w-0">
+            <h1 className="cart-head-title">Final Review</h1>
+            <p className="cart-head-sub">
+              {checkoutData.orderData.paymentMethod.toUpperCase()} ·{" "}
+              {deliverySummaryLabel}
             </p>
           </div>
-          <Link to="/order" className="btn-secondary">
-            Back to details
+          <Link to="/order" className="checkout-back">
+            Back
           </Link>
-        </div>
+        </header>
 
-        <section className="commerce-section">
-          <div className="commerce-section-body">
-            <h2 className="commerce-section-title">Review cart items</h2>
-            <p className="commerce-section-copy">
-              Method: {checkoutData.orderData.paymentMethod.toUpperCase()} |
-              Delivery: {deliverySummaryLabel}
-            </p>
+        <div className="cart-layout">
+          <div className="cart-main">
+            <section className="cart-panel">
+              <div className="cart-panel-head">
+                <p className="cart-panel-title">
+                  Items ({checkoutData.orderData.items.length})
+                </p>
+              </div>
 
-            <div className="commerce-summary-items">
-              {checkoutData.orderData.items.map((item, index) => (
-                <div
-                  key={`${item.product}-${index}`}
-                  className="commerce-summary-item"
-                >
-                  <div className="commerce-summary-top">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary-100 bg-cream-100">
-                        {getPaymentItemImage(item) ? (
-                          <OptimizedImage
-                            src={getPaymentItemImage(item)}
-                            alt={getPaymentItemName(item, index)}
-                            width={48}
-                            height={48}
-                            loading="lazy"
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <CakePlaceholderIcon className="h-6 w-6 text-primary-500" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="commerce-summary-name">
-                          {getPaymentItemName(item, index)}
-                        </p>
-                        <div className="commerce-meta-chips mt-2">
-                          {item.size && (
-                            <span className="commerce-chip commerce-chip--muted">
-                              {`Option: ${item.size}`}
-                            </span>
-                          )}
-                          {(item.cakeType || item.eggType) && (
-                            <span className="commerce-chip commerce-chip--muted">
-                              {`Cake Type: ${(item.cakeType || item.eggType) === "egg" ? "Egg" : "Eggless"}`}
-                            </span>
-                          )}
-                          {item.flavor && (
-                            <span className="commerce-chip commerce-chip--muted">
-                              {`Flavor: ${item.flavor}`}
-                            </span>
-                          )}
-                          <span className="commerce-chip commerce-chip--muted">
-                            {`Qty: ${item.quantity}`}
-                          </span>
-                          <span className="commerce-chip commerce-chip--success">
-                            {`Price: ${formatINR(getSafePaymentUnitPrice(item))}`}
-                          </span>
-                        </div>
-                      </div>
+              {checkoutData.orderData.items.map((item, index) => {
+                const meta = [
+                  item.size,
+                  item.cakeType || item.eggType
+                    ? (item.cakeType || item.eggType) === "egg"
+                      ? "Egg"
+                      : "Eggless"
+                    : "",
+                  item.flavor,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
+
+                return (
+                  <div
+                    key={`${item.product}-${index}`}
+                    className="checkout-review-row"
+                  >
+                    <div className="checkout-review-thumb">
+                      {getPaymentItemImage(item) ? (
+                        <OptimizedImage
+                          src={getPaymentItemImage(item)}
+                          alt={getPaymentItemName(item, index)}
+                          width={128}
+                          height={128}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <CakePlaceholderIcon className="h-6 w-6 text-primary-500" />
+                      )}
                     </div>
-                    <p className="commerce-summary-price">
+
+                    <div className="min-w-0 flex-1">
+                      <p className="checkout-review-name">
+                        {getPaymentItemName(item, index)}
+                      </p>
+                      {meta ? <p className="checkout-review-meta">{meta}</p> : null}
+                      <p className="checkout-review-qty">
+                        Qty {item.quantity} ×{" "}
+                        {formatINR(getSafePaymentUnitPrice(item))}
+                      </p>
+                    </div>
+
+                    <p className="checkout-review-price">
                       {formatINR(
                         Number(item.price || 0) * Number(item.quantity || 0),
                       )}
                     </p>
                   </div>
-                </div>
-              ))}
-            </div>
+                );
+              })}
+            </section>
 
-            <div className="commerce-note mt-6">
-              Contact: {checkoutData.customer?.name} |{" "}
-              {checkoutData.customer?.phone}
-            </div>
-            <div className="commerce-note mt-4">
-              Delivery to: {checkoutData.orderData.deliveryAddress.street},{" "}
-              {checkoutData.orderData.deliveryAddress.city},{" "}
-              {checkoutData.orderData.deliveryAddress.zipCode}
-            </div>
-
-            <div className="mt-6 rounded-2xl border border-primary-200 bg-primary-50/60 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-600">
-                Coupon
+            <section className="cart-panel p-3.5 sm:p-5">
+              <p className="cart-panel-title mb-2">Delivery to</p>
+              <p className="text-sm font-semibold text-primary-900">
+                {checkoutData.customer?.name} · {checkoutData.customer?.phone}
               </p>
-              {appliedCoupon ? (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white px-3 py-2">
-                  <div>
-                    <p className="text-sm font-semibold text-emerald-800">
-                      Applied {appliedCoupon.code}
-                    </p>
-                    {appliedCoupon.description && (
-                      <p className="text-xs text-emerald-700">
-                        {appliedCoupon.description}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={removeCoupon}
-                    className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div className="mt-3 flex gap-2">
-                  <input
-                    type="text"
-                    value={couponInput}
-                    onChange={(event) => {
-                      setCouponInput(event.target.value.toUpperCase());
-                      setCouponFeedback("");
-                    }}
-                    placeholder="Enter coupon code"
-                    className="commerce-input flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={applyCoupon}
-                    className="commerce-apply-button"
-                  >
-                    Apply
-                  </button>
+              <p className="mt-1 text-sm leading-relaxed text-primary-600">
+                {checkoutData.orderData.deliveryAddress.street},{" "}
+                {checkoutData.orderData.deliveryAddress.city},{" "}
+                {checkoutData.orderData.deliveryAddress.zipCode}
+              </p>
+            </section>
+
+            <section className="cart-panel p-3.5 sm:p-5">{couponSection}</section>
+          </div>
+
+          <aside className="cart-aside space-y-3">
+            <div className="cart-panel p-3.5 sm:p-5">
+              <PaymentSummaryPanel
+                pricing={checkoutData.pricing}
+                freeDeliveryProgress={checkoutData.freeDeliveryProgress}
+                itemCount={checkoutData.orderData.items?.length || 0}
+                totalUnits={(checkoutData.orderData.items || []).reduce(
+                  (sum, item) => sum + Number(item.quantity || 0),
+                  0,
+                )}
+                paymentMethod={checkoutData.orderData.paymentMethod}
+                embedded
+              />
+
+              {(error || loading) && (
+                <div
+                  className={`commerce-alert ${error ? "commerce-alert--danger" : "commerce-alert--warning"}`}
+                >
+                  {error || "Preparing secure payment..."}
                 </div>
               )}
-              {couponFeedback && (
-                <p className="mt-2 text-xs font-medium text-primary-700">
-                  {couponFeedback}
-                </p>
-              )}
-              {checkoutData?.pricing?.couponError && (
-                <p className="mt-2 text-xs font-semibold text-red-700">
-                  {checkoutData.pricing.couponError}
-                </p>
-              )}
-            </div>
 
-            <PaymentSummaryPanel
-              pricing={checkoutData.pricing}
-              freeDeliveryProgress={checkoutData.freeDeliveryProgress}
-              itemCount={checkoutData.orderData.items?.length || 0}
-              totalUnits={(checkoutData.orderData.items || []).reduce(
-                (sum, item) => sum + Number(item.quantity || 0),
-                0,
-              )}
-              paymentMethod={checkoutData.orderData.paymentMethod}
-              embedded
-            />
-
-            {(error || loading) && (
-              <div
-                className={`commerce-alert ${error ? "commerce-alert--danger" : "commerce-alert--warning"}`}
-              >
-                {error || "Preparing secure payment..."}
-              </div>
-            )}
-
-            <div className="commerce-actions">
+              {/* Desktop keeps the action inline; phones use the sticky bar. */}
               <button
                 type="button"
                 onClick={handlePayNow}
                 disabled={loading || isLaunching}
-                className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+                className="cart-cta mt-4 hidden w-full lg:block"
               >
-                {loading || isLaunching
-                  ? "Opening Payment..."
-                  : checkoutData.orderData.paymentMethod === "cash"
-                    ? "Place Cash On Delivery Order"
-                    : `Pay ${formatINR(checkoutData.pricing.totalAmount)}`}
+                {payLabel}
               </button>
             </div>
+          </aside>
+        </div>
+      </div>
+
+      <div className="cart-paybar">
+        <div className="cart-paybar-inner">
+          <div className="shrink-0 leading-tight">
+            <p className="text-[11px] font-medium text-primary-500">
+              Bill total
+            </p>
+            <p className="text-lg font-black text-primary-900">
+              {formatINR(checkoutData.pricing.totalAmount)}
+            </p>
           </div>
-        </section>
+          <button
+            type="button"
+            onClick={handlePayNow}
+            disabled={loading || isLaunching}
+            className="cart-cta"
+          >
+            {payLabel}
+          </button>
+        </div>
       </div>
     </div>
   );
