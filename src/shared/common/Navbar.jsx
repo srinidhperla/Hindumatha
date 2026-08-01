@@ -12,6 +12,7 @@ import {
 } from "react-icons/fi";
 import { logout } from "@/features/auth/authSlice";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
+import { filterWebsiteProducts } from "@/utils/productVisibility";
 import NavbarMegaMenu from "./NavbarMegaMenu";
 import NavbarMobileMenu from "./NavbarMobileMenu";
 
@@ -20,7 +21,8 @@ const Navbar = () => {
   const location = useLocation();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { businessInfo } = useSelector((state) => state.site);
-  const { products } = useSelector((state) => state.products);
+  const { products: allProducts } = useSelector((state) => state.products);
+  const products = useMemo(() => filterWebsiteProducts(allProducts), [allProducts]);
   const cartItems = useSelector((state) => state.cart.items);
 
   const [isScrolled, setIsScrolled] = useState(false);

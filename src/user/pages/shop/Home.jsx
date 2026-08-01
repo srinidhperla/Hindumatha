@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { filterWebsiteProducts } from "@/utils/productVisibility";
 import { FiArrowUp, FiMessageCircle } from "react-icons/fi";
 import SeoMeta from "@/shared/seo/SeoMeta";
 import { CLOUDINARY_GALLERY_IMAGES } from "@/constants/galleryCloudinaryImages";
@@ -42,7 +43,7 @@ const Home = () => {
   const [showTopButton, setShowTopButton] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
   const storefrontProducts = useMemo(
-    () => products.filter((product) => product.isAddon !== true),
+    () => filterWebsiteProducts(products).filter((product) => product.isAddon !== true),
     [products],
   );
   const featuredProducts = useMemo(

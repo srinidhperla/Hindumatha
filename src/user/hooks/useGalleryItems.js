@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { optimizeProductImageUrl } from "@/utils/imageOptimization";
+import { filterWebsiteProducts } from "@/utils/productVisibility";
 import {
   attachGalleryItemCodes,
   getGalleryItemCategories,
@@ -41,7 +42,8 @@ const useGalleryItems = () => {
   }, [galleryItems]);
 
   const featuredProductItems = useMemo(() => {
-    const safeProducts = Array.isArray(products) ? products : [];
+    // Only website-visible products can appear in the gallery's featured strip.
+    const safeProducts = filterWebsiteProducts(products);
 
     return safeProducts
       .filter((product) => product.isFeatured)

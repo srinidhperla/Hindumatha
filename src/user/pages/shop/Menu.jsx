@@ -19,6 +19,7 @@ import {
 } from "@/utils/productOptions";
 import { isCategoryActive } from "@/utils/categorySettings";
 import SeoMeta from "@/shared/seo/SeoMeta";
+import { filterWebsiteProducts } from "@/utils/productVisibility";
 import { MenuItemSkeleton } from "@/shared/ui/Skeleton";
 import MenuCategorySections from "./MenuCategorySections";
 import MenuControls from "./MenuControls";
@@ -60,7 +61,11 @@ const Menu = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [retryScheduled, setRetryScheduled] = useState(false);
   const handledTargetProductIdRef = useRef("");
-  const { products, loading, error } = useSelector((state) => state.products);
+  const { products: allProducts, loading, error } = useSelector(
+    (state) => state.products,
+  );
+  // Shop-only items (biscuits, chocolates) never appear on the website.
+  const products = useMemo(() => filterWebsiteProducts(allProducts), [allProducts]);
   const { categoryOrder = [], categorySettings = [] } = useSelector(
     (state) => state.site,
   );

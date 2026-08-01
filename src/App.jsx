@@ -19,6 +19,7 @@ import { getProfile } from "@/features/auth/authSlice";
 import { fetchSiteContent } from "@/features/site/siteSlice";
 import { fetchProducts } from "@/features/products/productSlice";
 import { syncCartProducts, setCurrentUser } from "@/features/cart/cartSlice";
+import { filterOrderableProducts } from "@/utils/productVisibility";
 import { getSocketServerUrl } from "@/utils/socketUrl";
 
 const SOCKET_URL = getSocketServerUrl();
@@ -163,7 +164,11 @@ function App() {
 
   useEffect(() => {
     if (productsLoaded) {
-      dispatch(syncCartProducts(products));
+      // Only online-orderable products count as "still in the catalog" for the
+      // cart. If a product is switched to shop-only, the existing
+      // unavailable-snapshot path flags it instead of silently letting it
+      // through checkout (where the server would reject it anyway).
+      dispatch(syncCartProducts(filterOrderableProducts(products)));
     }
   }, [dispatch, products, productsLoaded]);
 
