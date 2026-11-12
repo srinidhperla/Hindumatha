@@ -77,7 +77,7 @@ const AdminSettingsPage = ({ onToast, syncVersion = 0 }) => {
   const renderSyncVersion = syncVersion;
 
   return (
-    <div className="space-y-8" data-sync-version={renderSyncVersion}>
+    <div className="ws-compact space-y-4" data-sync-version={renderSyncVersion}>
       <PaymentGatewayStatusSection paymentStatus={paymentStatus} />
 
       <AlertEmailStatusSection

@@ -1,14 +1,26 @@
 import React from "react";
-import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
+import { ActionButton } from "@/shared/ui/Primitives";
+import {
+  FormSection,
+  RemovableChip,
+  SuggestChip,
+  fieldClass,
+} from "@/shared/workspace/Form";
 import {
   getDefaultOptionsForPortionType,
   getPortionTypeMeta,
   PRODUCT_PORTION_TYPES,
 } from "@/utils/productOptions";
 
+const onEnter = (handler) => (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    handler();
+  }
+};
+
 const ProductOptionsSection = ({
   formData,
-  inputClassName,
   availableFlavors,
   customFlavor,
   customWeightLabel,
@@ -31,206 +43,128 @@ const ProductOptionsSection = ({
         (current) => current.label.toLowerCase() === option.label.toLowerCase(),
       ),
   );
+  const suggestedFlavors = availableFlavors.filter(
+    (flavor) =>
+      !formData.flavorOptions.some(
+        (option) => option.name.toLowerCase() === flavor.toLowerCase(),
+      ),
+  );
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      {/* Cake type info banner */}
-      {(formData.isEgg || formData.isEggless) && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#ebe1cb] bg-[#faf6ec] px-3 py-2.5">
-          <span className="text-xs font-semibold text-[#5c4a26]">
-            Applies to:
-          </span>
-          {formData.isEgg && (
-            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
-              🥚 Egg
-            </span>
-          )}
-          {formData.isEggless && (
-            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
-              🌱 Eggless
-            </span>
-          )}
-          <span className="ml-auto text-[10px] text-[#7d6c4d]">
-            Fine-tune per cake type in Inventory
-          </span>
+    <div className="grid gap-x-6 gap-y-4 md:grid-cols-2">
+      <FormSection title="Flavors">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customFlavor}
+            onChange={(event) => onCustomFlavorChange(event.target.value)}
+            onKeyDown={onEnter(onAddFlavor)}
+            placeholder="Add a flavor"
+            className={fieldClass}
+          />
+          <ActionButton type="button" variant="secondary" onClick={onAddFlavor}>
+            Add
+          </ActionButton>
         </div>
-      )}
 
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
-        <SurfaceCard className="p-3 sm:p-5">
-          <h3 className="text-base sm:text-lg font-semibold text-[#1f1709]">
-            Flavors
-          </h3>
-          <p className="mt-1 text-xs sm:text-sm text-[#5c4a26]">
-            Add available flavors quickly. Inventory toggles stay in Inventory
-            page.
-          </p>
-
-          {availableFlavors.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {availableFlavors
-                .filter(
-                  (flavor) =>
-                    !formData.flavorOptions.some(
-                      (option) =>
-                        option.name.toLowerCase() === flavor.toLowerCase(),
-                    ),
-                )
-                .map((flavor) => (
-                  <ActionButton
-                    key={flavor}
-                    type="button"
-                    variant="soft"
-                    onClick={() => onAddFlavorOption(flavor)}
-                    className="rounded-full px-3 py-1 text-xs"
-                  >
-                    + {flavor}
-                  </ActionButton>
-                ))}
-            </div>
-          )}
-
-          <div className="mt-4 flex gap-3">
-            <input
-              type="text"
-              value={customFlavor}
-              onChange={(event) => onCustomFlavorChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  onAddFlavor();
-                }
-              }}
-              placeholder="Add new flavor"
-              className={inputClassName.replace("mt-1 ", "")}
-            />
-            <ActionButton
-              type="button"
-              variant="secondary"
-              onClick={onAddFlavor}
-            >
-              Add
-            </ActionButton>
-          </div>
-
-          <div className="mt-4 space-y-2">
+        {formData.flavorOptions.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {formData.flavorOptions.map((option) => (
-              <div
+              <RemovableChip
                 key={option.name}
-                className="flex items-center justify-between rounded-xl border border-[#ebe1cb] bg-[#faf6ec] px-3 py-2"
+                label={`Remove ${option.name}`}
+                onRemove={() => onRemoveFlavor(option.name)}
               >
-                <span className="text-sm font-medium text-[#1f1709]">
-                  {option.name}
-                </span>
-                <ActionButton
-                  type="button"
-                  variant="danger"
-                  onClick={() => onRemoveFlavor(option.name)}
-                  className="px-3 py-1 text-xs"
-                >
-                  Remove
-                </ActionButton>
-              </div>
+                {option.name}
+              </RemovableChip>
             ))}
           </div>
-        </SurfaceCard>
+        )}
 
-        <SurfaceCard className="p-3 sm:p-5">
-          <h3 className="text-base sm:text-lg font-semibold text-[#1f1709]">
-            {portionTypeMeta.heading}
-          </h3>
-          <p className="mt-1 text-xs sm:text-sm text-[#5c4a26]">
-            Add {portionTypeMeta.singular} labels only when this product needs
-            them. If you leave this empty, the base price is used directly.
-          </p>
-
-          {suggestedWeightOptions.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {suggestedWeightOptions.map((option) => (
-                <ActionButton
-                  key={option.label}
-                  type="button"
-                  variant="soft"
-                  onClick={() => onAddWeight(option.label)}
-                  className="rounded-full px-3 py-1 text-xs"
-                >
-                  + {option.label}
-                </ActionButton>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-3 sm:mt-4">
-            <label className="block text-xs font-semibold text-[#5c4a26]">
-              Unit Type
-            </label>
-            <select
-              value={formData.portionType || "weight"}
-              onChange={(event) => onPortionTypeChange(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
-            >
-              {PRODUCT_PORTION_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {getPortionTypeMeta(type).heading}
-                </option>
-              ))}
-            </select>
+        {suggestedFlavors.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {suggestedFlavors.map((flavor) => (
+              <SuggestChip
+                key={flavor}
+                onClick={() => onAddFlavorOption(flavor)}
+              >
+                {flavor}
+              </SuggestChip>
+            ))}
           </div>
+        )}
+      </FormSection>
 
-          <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-3">
-            <input
-              type="text"
-              value={customWeightLabel}
-              onChange={(event) =>
-                onCustomWeightLabelChange(event.target.value)
-              }
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  onAddWeight();
-                }
-              }}
-              placeholder={portionTypeMeta.example}
-              className={inputClassName.replace("mt-1 ", "")}
-            />
-            <ActionButton
-              type="button"
-              variant="secondary"
-              onClick={onAddWeight}
-            >
-              Add
-            </ActionButton>
-          </div>
+      <FormSection title={portionTypeMeta.heading}>
+        <div className="flex gap-2">
+          <select
+            value={formData.portionType || "weight"}
+            onChange={(event) => onPortionTypeChange(event.target.value)}
+            className={`${fieldClass} w-auto shrink-0`}
+            aria-label="Unit type"
+          >
+            {PRODUCT_PORTION_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {getPortionTypeMeta(type).heading}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={customWeightLabel}
+            onChange={(event) => onCustomWeightLabelChange(event.target.value)}
+            onKeyDown={onEnter(onAddWeight)}
+            placeholder={portionTypeMeta.example}
+            className={`${fieldClass} min-w-0`}
+          />
+          <ActionButton type="button" variant="secondary" onClick={onAddWeight}>
+            Add
+          </ActionButton>
+        </div>
 
-          <div className="mt-3 sm:mt-4 space-y-2">
+        {formData.weightOptions.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {formData.weightOptions.map((option, index) => (
-              <div
+              <span
                 key={option.label}
-                className="rounded-xl border border-[#ebe1cb] bg-[#faf6ec] p-2 sm:p-3"
+                className="inline-flex items-center rounded-full border border-[#e3d7bb] bg-[#faf6ec] pr-1"
               >
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    value={option.label}
-                    onChange={(event) =>
-                      onWeightFieldChange(index, "label", event.target.value)
-                    }
-                    className="flex-1 min-w-0 rounded-xl border border-[#ebe1cb] bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
-                  />
-                  <ActionButton
-                    type="button"
-                    variant="danger"
-                    onClick={() => onRemoveWeight(option.label)}
-                    className="px-2 sm:px-3 py-1 text-xs flex-shrink-0"
-                  >
-                    ✕
-                  </ActionButton>
-                </div>
-              </div>
+                <input
+                  type="text"
+                  value={option.label}
+                  onChange={(event) =>
+                    onWeightFieldChange(index, "label", event.target.value)
+                  }
+                  size={Math.max(4, option.label.length)}
+                  aria-label={`${portionTypeMeta.singular} label`}
+                  className="rounded-full bg-transparent py-1 pl-3 pr-1 text-xs font-semibold text-[#1f1709] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => onRemoveWeight(option.label)}
+                  aria-label={`Remove ${option.label}`}
+                  className="flex h-5 w-5 items-center justify-center rounded-full text-[#8a7a5c] hover:bg-[#f1cdc6] hover:text-[#a3271b]"
+                >
+                  ×
+                </button>
+              </span>
             ))}
           </div>
-        </SurfaceCard>
-      </div>
+        )}
+
+        {suggestedWeightOptions.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {suggestedWeightOptions.map((option) => (
+              <SuggestChip
+                key={option.label}
+                onClick={() => onAddWeight(option.label)}
+              >
+                {option.label}
+              </SuggestChip>
+            ))}
+          </div>
+        )}
+      </FormSection>
     </div>
   );
 };

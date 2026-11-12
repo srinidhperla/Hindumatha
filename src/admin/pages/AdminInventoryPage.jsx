@@ -14,11 +14,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  EmptyState,
-  LoadingState,
-  MetricCard,
-} from "@/admin/components/ui/AdminUi";
+import { EmptyState, LoadingState } from "@/admin/components/ui/AdminUi";
 import { StatusChip, SurfaceCard, Toggle } from "@/shared/ui/Primitives";
 import WorkspaceToolbar from "@/shared/workspace/Toolbar";
 import { DEFAULT_PRODUCT_CATEGORIES, getErrorMessage } from "./adminShared";
@@ -65,7 +61,7 @@ const CategoryCard = ({
   return (
     <div ref={sortable ? sortableApi.setNodeRef : undefined} style={style}>
       <SurfaceCard className="overflow-hidden">
-        <div className="border-b border-[#ebe1cb] bg-white px-4 py-3 sm:px-5">
+        <div className="border-b border-[#ebe1cb] bg-white px-3 py-2 sm:px-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {sortable ? (
@@ -397,6 +393,7 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
                 key={product._id}
                 product={product}
                 canOrder={isProductPurchasable(product)}
+                categoryActive={isCategoryActive(categorySettings, category)}
                 flavorOptions={flavorOptions}
                 weightOptions={weightOptions}
                 portionTypeMeta={portionTypeMeta}
@@ -423,30 +420,17 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard
-          title="Catalog"
-          value={summary.totalProducts}
-          subtitle="Total products"
-        />
-        <MetricCard
-          title="Live"
-          value={summary.liveProducts}
-          subtitle="Orderable now"
-          highlight
-        />
-        <MetricCard
-          title="Paused"
-          value={summary.pausedProducts}
-          subtitle="Hidden from menu"
-        />
-        <MetricCard
-          title="Blocked"
-          value={summary.blockedVariants}
-          subtitle="Options switched off"
-        />
-      </div>
+    <div className="space-y-4 sm:space-y-4">
+      <p className="text-sm text-[#7d6c4d]">
+        <strong className="text-[#1f1709]">{summary.totalProducts}</strong>{" "}
+        products ·{" "}
+        <strong className="text-emerald-700">{summary.liveProducts}</strong>{" "}
+        live ·{" "}
+        <strong className="text-[#1f1709]">{summary.pausedProducts}</strong>{" "}
+        paused ·{" "}
+        <strong className="text-[#1f1709]">{summary.blockedVariants}</strong>{" "}
+        options switched off
+      </p>
 
       <WorkspaceToolbar
         search={{
@@ -544,7 +528,7 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
           </div>
         )
       ) : (
-        <SurfaceCard className="p-8">
+        <SurfaceCard className="p-4">
           <EmptyState message="No products match the current inventory filters." />
         </SurfaceCard>
       )}

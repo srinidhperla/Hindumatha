@@ -63,14 +63,10 @@ const AdminGalleryGeneralSection = ({
           <h3 className="text-base font-semibold text-[#1f1709] sm:text-lg">
             Main Details
           </h3>
-          <p className="mt-1 text-sm text-[#5c4a26]">
-            Add and edit the main gallery details for this image.
-          </p>
         </div>
-        <StatusChip tone="info">Popup editor</StatusChip>
       </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
         <label className="text-sm font-medium text-[#5c4a26]">
           Title
           <input
@@ -86,8 +82,8 @@ const AdminGalleryGeneralSection = ({
 
         <div className="text-sm font-medium text-[#5c4a26] md:col-span-2">
           Categories
-          <div className="mt-2 rounded-2xl border border-[#ebe1cb] bg-white p-3">
-            <div className="flex flex-wrap gap-2">
+          <div className="mt-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {galleryCategories.map((cat) => {
                 const isSelected = selectedCategories.includes(cat);
 
@@ -96,7 +92,7 @@ const AdminGalleryGeneralSection = ({
                     key={cat}
                     type="button"
                     onClick={() => toggleCategory(cat)}
-                    className={`rounded-full border px-3 py-2 text-sm font-semibold transition-all ${
+                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
                       isSelected
                         ? "border-[#1f1709] bg-[#1f1709] text-[#f3dd96]"
                         : "border-[#ebe1cb] bg-white text-[#1f1709] hover:border-[#c9a84c] hover:bg-[#faf6ec]"
@@ -107,7 +103,7 @@ const AdminGalleryGeneralSection = ({
                 );
               })}
             </div>
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <div className="mt-2 flex max-w-md gap-2">
               <input
                 type="text"
                 value={pendingCategory}
@@ -126,19 +122,16 @@ const AdminGalleryGeneralSection = ({
                 variant="secondary"
                 onClick={addPendingCategory}
               >
-                Add Category
+                Add
               </ActionButton>
             </div>
-            <div className="mt-3 rounded-xl bg-[#faf6ec] px-3 py-2 text-xs text-[#5c4a26]">
-              Select one or more categories. The first selected category is used
-              as the main gallery label.
-            </div>
             {selectedCategories.length ? (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[#7d6c4d]">
+                Selected:
                 {selectedCategories.map((category, index) => (
                   <span
                     key={`selected-${category}`}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#faf6ec] px-3 py-1.5 text-xs font-semibold text-[#1f1709]"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#faf6ec] px-2.5 py-1 text-xs font-semibold text-[#1f1709]"
                   >
                     {formatCategoryLabel(category)}
                     {index === 0 ? (

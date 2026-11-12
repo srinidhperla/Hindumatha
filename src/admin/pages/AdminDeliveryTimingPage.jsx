@@ -40,7 +40,7 @@ const AdminDeliveryTimingPage = ({ syncVersion = 0 }) => {
   const renderSyncVersion = syncVersion;
 
   return (
-    <div className="space-y-6" data-sync-version={renderSyncVersion}>
+    <div className="space-y-4" data-sync-version={renderSyncVersion}>
       <AdminDeliveryTimingSection
         normalizedEditorDeliverySettings={normalizedEditorDeliverySettings}
         pauseUntilLabel={pauseUntilLabel}

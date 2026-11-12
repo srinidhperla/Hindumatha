@@ -6,7 +6,6 @@ const inputClassName =
 
 const AdminGalleryOptionSection = ({
   title,
-  description,
   placeholder,
   options,
   selectedValues,
@@ -15,8 +14,6 @@ const AdminGalleryOptionSection = ({
   canDeleteSection = false,
   pendingValue,
   priceEntries = [],
-  priceInputHeading = "",
-  priceInputHint = "",
   onPendingValueChange,
   onPriceChange,
   onToggleOption,
@@ -93,14 +90,7 @@ const AdminGalleryOptionSection = ({
           </button>
         </legend>
 
-        <div className="flex items-start justify-between gap-3">
-          <p className="text-sm text-[#5c4a26]">{description}</p>
-          <StatusChip tone="accent">
-            {usesFieldToggle ? "Enable field" : "Select boxes"}
-          </StatusChip>
-        </div>
-
-        <div className="mt-4 grid gap-3">
+        <div className="flex flex-wrap gap-1.5">
           {resolvedOptions.map((option) => {
             const isSelected = selectedValues.includes(option);
 
@@ -109,56 +99,39 @@ const AdminGalleryOptionSection = ({
                 key={`${title}-${option}`}
                 type="button"
                 onClick={() => onToggleOption(option)}
-                className={`flex items-center gap-3 rounded-2xl border-2 px-3 py-3 text-left admin-motion ${
+                aria-pressed={isSelected}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold admin-motion ${
                   isSelected
-                    ? "border-[#1f1709] bg-[#faf6ec] shadow-[0_8px_18px_rgba(18,12,2,0.12)]"
-                    : "border-[rgba(42,31,14,0.3)] bg-white"
+                    ? "border-[#1f1709] bg-[#1f1709] text-[#f3dd96]"
+                    : "border-[#e3d7bb] bg-white text-[#5c4a26] hover:bg-[#faf6ec]"
                 }`}
               >
-                <span
-                  className={`relative flex h-8 w-8 shrink-0 items-center justify-center border-[3px] ${
-                    isSelected
-                      ? "border-[#1f1709] bg-[#f4dfac]"
-                      : "border-[#1f1709] bg-white"
-                  }`}
-                >
-                  {isSelected ? (
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-5 w-5 text-[#1f1709]"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : null}
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-[#1f1709]">
-                    {option}
-                  </span>
-                  <span className="text-xs text-[#5c4a26]">
-                    {isSelected ? "Enabled" : "Disabled"}
-                  </span>
-                </div>
+                {isSelected ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : null}
+                {option}
               </button>
             );
           })}
         </div>
 
-        {onPriceChange ? (
-          <div className="mt-4 rounded-2xl border border-[#ebe1cb] bg-white p-3">
-            <div className="mb-3">
+        {onPriceChange && priceEntries.length ? (
+          <div className="mt-3">
+            <div className="mb-1.5">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5c4a26]">
-                {priceInputHeading || "Set price for this cake"}
+                Price for this cake (₹)
               </p>
-              {priceInputHint ? (
-                <p className="mt-1 text-xs text-[#5c4a26]">{priceInputHint}</p>
-              ) : null}
             </div>
 
             {!priceEntries.length ? (
@@ -166,20 +139,15 @@ const AdminGalleryOptionSection = ({
                 Select an option above to enter its price for this image.
               </p>
             ) : (
-              <div className="grid gap-3">
+              <div className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2">
                 {priceEntries.map((entry) => (
                   <label
                     key={`${title}-price-${entry.option}`}
-                    className="grid gap-2 rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-3 sm:grid-cols-[1fr,180px] sm:items-center"
+                    className="grid grid-cols-[1fr,110px] items-center gap-2"
                   >
-                    <div>
-                      <p className="text-sm font-semibold text-[#1f1709]">
-                        {entry.option}
-                      </p>
-                      <p className="text-xs text-[#5c4a26]">
-                        Price for this cake image
-                      </p>
-                    </div>
+                    <span className="truncate text-sm font-medium text-[#1f1709]">
+                      {entry.option}
+                    </span>
                     <input
                       type="number"
                       min="0"
@@ -199,11 +167,11 @@ const AdminGalleryOptionSection = ({
         {isEditing ? (
           <>
             {onRenameSection ? (
-              <div className="mt-4 space-y-2 rounded-2xl border border-[#ebe1cb] bg-white p-3">
+              <div className="mt-3 space-y-2 rounded-xl border border-[#ebe1cb] bg-[#faf6ec] p-2.5">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5c4a26]">
                   Manage Field
                 </p>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={title}
@@ -224,14 +192,14 @@ const AdminGalleryOptionSection = ({
 
             {!usesFieldToggle ? (
               <>
-                <div className="mt-4 space-y-2 rounded-2xl border border-[#ebe1cb] bg-white p-3">
+                <div className="mt-3 space-y-2 rounded-xl border border-[#ebe1cb] bg-[#faf6ec] p-2.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5c4a26]">
                     Manage Fields
                   </p>
                   {options.map((option, index) => (
                     <div
                       key={`${title}-manage-${index}`}
-                      className="flex flex-col gap-2 sm:flex-row sm:items-center"
+                      className="flex items-center gap-2"
                     >
                       <input
                         type="text"
@@ -252,7 +220,7 @@ const AdminGalleryOptionSection = ({
                   ))}
                 </div>
 
-                <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-dashed border-[#ebe1cb] bg-[#faf6ec] p-3 sm:flex-row sm:items-center">
+                <div className="mt-2 flex items-center gap-2">
                   <input
                     type="text"
                     value={pendingValue}

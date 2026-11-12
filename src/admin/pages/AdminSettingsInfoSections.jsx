@@ -8,7 +8,7 @@ export const BusinessInfoSection = ({
   saving,
 }) => {
   return (
-    <SurfaceCard className="p-6">
+    <SurfaceCard className="p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-[#1f1709]">
           Business Information
@@ -95,7 +95,7 @@ export const BusinessInfoSection = ({
 
 export const StoreHoursSection = ({ storeHours, onChange, onSave, saving }) => {
   return (
-    <SurfaceCard className="p-6">
+    <SurfaceCard className="p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-[#1f1709]">Store Hours</h2>
         <ActionButton type="button" onClick={onSave} disabled={saving}>
@@ -137,7 +137,7 @@ export const SocialLinksSection = ({
   saving,
 }) => {
   return (
-    <SurfaceCard className="p-6">
+    <SurfaceCard className="p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-[#1f1709]">Social Links</h2>
         <ActionButton type="button" onClick={onSave} disabled={saving}>

@@ -516,15 +516,10 @@ const AdminGalleryFormModal = ({
   return (
     <Modal
       title={title}
-      badge={
-        <StatusChip tone={isPricingMode ? "accent" : "info"}>
-          {isPricingMode ? "Pricing popup" : "Admin popup"}
-        </StatusChip>
-      }
       onClose={onClose}
-      maxWidthClassName="max-w-7xl"
+      maxWidthClassName="max-w-5xl"
       footer={
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-2">
           <ActionButton type="button" onClick={onClose} variant="secondary">
             Cancel
           </ActionButton>
@@ -544,17 +539,17 @@ const AdminGalleryFormModal = ({
         </div>
       }
     >
-      <div className="rounded-2xl border border-[#ebe1cb] bg-gradient-to-br from-gold-50/35 via-white/70 to-cream-100/45 p-3 sm:p-4">
+      <div>
         <form
           id="gallery-editor-form"
           onSubmit={onSubmit}
-          className="space-y-5"
+          className="ws-dense space-y-4"
         >
           <div
             className={
               isPricingMode
-                ? "grid gap-5"
-                : "grid gap-5 xl:grid-cols-[320px,1fr]"
+                ? "grid gap-4"
+                : "grid gap-5 md:grid-cols-[200px,1fr]"
             }
           >
             {!isPricingMode ? (
@@ -575,7 +570,7 @@ const AdminGalleryFormModal = ({
               </div>
             ) : null}
 
-            <div className="space-y-5">
+            <div className="ws-dense-stack">
               {!isPricingMode ? (
                 <AdminGalleryGeneralSection
                   categoryDrafts={categoryDrafts}
@@ -598,12 +593,7 @@ const AdminGalleryFormModal = ({
                         <h3 className="text-base font-semibold text-[#1f1709] sm:text-lg">
                           Matrix Setup
                         </h3>
-                        <p className="mt-1 text-sm text-[#5c4a26]">
-                          Keep Cake Type, Egg Type, and Flavor global here, then
-                          price the valid combinations.
-                        </p>
                       </div>
-                      <StatusChip tone="accent">Shared pricing</StatusChip>
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-3">
@@ -656,18 +646,13 @@ const AdminGalleryFormModal = ({
                       <h3 className="text-base font-semibold text-[#1f1709] sm:text-lg">
                         General
                       </h3>
-                      <p className="mt-1 text-sm text-[#5c4a26]">
-                        Cake type, egg type, flavor, fondant, and other main
-                        setup fields.
-                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <StatusChip tone="info">General block</StatusChip>
                       {renderAddFieldPopup("general")}
                     </div>
                   </div>
 
-                  <div className="grid gap-5">
+                  <div className="grid gap-2.5">
                     <AdminGalleryWeightRangeSection
                       weightRange={formData.weightRange}
                       onWeightRangeChange={onWeightRangeChange}
@@ -740,18 +725,13 @@ const AdminGalleryFormModal = ({
                       <h3 className="text-base font-semibold text-[#1f1709] sm:text-lg">
                         Extras
                       </h3>
-                      <p className="mt-1 text-sm text-[#5c4a26]">
-                        Keep photo options and simple extra names here like
-                        Doll, Deposit, and topper add-ons.
-                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <StatusChip tone="accent">Extras block</StatusChip>
                       {renderAddFieldPopup("extras")}
                     </div>
                   </div>
 
-                  <div className="grid gap-5">
+                  <div className="grid gap-2.5">
                     {groupedSections.extras.map((section) => {
                       const pricesComeFromImage =
                         isGallerySectionPriceSetPerImage(section);

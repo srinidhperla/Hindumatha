@@ -1,6 +1,6 @@
 import React from "react";
 import { EmptyState } from "../ui/AdminUi";
-import { ActionButton, StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
+import { SurfaceCard } from "@/shared/ui/Primitives";
 import { OptimizedImage } from "@/shared/ui";
 import {
   formatCategoryLabel,
@@ -8,6 +8,13 @@ import {
   getAvailableWeightOptions,
 } from "@/utils/productOptions";
 
+const eggLabel = (product) =>
+  [product.isEgg !== false && "Egg", product.isEggless && "Eggless"]
+    .filter(Boolean)
+    .join(" · ");
+
+/* One product per row: everything needed to find and edit an item, with the
+ * long description and image counts left to the edit form. */
 const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
   if (!products.length) {
     return (
@@ -18,100 +25,70 @@ const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:gap-5 sm:grid-cols-2 xl:grid-cols-3">
+    <SurfaceCard className="divide-y divide-[#f3ecdb] overflow-hidden">
       {products.map((product) => {
-        const availableFlavorCount = getAvailableFlavorOptions(product).length;
-        const availableWeightCount = getAvailableWeightOptions(product).length;
+        const flavorCount = getAvailableFlavorOptions(product).length;
+        const sizeCount = getAvailableWeightOptions(product).length;
+        const options = [
+          sizeCount > 0 && `${sizeCount} size${sizeCount === 1 ? "" : "s"}`,
+          flavorCount > 0 &&
+            `${flavorCount} flavor${flavorCount === 1 ? "" : "s"}`,
+        ]
+          .filter(Boolean)
+          .join(" · ");
 
         return (
-          <SurfaceCard
+          <div
             key={product._id}
-            className="group overflow-hidden flex flex-col admin-motion hover:-translate-y-1 hover:shadow-[0_20px_36px_rgba(18,12,2,0.16)]"
+            className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#fdfbf5] sm:px-4"
           >
             <OptimizedImage
               src={product.images?.[0] || product.image}
-              alt={product.name}
-              width={640}
-              height={420}
+              alt=""
+              width={112}
+              height={112}
               loading="lazy"
-              className="h-36 sm:h-48 w-full object-cover admin-motion-transform group-hover:scale-[1.04]"
+              className="h-12 w-12 shrink-0 rounded-xl bg-[#f3ecdb] object-cover sm:h-14 sm:w-14"
             />
-            <div className="flex flex-1 flex-col p-3 sm:p-5">
-              <div className="mb-2 sm:mb-3 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <StatusChip tone="info">
-                    {formatCategoryLabel(product.category)}
-                  </StatusChip>
-                  {product.isEgg !== false && (
-                    <StatusChip tone="neutral">Egg</StatusChip>
-                  )}
-                  {product.isEggless && (
-                    <StatusChip tone="success">Eggless</StatusChip>
-                  )}
-                  <h3 className="mt-1 text-sm sm:text-base font-bold text-[#1f1709] leading-tight truncate">
-                    {product.name}
-                  </h3>
-                </div>
-                <p className="shrink-0 text-sm sm:text-base font-semibold text-[#5c4a26]">
-                  ₹{product.price}
-                </p>
-              </div>
 
-              <p className="text-xs sm:text-sm text-[#5c4a26] line-clamp-2">
-                {product.description}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-[#1f1709]">
+                {product.name}
               </p>
-
-              <div className="mt-2 sm:mt-3 flex flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium">
-                <span className="rounded-full bg-[#faf6ec] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[#5c4a26]">
-                  {availableFlavorCount} flavors
-                </span>
-                <span className="rounded-full bg-[#faf6ec] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[#5c4a26]">
-                  {availableWeightCount} sizes
-                </span>
-                <span className="rounded-full bg-[#faf6ec] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[#5c4a26]">
-                  {product.images?.length || 1} imgs
-                </span>
-              </div>
-
-              {!!product.flavorOptions?.length && (
-                <div className="mt-2 sm:mt-3 flex flex-wrap gap-1 sm:gap-1.5">
-                  {product.flavorOptions.slice(0, 3).map((option) => (
-                    <span
-                      key={`${product._id}-${option.name}`}
-                      className="rounded-full bg-[#faf6ec] px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-[#5c4a26]"
-                    >
-                      {option.name}
-                    </span>
-                  ))}
-                  {product.flavorOptions.length > 3 && (
-                    <span className="rounded-full bg-[#faf6ec] px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-[#7d6c4d]">
-                      +{product.flavorOptions.length - 3}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-auto pt-3 sm:pt-4 flex gap-2 sm:gap-3">
-                <ActionButton
-                  onClick={() => onEdit(product)}
-                  variant="secondary"
-                  className="flex-1 text-xs sm:text-sm py-2"
-                >
-                  Edit
-                </ActionButton>
-                <ActionButton
-                  onClick={() => onDelete(product._id)}
-                  variant="danger"
-                  className="flex-1 text-xs sm:text-sm py-2"
-                >
-                  Delete
-                </ActionButton>
-              </div>
+              <p className="truncate text-xs text-[#7d6c4d]">
+                {formatCategoryLabel(product.category)}
+                {eggLabel(product) ? ` · ${eggLabel(product)}` : ""}
+              </p>
             </div>
-          </SurfaceCard>
+
+            <p className="hidden w-36 shrink-0 text-xs text-[#7d6c4d] md:block">
+              {options || "Single price"}
+            </p>
+
+            <p className="w-16 shrink-0 text-right text-sm font-bold text-[#1f1709]">
+              ₹{product.price}
+            </p>
+
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onEdit(product)}
+                className="rounded-lg border border-[#e3d7bb] bg-white px-3 py-1.5 text-xs font-semibold text-[#5c4a26] hover:bg-[#faf6ec]"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(product._id)}
+                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#a3271b] hover:bg-[#fdf1ef]"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         );
       })}
-    </div>
+    </SurfaceCard>
   );
 };
 

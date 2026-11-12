@@ -1,100 +1,124 @@
-import React from "react";
+import React, { useRef } from "react";
 import Modal from "@/shared/ui/Modal";
-import { OptimizedImage } from "@/shared/ui";
-import { ActionButton, StatusChip } from "@/shared/ui/Primitives";
+import { ActionButton } from "@/shared/ui/Primitives";
+import { FormField, fieldClass } from "@/shared/workspace/Form";
 
-const inputClassName =
-  "mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2.5 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]";
-
+/* Add or edit a cart add-on (party popper, candles…). An add-on is a product
+ * with a single price and one picture, so it gets this short form rather
+ * than the full product editor with flavours, sizes and price tables. */
 const AddOnFormModal = ({
   formData,
+  isEditing = false,
+  isSubmitting = false,
   onChange,
   onImageChange,
   onSubmit,
   onClose,
-}) => (
-  <Modal
-    title="Add Addon"
-    badge={<StatusChip tone="accent">Cart upsell</StatusChip>}
-    onClose={onClose}
-    maxWidthClassName="max-w-2xl"
-    footer={
-      <div className="flex justify-end gap-3">
-        <ActionButton type="button" onClick={onClose} variant="secondary">
-          Cancel
-        </ActionButton>
-        <ActionButton type="submit" form="addon-editor-form" variant="primary">
-          Save Addon
-        </ActionButton>
-      </div>
-    }
-  >
-    <form id="addon-editor-form" onSubmit={onSubmit} className="space-y-4">
-      <label className="block">
-        <span className="text-sm font-medium text-[#5c4a26]">Name</span>
-        <input
-          name="name"
-          value={formData.name}
-          onChange={onChange}
-          placeholder="Example: Birthday topper"
-          className={inputClassName}
-          required
-        />
-      </label>
+}) => {
+  const fileInputRef = useRef(null);
 
-      <label className="block">
-        <span className="text-sm font-medium text-[#5c4a26]">Price</span>
-        <input
-          type="number"
-          name="price"
-          min="0"
-          step="0.01"
-          value={formData.price}
-          onChange={onChange}
-          placeholder="99"
-          className={inputClassName}
-          required
-        />
-      </label>
-
-      <label className="block">
-        <span className="text-sm font-medium text-[#5c4a26]">Description</span>
-        <textarea
-          name="description"
-          rows={3}
-          value={formData.description}
-          onChange={onChange}
-          placeholder="Short addon description"
-          className={inputClassName}
-          required
-        />
-      </label>
-
-      <label className="block">
-        <span className="text-sm font-medium text-[#5c4a26]">Image</span>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={onImageChange}
-          className={inputClassName}
-          required
-        />
-      </label>
-
-      {formData.imagePreview && (
-        <div className="overflow-hidden rounded-2xl border border-[#ebe1cb] bg-white p-2">
-          <OptimizedImage
-            src={formData.imagePreview}
-            alt="Addon preview"
-            width={720}
-            height={440}
-            loading="lazy"
-            className="h-44 w-full rounded-xl object-cover"
-          />
+  return (
+    <Modal
+      title={isEditing ? "Edit Addon" : "Add Addon"}
+      onClose={onClose}
+      maxWidthClassName="max-w-xl"
+      footer={
+        <div className="flex justify-end gap-2">
+          <ActionButton type="button" onClick={onClose} variant="secondary">
+            Cancel
+          </ActionButton>
+          <ActionButton
+            type="submit"
+            form="addon-editor-form"
+            variant="primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? "Saving..."
+              : isEditing
+                ? "Update Addon"
+                : "Save Addon"}
+          </ActionButton>
         </div>
-      )}
-    </form>
-  </Modal>
-);
+      }
+    >
+      <form
+        id="addon-editor-form"
+        onSubmit={onSubmit}
+        className="grid gap-3 sm:grid-cols-[112px_minmax(0,1fr)]"
+      >
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={onImageChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="relative block aspect-square w-28 overflow-hidden rounded-xl border border-dashed border-[#d9c48a] bg-[#faf6ec] hover:border-[#c9a84c]"
+          >
+            {formData.imagePreview ? (
+              <>
+                <img
+                  src={formData.imagePreview}
+                  alt="Addon"
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute inset-x-0 bottom-0 bg-[rgba(18,12,2,0.72)] py-1 text-[11px] font-semibold text-white">
+                  Change
+                </span>
+              </>
+            ) : (
+              <span className="flex h-full flex-col items-center justify-center gap-1 text-xs font-semibold text-[#5c4a26]">
+                <span className="text-xl leading-none">+</span>
+                Add image
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div className="grid gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_110px] gap-3">
+            <FormField label="Name">
+              <input
+                name="name"
+                value={formData.name}
+                onChange={onChange}
+                placeholder="Birthday topper"
+                className={fieldClass}
+                required
+              />
+            </FormField>
+            <FormField label="Price (₹)">
+              <input
+                type="number"
+                name="price"
+                min="0"
+                step="0.01"
+                value={formData.price}
+                onChange={onChange}
+                className={fieldClass}
+                required
+              />
+            </FormField>
+          </div>
+          <FormField label="Description">
+            <textarea
+              name="description"
+              rows={2}
+              value={formData.description}
+              onChange={onChange}
+              className={fieldClass}
+              required
+            />
+          </FormField>
+        </div>
+      </form>
+    </Modal>
+  );
+};
 
 export default AddOnFormModal;

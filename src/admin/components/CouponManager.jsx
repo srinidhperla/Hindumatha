@@ -8,7 +8,7 @@ const CouponManager = ({
   onSave,
   saving,
 }) => (
-  <section className="rounded-2xl border border-[#ebe1cb] bg-gradient-to-br from-white via-cream-50/75 to-gold-50/60 p-6 shadow-[0_14px_34px_rgba(88,60,10,0.09)] admin-motion hover:shadow-[0_20px_40px_rgba(88,60,10,0.14)]">
+  <section className="rounded-2xl border border-[#ebe1cb] bg-gradient-to-br from-white via-cream-50/75 to-gold-50/60 p-4 shadow-[0_14px_34px_rgba(88,60,10,0.09)] admin-motion hover:shadow-[0_20px_40px_rgba(88,60,10,0.14)]">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 className="text-lg font-semibold text-[#1f1709]">
@@ -37,7 +37,7 @@ const CouponManager = ({
       </div>
     </div>
 
-    <div className="mt-6 space-y-4">
+    <div className="mt-4 space-y-4">
       {coupons.map((coupon, index) => (
         <div
           key={coupon._id || `${coupon.code || "coupon"}-${index}`}

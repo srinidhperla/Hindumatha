@@ -2,11 +2,7 @@ import React, { useMemo } from "react";
 import AdminGalleryCard from "@/admin/components/gallery/AdminGalleryCard";
 import AdminGalleryToolbar from "@/admin/components/gallery/AdminGalleryToolbar";
 import AdminGalleryFormModal from "@/admin/components/modals/AdminGalleryFormModal";
-import {
-  EmptyState,
-  LoadingState,
-  MetricCard,
-} from "@/admin/components/ui/AdminUi";
+import { EmptyState, LoadingState } from "@/admin/components/ui/AdminUi";
 import { SurfaceCard } from "@/shared/ui/Primitives";
 import useAdminGalleryEditor from "@/admin/hooks/useAdminGalleryEditor";
 import useImageBackup from "@/admin/hooks/useImageBackup";
@@ -87,25 +83,19 @@ const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard
-          title="Gallery Images"
-          value={galleryItems.length}
-          subtitle="All admin-managed showcase images"
-          highlight
-        />
-        <MetricCard
-          title="Categories"
-          value={galleryCategories.length}
-          subtitle="Used across the gallery collection"
-        />
-        <MetricCard
-          title="Total Likes"
-          value={totalLikes}
-          subtitle="Imported from the live gallery data"
-        />
-      </div>
+    <div className="space-y-4">
+      <p className="text-sm text-[#7d6c4d]">
+        <strong className="text-[#1f1709]">{galleryItems.length}</strong> images
+        {" · "}
+        <strong className="text-[#1f1709]">
+          {galleryCategories.length}
+        </strong>{" "}
+        categories{" · "}
+        <strong className="text-[#1f1709]">{totalLikes}</strong> likes
+        {filteredItems.length !== galleryItems.length
+          ? ` · showing ${filteredItems.length}`
+          : ""}
+      </p>
 
       <AdminGalleryToolbar
         galleryCategories={galleryCategories}
@@ -123,7 +113,7 @@ const AdminGalleryPage = ({ onToast, syncVersion = 0 }) => {
           <EmptyState message="No gallery items match your current search." />
         </SurfaceCard>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
           {codedFilteredItems.map((item) => (
             <AdminGalleryCard
               key={item._id}

@@ -3,7 +3,7 @@ import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 
 export const PaymentGatewayStatusSection = ({ paymentStatus }) => {
   return (
-    <SurfaceCard className="p-6">
+    <SurfaceCard className="p-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-[#1f1709]">
@@ -16,17 +16,17 @@ export const PaymentGatewayStatusSection = ({ paymentStatus }) => {
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+      <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Gateway
           </p>
           <p className="mt-2 text-sm font-semibold uppercase text-[#1f1709]">
             {paymentStatus.gateway || "razorpay"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Online Payments
           </p>
           <p
@@ -35,16 +35,16 @@ export const PaymentGatewayStatusSection = ({ paymentStatus }) => {
             {paymentStatus.configured ? "Ready" : "Keys missing"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Key ID
           </p>
           <p className="mt-2 break-all text-sm font-semibold text-[#1f1709]">
             {paymentStatus.keyIdPreview || "Not configured"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Methods
           </p>
           <p className="mt-2 text-sm font-semibold text-[#1f1709]">
@@ -58,7 +58,7 @@ export const PaymentGatewayStatusSection = ({ paymentStatus }) => {
 
 export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
   return (
-    <SurfaceCard className="p-6">
+    <SurfaceCard className="p-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-[#1f1709]">
@@ -79,9 +79,9 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
         </ActionButton>
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+      <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Email Provider
           </p>
           <p
@@ -93,8 +93,8 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
             {alertStatus.provider || "none"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Recipients
           </p>
           <p className="mt-2 break-all text-sm font-semibold text-[#1f1709]">
@@ -106,16 +106,16 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
             Source: {alertStatus.recipientSource || "unknown"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             From
           </p>
           <p className="mt-2 break-all text-sm font-semibold text-[#1f1709]">
             {alertStatus.from || "Not configured"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Sender
           </p>
           <p className="mt-2 break-all text-sm font-semibold text-[#1f1709]">
@@ -127,8 +127,8 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
             </p>
           ) : null}
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Missing Fields
           </p>
           <p className="mt-2 text-sm font-semibold text-[#1f1709]">
@@ -137,16 +137,16 @@ export const AlertEmailStatusSection = ({ alertStatus, onSendTestEmail }) => {
               : "None"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Recipient Count
           </p>
           <p className="mt-2 text-sm font-semibold text-[#1f1709]">
             {alertStatus.recipientCount || 0}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5c4a26]">
+        <div className="rounded-xl bg-[#faf6ec] px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#5c4a26]">
             Pending Orders
           </p>
           <p className="mt-2 text-sm font-semibold text-[#1f1709]">

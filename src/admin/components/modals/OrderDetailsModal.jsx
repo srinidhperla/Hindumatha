@@ -143,8 +143,8 @@ const OrderDetailsModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-primary-900/70 via-primary-900/55 to-black/60 p-4 backdrop-blur-md">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-white/35 bg-white/25 p-6 shadow-[0_30px_80px_rgba(10,10,20,0.45)] backdrop-blur-2xl">
-        <div className="mb-6 flex items-start justify-between rounded-2xl border border-white/40 bg-white/35 p-4 backdrop-blur-xl">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-white/35 bg-white/25 p-4 shadow-[0_30px_80px_rgba(10,10,20,0.45)] backdrop-blur-2xl">
+        <div className="mb-4 flex items-start justify-between rounded-2xl border border-white/40 bg-white/35 p-4 backdrop-blur-xl">
           <div>
             <h2 className="text-xl font-semibold text-[#1f1709]">
               Order details
@@ -175,7 +175,7 @@ const OrderDetailsModal = ({
           </button>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
             <h3 className="text-sm font-semibold text-[#1f1709]">Customer</h3>
             <p className="mt-2 text-sm font-medium text-[#1f1709]">
@@ -234,7 +234,7 @@ const OrderDetailsModal = ({
         </div>
 
         {specialInstructions && (
-          <div className="mt-5 rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
+          <div className="mt-3 rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
             <h3 className="text-sm font-semibold text-[#1f1709]">
               Special Instructions
             </h3>
@@ -242,8 +242,8 @@ const OrderDetailsModal = ({
           </div>
         )}
 
-        <div className="mt-5 rounded-2xl border border-white/45 bg-white/35 backdrop-blur-xl">
-          <div className="border-b border-white/45 px-4 py-3">
+        <div className="mt-3 rounded-2xl border border-white/45 bg-white/35 backdrop-blur-xl">
+          <div className="border-b border-white/45 px-3 py-2">
             <h3 className="text-sm font-semibold text-[#1f1709]">Items</h3>
           </div>
           <div className="divide-y divide-white/45">
@@ -252,7 +252,7 @@ const OrderDetailsModal = ({
               return (
                 <div
                   key={`${order._id}-${item.product?._id || index}`}
-                  className="px-4 py-3"
+                  className="px-3 py-2"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -290,7 +290,7 @@ const OrderDetailsModal = ({
           </div>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
+        <div className="mt-3 rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-sm text-[#5c4a26]">Payment Method</p>

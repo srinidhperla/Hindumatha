@@ -449,7 +449,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
       />
 
       {latestOrder && (
-        <SurfaceCard className="mb-4 border-[#ebe1cb] bg-gradient-to-r from-gold-50/70 via-white/70 to-cream-100/70 px-4 py-3 text-sm text-[#5c4a26] shadow-none admin-motion hover:border-[#ebe1cb]">
+        <SurfaceCard className="mb-4 border-[#ebe1cb] bg-gradient-to-r from-gold-50/70 via-white/70 to-cream-100/70 px-3 py-2 text-sm text-[#5c4a26] shadow-none admin-motion hover:border-[#ebe1cb]">
           Latest order from{" "}
           <span className="font-semibold">
             {latestOrder.user?.name || "Guest Customer"}
@@ -496,7 +496,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                 ].map((group) => (
                   <th
                     key={group[0].key}
-                    className={`px-3 py-2.5 text-left align-top text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7d6c4d] ${
+                    className={`px-3 py-2 text-left align-top text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7d6c4d] ${
                       group[0].key === SORTABLE_COLUMNS.status
                         ? "sticky right-0 z-10 bg-[#faf6ec]"
                         : ""
@@ -545,7 +545,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                     key={order._id}
                     className="group align-top hover:bg-[#fdfbf5]"
                   >
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-2">
                       <p className="whitespace-nowrap font-semibold text-[#1f1709]">
                         {getOrderDisplayCode(order)}
                       </p>
@@ -557,7 +557,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                         View details
                       </button>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-2">
                       <p className="font-medium text-[#1f1709]">
                         {order.user?.name || "Guest Customer"}
                       </p>
@@ -570,7 +570,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                           "No phone"}
                       </p>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-2">
                       <div className="max-w-[190px] space-y-1">
                         {getItemsPreviewRows(order).map((row, index) => (
                           <p
@@ -582,7 +582,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                         ))}
                       </div>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-2">
                       {specialInstructions ? (
                         <p className="max-w-[160px] text-xs text-[#5c4a26]">
                           {specialInstructions}
@@ -591,7 +591,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                         <span className="text-xs text-[#7d6c4d]">-</span>
                       )}
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-2">
                       <StatusChip
                         tone={getPaymentStatusTone(order.paymentStatus)}
                         className="capitalize"
@@ -602,10 +602,10 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                         {getPaymentMethodLabel(order.paymentMethod)}
                       </p>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 font-semibold text-[#1f1709]">
+                    <td className="whitespace-nowrap px-3 py-2 font-semibold text-[#1f1709]">
                       ₹{Number(order.totalAmount || 0).toLocaleString("en-IN")}
                     </td>
-                    <td className="px-3 py-3 text-xs text-[#5c4a26]">
+                    <td className="px-3 py-2 text-xs text-[#5c4a26]">
                       <p className="font-medium text-[#1f1709]">
                         {formatRequestedDelivery(order)}
                       </p>
@@ -613,7 +613,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
                         Est. {formatEstimatedDelivery(order)}
                       </p>
                     </td>
-                    <td className="sticky right-0 bg-white px-3 py-3 shadow-[-10px_0_14px_-12px_rgba(31,23,9,0.25)] group-hover:bg-[#fdfbf5]">
+                    <td className="sticky right-0 bg-white px-3 py-2 shadow-[-10px_0_14px_-12px_rgba(31,23,9,0.25)] group-hover:bg-[#fdfbf5]">
                       <div className="flex items-start gap-2">
                         {order.status === "pending" ? (
                           <div className="flex flex-wrap items-center gap-2">
@@ -734,7 +734,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
         </div>
 
         {!sortedOrders?.length && (
-          <div className="p-8 text-center text-[#5c4a26]">No orders yet.</div>
+          <div className="p-4 text-center text-[#5c4a26]">No orders yet.</div>
         )}
       </SurfaceCard>
 

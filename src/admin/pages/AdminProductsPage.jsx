@@ -46,6 +46,8 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddOnModalOpen, setIsAddOnModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  // The addon being edited in the short addon form (null when creating).
+  const [editingAddOn, setEditingAddOn] = useState(null);
   const [formData, setFormData] = useState(createDefaultProductForm());
   const [useCustomCategory, setUseCustomCategory] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
@@ -250,6 +252,7 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
 
   const resetAddOnForm = () => {
     setIsSubmittingAddOn(false);
+    setEditingAddOn(null);
     setAddOnForm({
       name: "",
       description: "",
@@ -619,7 +622,24 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
     }
   };
 
+  const handleEditAddOn = (product) => {
+    setEditingAddOn(product);
+    setAddOnForm({
+      name: product.name || "",
+      description: product.description || "",
+      price: Number(product.price) || 0,
+      imageFile: null,
+      imagePreview: product.images?.[0] || product.image || "",
+    });
+    setIsAddOnModalOpen(true);
+  };
+
   const handleEdit = (product) => {
+    if (product.isAddon === true) {
+      handleEditAddOn(product);
+      return;
+    }
+
     const categoryExists = availableCategories.includes(product.category);
     const rawFlavorWeightAvailability =
       product.flavorWeightAvailability instanceof Map
@@ -746,7 +766,11 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
       return;
     }
 
-    if (!addOnForm.imageFile) {
+    const existingAddOnImage = editingAddOn
+      ? editingAddOn.images?.[0] || editingAddOn.image || ""
+      : "";
+
+    if (!addOnForm.imageFile && !existingAddOnImage) {
       onToast("Please upload addon image.", "error");
       return;
     }
@@ -758,32 +782,97 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
       productData.append("name", name);
       productData.append("description", description);
       productData.append("price", price);
-      productData.append("category", "addons");
-      productData.append("portionType", "pieces");
       productData.append("isAddon", true);
-      productData.append("isAvailable", true);
-      productData.append("isEgg", true);
-      productData.append("isEggless", false);
-      productData.append("flavorOptions", JSON.stringify([]));
-      productData.append(
-        "weightOptions",
-        JSON.stringify([{ label: "1 pc", multiplier: 1, isAvailable: true }]),
-      );
-      productData.append("flavorWeightAvailability", JSON.stringify({}));
-      productData.append("variantPrices", JSON.stringify({}));
-      productData.append("existingImages", JSON.stringify([]));
-      productData.append(
-        "imageOrder",
-        JSON.stringify([{ type: "new", value: imageToken }]),
-      );
-      productData.append("newImageIds", imageToken);
-      productData.append("images", addOnForm.imageFile);
 
-      await dispatch(createProduct(productData)).unwrap();
-      onToast("Addon created successfully.");
+      if (editingAddOn) {
+        // Only name, price, description and picture are edited here; every
+        // other setting on the addon is sent back unchanged.
+        const rawAvailability =
+          editingAddOn.flavorWeightAvailability instanceof Map
+            ? Object.fromEntries(
+                editingAddOn.flavorWeightAvailability.entries(),
+              )
+            : editingAddOn.flavorWeightAvailability || {};
+        const rawVariantPrices =
+          editingAddOn.variantPrices instanceof Map
+            ? Object.fromEntries(editingAddOn.variantPrices.entries())
+            : editingAddOn.variantPrices || {};
+
+        productData.append("category", editingAddOn.category || "addons");
+        productData.append(
+          "portionType",
+          normalizePortionType(editingAddOn.portionType),
+        );
+        productData.append("isEgg", editingAddOn.isEgg !== false);
+        productData.append("isEggless", editingAddOn.isEggless === true);
+        productData.append(
+          "flavorOptions",
+          JSON.stringify(normalizeFlavorOptions(editingAddOn)),
+        );
+        productData.append(
+          "weightOptions",
+          JSON.stringify(normalizeWeightOptions(editingAddOn)),
+        );
+        productData.append(
+          "flavorWeightAvailability",
+          JSON.stringify({
+            ...normalizeFlavorWeightAvailability(editingAddOn),
+            ...rawAvailability,
+          }),
+        );
+        productData.append("variantPrices", JSON.stringify(rawVariantPrices));
+        productData.append(
+          "addOns",
+          JSON.stringify(
+            Array.isArray(editingAddOn.addOns) ? editingAddOn.addOns : [],
+          ),
+        );
+      } else {
+        productData.append("category", "addons");
+        productData.append("portionType", "pieces");
+        productData.append("isAvailable", true);
+        productData.append("isEgg", true);
+        productData.append("isEggless", false);
+        productData.append("flavorOptions", JSON.stringify([]));
+        productData.append(
+          "weightOptions",
+          JSON.stringify([{ label: "1 pc", multiplier: 1, isAvailable: true }]),
+        );
+        productData.append("flavorWeightAvailability", JSON.stringify({}));
+        productData.append("variantPrices", JSON.stringify({}));
+      }
+
+      if (addOnForm.imageFile) {
+        productData.append("existingImages", JSON.stringify([]));
+        productData.append(
+          "imageOrder",
+          JSON.stringify([{ type: "new", value: imageToken }]),
+        );
+        productData.append("newImageIds", imageToken);
+        productData.append("images", addOnForm.imageFile);
+      } else {
+        productData.append(
+          "existingImages",
+          JSON.stringify([existingAddOnImage]),
+        );
+        productData.append(
+          "imageOrder",
+          JSON.stringify([{ type: "existing", value: existingAddOnImage }]),
+        );
+      }
+
+      if (editingAddOn) {
+        await dispatch(
+          updateProduct({ id: editingAddOn._id, productData }),
+        ).unwrap();
+        onToast("Addon updated successfully.");
+      } else {
+        await dispatch(createProduct(productData)).unwrap();
+        onToast("Addon created successfully.");
+      }
       resetAddOnForm();
     } catch (error) {
-      onToast(getErrorMessage(error, "Failed to create addon."), "error");
+      onToast(getErrorMessage(error, "Failed to save addon."), "error");
     } finally {
       setIsSubmittingAddOn(false);
     }
@@ -859,6 +948,8 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
       {isAddOnModalOpen && (
         <AddOnFormModal
           formData={addOnForm}
+          isEditing={Boolean(editingAddOn)}
+          isSubmitting={isSubmittingAddOn}
           onChange={handleAddOnInputChange}
           onImageChange={handleAddOnImageChange}
           onSubmit={handleAddOnSubmit}

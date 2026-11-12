@@ -77,17 +77,19 @@ export const Toggle = ({
   label,
   size = "default",
 }) => {
+  // Only the admin and billing workspaces use this, so it is sized for dense
+  // screens: a standard switch, and a smaller one for rows of options.
   const sizeStyles =
-    size === "compact"
+    size === "compact" || size === "sm"
       ? {
-          track: "h-7 w-12 p-1 sm:h-8 sm:w-14",
-          thumb: "h-5 w-5 sm:h-6 sm:w-6",
-          position: checked ? "translate-x-5 sm:translate-x-6" : "translate-x-0",
+          track: "h-5 w-9 shrink-0 p-0.5",
+          thumb: "h-4 w-4",
+          position: checked ? "translate-x-4" : "translate-x-0",
         }
       : {
-          track: "h-8 w-14 p-1",
-          thumb: "h-6 w-6",
-          position: checked ? "translate-x-6" : "translate-x-0",
+          track: "h-6 w-11 shrink-0 p-0.5",
+          thumb: "h-5 w-5",
+          position: checked ? "translate-x-5" : "translate-x-0",
         };
 
   return (
@@ -99,7 +101,7 @@ export const Toggle = ({
       className={join(
         "relative inline-flex items-center rounded-full admin-motion",
         sizeStyles.track,
-        checked ? "bg-sage-500" : "bg-primary-200",
+        checked ? "bg-[#2f6b45]" : "bg-[#d9cdb1]",
         disabled ? "opacity-60" : "",
       )}
     >

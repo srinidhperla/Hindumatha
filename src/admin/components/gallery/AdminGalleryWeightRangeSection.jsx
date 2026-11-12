@@ -14,15 +14,7 @@ const AdminGalleryWeightRangeSection = ({
         Weight
       </legend>
 
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-[#5c4a26]">
-          Set the minimum and maximum weight for this cake. Each gallery item
-          can have its own range.
-        </p>
-        <StatusChip tone="info">Dynamic range</StatusChip>
-      </div>
-
-      <div className="mt-4 grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         <label className="text-sm font-medium text-[#5c4a26]">
           Minimum weight
           <input
@@ -58,14 +50,6 @@ const AdminGalleryWeightRangeSection = ({
             className={inputClassName}
           />
         </label>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] px-4 py-3 text-sm text-[#5c4a26]">
-        Available range preview:{" "}
-        <span className="font-semibold text-[#1f1709]">
-          {weightRange?.min ?? 0} - {weightRange?.max ?? 0}{" "}
-          {String(weightRange?.unit || "kg").trim() || "kg"}
-        </span>
       </div>
     </fieldset>
   </SurfaceCard>

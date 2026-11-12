@@ -23,7 +23,7 @@ const REJECT_OPTIONS = [
 const STATUS_EDIT_OPTIONS = ORDER_STATUS_OPTIONS;
 
 const inputClassName =
-  "mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2.5 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]";
+  "mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]";
 
 const getRequestedDeliveryLabel = (order) => {
   if (order?.deliveryMode === "now") {

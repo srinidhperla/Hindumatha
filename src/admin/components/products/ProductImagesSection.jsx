@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useRef } from "react";
 import { OptimizedImage } from "@/shared/ui";
-import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
+import { FormSection } from "@/shared/workspace/Form";
+
+const controlClass =
+  "flex h-6 flex-1 items-center justify-center text-xs text-white hover:bg-white/20 disabled:opacity-30";
 
 const ProductImagesSection = ({
   imageItems,
@@ -8,70 +11,80 @@ const ProductImagesSection = ({
   onImageChange,
   onMoveImage,
   onRemoveImage,
-}) => (
-  <SurfaceCard className="p-3 sm:p-5">
-    <h3 className="text-base sm:text-lg font-semibold text-[#1f1709]">
-      Images
-    </h3>
-    <p className="mt-1 text-xs sm:text-sm text-[#5c4a26]">
-      Upload multiple images. First image = cover.
-    </p>
-    <input
-      type="file"
-      accept="image/*"
-      multiple
-      onChange={onImageChange}
-      className="mt-3 block w-full text-sm text-[#5c4a26]"
-    />
+}) => {
+  const fileInputRef = useRef(null);
 
-    {imageItems.length > 0 && (
-      <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3">
+  return (
+    <FormSection title="Images">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={onImageChange}
+        className="hidden"
+      />
+      <div className="flex flex-wrap gap-2">
         {imageItems.map((item, index) => (
           <div
             key={item.id}
-            className="overflow-hidden rounded-2xl border border-[#ebe1cb] bg-white"
+            className="relative h-24 w-24 overflow-hidden rounded-xl border border-[#ebe1cb] bg-[#f3ecdb]"
           >
             <OptimizedImage
               src={item.preview}
               alt={`${formData.name || "Product"} ${index + 1}`}
-              width={320}
-              height={240}
+              width={192}
+              height={192}
               loading="lazy"
-              className="h-28 sm:h-36 w-full object-cover"
+              className="h-full w-full object-cover"
             />
-            <div className="flex items-center gap-1 border-t border-[#ebe1cb] p-1.5 sm:p-2">
-              <ActionButton
+            {index === 0 && (
+              <span className="absolute left-1 top-1 rounded-full bg-[#1f1709] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#f3dd96]">
+                Cover
+              </span>
+            )}
+            <div className="absolute inset-x-0 bottom-0 flex bg-[rgba(18,12,2,0.72)]">
+              <button
                 type="button"
-                variant="soft"
                 onClick={() => onMoveImage(index, -1)}
                 disabled={index === 0}
-                className="flex-1 px-1 py-1 text-[10px] sm:text-xs"
+                aria-label="Move left"
+                className={controlClass}
               >
                 ←
-              </ActionButton>
-              <ActionButton
+              </button>
+              <button
                 type="button"
-                variant="soft"
                 onClick={() => onMoveImage(index, 1)}
                 disabled={index === imageItems.length - 1}
-                className="flex-1 px-1 py-1 text-[10px] sm:text-xs"
+                aria-label="Move right"
+                className={controlClass}
               >
                 →
-              </ActionButton>
-              <ActionButton
+              </button>
+              <button
                 type="button"
-                variant="danger"
                 onClick={() => onRemoveImage(item.id)}
-                className="flex-1 px-1 py-1 text-[10px] sm:text-xs"
+                aria-label="Remove image"
+                className={controlClass}
               >
                 ✕
-              </ActionButton>
+              </button>
             </div>
           </div>
         ))}
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#d9c48a] text-xs font-semibold text-[#5c4a26] hover:border-[#c9a84c] hover:bg-[#faf6ec]"
+        >
+          <span className="text-xl leading-none">+</span>
+          Add images
+        </button>
       </div>
-    )}
-  </SurfaceCard>
-);
+    </FormSection>
+  );
+};
 
 export default ProductImagesSection;

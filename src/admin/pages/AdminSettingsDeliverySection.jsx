@@ -21,7 +21,7 @@ export const AdminSettingsDeliverySection = ({
     isFiniteCoordinate(deliverySettings.storeLocation?.lng);
 
   return (
-    <SurfaceCard className="p-6">
+    <SurfaceCard className="p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-[#1f1709]">
@@ -70,7 +70,7 @@ export const AdminSettingsDeliverySection = ({
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
         <label className="block">
           <span className="block text-sm font-medium text-[#5c4a26]">
             Delivery Enabled
@@ -100,13 +100,13 @@ export const AdminSettingsDeliverySection = ({
         </label>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] px-4 py-3 text-sm text-[#5c4a26]">
+      <div className="mt-4 rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] px-3 py-2 text-sm text-[#5c4a26]">
         Search for the store area below, use current browser location, or drop
         the pin on the map. The system keeps coordinates internally for radius
         checks, but the admin flow stays address-first.
       </div>
 
-      <div className="mt-5">
+      <div className="mt-3">
         <p className="mb-2 text-sm font-medium text-[#5c4a26]">
           Click on the map to set store location and preview delivery radius
         </p>

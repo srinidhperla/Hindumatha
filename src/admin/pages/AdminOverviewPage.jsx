@@ -57,15 +57,11 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
   const { orders, loading: ordersLoading } = useSelector(
     (state) => state.orders,
   );
-  const { products, loading: productsLoading } = useSelector(
-    (state) => state.products,
-  );
   const [analytics, setAnalytics] = useState({
     customerCount: 0,
     todayOrders: 0,
     todayRevenue: 0,
   });
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [actionMode, setActionMode] = useState("");
   const [actionOrder, setActionOrder] = useState(null);
   const [actionSubmitting, setActionSubmitting] = useState(false);
@@ -74,10 +70,6 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
     let mounted = true;
 
     const loadAnalytics = async () => {
-      if (mounted) {
-        setAnalyticsLoading(true);
-      }
-
       try {
         const response = await fetchOrderAnalytics();
         if (!mounted) {
@@ -108,10 +100,6 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
             .filter((order) => order.status !== "cancelled")
             .reduce((sum, order) => sum + Number(order.totalAmount || 0), 0),
         });
-      } finally {
-        if (mounted) {
-          setAnalyticsLoading(false);
-        }
       }
     };
 
@@ -201,7 +189,7 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="ws-compact space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard
           title="Today's Orders"
@@ -231,8 +219,8 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
+      <div>
+        <div className="rounded-2xl border border-[#ebe1cb] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-4 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="font-playfair text-lg font-semibold text-[#1f1709]">
@@ -250,7 +238,7 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
           </div>
 
           {recentOrders.length ? (
-            <div className="mt-5 space-y-4">
+            <div className="mt-3 space-y-4">
               {recentOrders.map((order) => {
                 const isProgressEditable = canEditProgressStatus(order.status);
 
@@ -321,7 +309,7 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
                             }
                             handleQuickStatusChange(order._id, nextValue);
                           }}
-                          className="rounded-2xl border border-[#ebe1cb] bg-white px-3 py-2.5 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
+                          className="rounded-2xl border border-[#ebe1cb] bg-white px-3 py-2 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                           aria-label="Update order status"
                           title="Update order status"
                         >
@@ -340,68 +328,6 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
           ) : (
             <EmptyState message="No orders yet." />
           )}
-        </div>
-
-        <div className="rounded-2xl border border-[#ebe1cb] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
-          <h2 className="font-playfair text-lg font-semibold text-[#1f1709]">
-            Product Summary
-          </h2>
-          <p className="mt-1 text-sm text-[#7d6c4d]">
-            Quick visibility into the live catalog.
-          </p>
-
-          {productsLoading ? (
-            <LoadingState />
-          ) : products?.length ? (
-            <ul className="mt-5 space-y-3">
-              {products.slice(0, 6).map((product) => (
-                <li
-                  key={product._id}
-                  className="flex items-center justify-between rounded-xl border border-[#ebe1cb] bg-white p-3 admin-motion hover:border-[rgba(201,168,76,0.4)] hover:bg-white"
-                >
-                  <div className="flex items-center space-x-3">
-                    <OptimizedImage
-                      src={product.image}
-                      alt={product.name}
-                      width={48}
-                      height={48}
-                      loading="lazy"
-                      className="h-12 w-12 rounded-xl object-cover"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-[#1f1709]">
-                        {product.name}
-                      </p>
-                      <p className="text-xs text-[#7d6c4d]">
-                        {product.category}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-sm font-semibold text-[#5b4312]">
-                    ₹{product.price}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState message="Add products to view summary." />
-          )}
-
-          <div className="mt-5 rounded-2xl border border-[#ebe1cb] bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b6914]">
-              Snapshot
-            </p>
-            <div className="mt-3 space-y-2 text-sm text-[#7d6c4d]">
-              <p>Total orders: {metrics.totalOrders}</p>
-              <p>
-                Total revenue: ₹{metrics.totalRevenue.toLocaleString("en-IN")}
-              </p>
-              <p>
-                Analytics status:{" "}
-                {analyticsLoading ? "Refreshing live metrics..." : "Up to date"}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -1,6 +1,4 @@
 import React from "react";
-import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
-import { normalizeGalleryFormFromItem } from "@/admin/pages/adminGalleryConfig";
 import {
   formatGalleryCategoryLabel,
   formatGalleryWeightRange,
@@ -16,121 +14,65 @@ const formatPrice = (value) => {
   return `₹${numericValue.toLocaleString("en-IN")}`;
 };
 
-const summarizeOptions = (items = [], limit = 3) => {
-  const normalizedItems = Array.isArray(items)
-    ? items.map((item) => String(item || "").trim()).filter(Boolean)
-    : [];
-  if (!normalizedItems.length) {
-    return "Not set";
-  }
-
-  const preview = normalizedItems.slice(0, limit).join(", ");
-  return normalizedItems.length > limit
-    ? `${preview} +${normalizedItems.length - limit} more`
-    : preview;
-};
-
-const summarizeSectionOptions = (section, items = []) => {
-  const normalizedItems = Array.isArray(items)
-    ? items.map((item) => String(item || "").trim()).filter(Boolean)
-    : [];
-
-  if (section?.area === "extras" && section?.isCustom) {
-    const sectionTitle = String(section?.title || "").trim();
-
-    if (normalizedItems.length === 1 && normalizedItems[0] === sectionTitle) {
-      return "Enabled";
-    }
-
-    if (!normalizedItems.length) {
-      return "Disabled";
-    }
-  }
-
-  return summarizeOptions(normalizedItems);
-};
-
-const AdminGalleryCard = ({ item, galleryFieldConfig, onEdit, onDelete }) => {
-  const normalizedItem = normalizeGalleryFormFromItem(item, galleryFieldConfig);
-  const visibleSections = Array.isArray(normalizedItem.fieldSections)
-    ? normalizedItem.fieldSections
-    : [];
+/* A photo tile: the image, what it is, what it costs. The per-option details
+ * (cake type, flavour, fondant…) live in the edit form. */
+const AdminGalleryCard = ({ item, onEdit, onDelete }) => {
   const weightLabel = formatGalleryWeightRange(item);
   const categories = getGalleryItemCategories(item);
 
   return (
-    <SurfaceCard className="overflow-hidden border-[#ebe1cb]">
-      <div className="relative">
+    <div className="ws-card group overflow-hidden">
+      <button
+        type="button"
+        onClick={onEdit}
+        className="relative block aspect-square w-full bg-[#f3ecdb]"
+        aria-label={`Edit ${item.title}`}
+      >
         <img
           src={item.imageUrl}
           alt={item.title}
-          className="h-56 w-full object-cover"
+          loading="lazy"
+          className="h-full w-full object-cover"
         />
         {item.cakeCode ? (
-          <div className="absolute left-3 top-3 rounded-full bg-[rgba(18,12,2,0.88)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#fff7e3] shadow-lg">
+          <span className="absolute left-2 top-2 rounded-full bg-[rgba(18,12,2,0.82)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#fff7e3]">
             {item.cakeCode}
-          </div>
+          </span>
         ) : null}
-      </div>
+      </button>
 
-      <div className="space-y-4 p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category, index) => (
-                <span
-                  key={`${item._id}-${category}`}
-                  className="rounded-full bg-[#faf6ec] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8b6914]"
-                >
-                  {formatGalleryCategoryLabel(category)}
-                  {index === 0 ? " • Main" : ""}
-                </span>
-              ))}
-            </div>
-            <h3 className="mt-1 text-lg font-bold text-[#1f1709]">
-              {item.title}
-            </h3>
-            <p className="mt-1 text-sm text-[#7d6c4d]">
-              {item.priceLabel || "Starting at"} {formatPrice(item.price)}
-            </p>
-            {weightLabel ? (
-              <p className="mt-1 text-xs font-medium text-[#8b6914]">
-                Weight: {weightLabel}
-              </p>
-            ) : null}
-          </div>
-        </div>
+      <div className="px-3 pb-2.5 pt-2">
+        <h3 className="truncate text-sm font-semibold text-[#1f1709]">
+          {item.title}
+        </h3>
+        <p className="truncate text-xs text-[#7d6c4d]">
+          <span className="font-semibold text-[#8b6914]">
+            {formatPrice(item.price)}
+          </span>
+          {weightLabel ? ` · ${weightLabel}` : ""}
+        </p>
+        <p className="truncate text-[11px] text-[#8a7a5c]">
+          {categories.map(formatGalleryCategoryLabel).join(", ")}
+        </p>
 
-        <div className="grid gap-2 rounded-2xl border border-[#ebe1cb] bg-white p-3 text-xs text-[#7d6c4d]">
-          {visibleSections.map((section) => (
-            <p key={section.key}>
-              <span className="font-semibold text-[#6a4c16]">
-                {section.title}:
-              </span>{" "}
-              {summarizeSectionOptions(section, normalizedItem[section.key])}
-            </p>
-          ))}
-        </div>
-
-        <div className="flex gap-2">
-          <ActionButton
+        <div className="mt-2 flex items-center justify-between border-t border-[#f3ecdb] pt-2">
+          <button
+            type="button"
             onClick={onEdit}
-            variant="secondary"
-            className="w-full text-xs sm:text-sm"
+            className="text-xs font-semibold text-[#8b6914] hover:underline"
           >
-            Edit Image
-          </ActionButton>
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-xs font-semibold text-[#a3271b] hover:underline"
+          >
+            Delete
+          </button>
         </div>
-
-        <ActionButton
-          onClick={onDelete}
-          variant="danger"
-          className="w-full text-xs sm:text-sm"
-        >
-          Delete
-        </ActionButton>
       </div>
-    </SurfaceCard>
+    </div>
   );
 };
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { ActionButton, SurfaceCard, Toggle } from "@/shared/ui/Primitives";
+import { FormField, fieldClass } from "@/shared/workspace/Form";
 
 const AdminDeliveryFeeSection = ({
   normalizedEditorDeliverySettings,
@@ -9,122 +10,87 @@ const AdminDeliveryFeeSection = ({
   handleSaveDeliveryFee,
   saving,
 }) => {
+  const settings = normalizedEditorDeliverySettings;
+
   return (
-    <SurfaceCard className="p-6">
-      <div className="rounded-[28px] border border-[#ebe1cb] bg-white p-6 shadow-sm">
+    <SurfaceCard className="p-4 md:p-5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="font-playfair text-lg font-bold text-[#1f1709]">
+          Delivery fee
+        </h2>
+        <ActionButton
+          type="button"
+          onClick={handleSaveDeliveryFee}
+          disabled={saving}
+        >
+          {saving ? "Saving..." : "Save fee"}
+        </ActionButton>
+      </div>
+
+      <div className="grid gap-x-8 gap-y-4 md:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#8b6914]">
-            Delivery Pricing
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold text-[#1f1709]">
-            Delivery Fee
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm text-[#5c4a26]">
-            Configure distance-based delivery charges and optional free delivery
-            above an order amount.
-          </p>
-        </div>
-
-        <div className="mt-6 grid gap-4 xl:grid-cols-2">
-          <div className="rounded-2xl border border-[#ebe1cb] bg-white p-5 shadow-sm">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7d6c4d]">
-                  Delivery Fee by Distance
-                </p>
-                <p className="mt-2 text-sm text-[#5c4a26]">
-                  Set fixed fee for first 1 km and extra fee per km beyond 1 km.
-                </p>
-              </div>
-              <label className="inline-flex items-center gap-2 text-sm font-medium text-[#1f1709]">
-                <Toggle
-                  checked={normalizedEditorDeliverySettings.distanceFeeEnabled}
-                  onClick={() =>
-                    handleDistanceFeeEnabledChange(
-                      !normalizedEditorDeliverySettings.distanceFeeEnabled,
-                    )
-                  }
-                  label="toggle delivery fee by distance"
-                />
-                On
-              </label>
-            </div>
-
-            <label className="mt-4 block text-sm font-medium text-[#1f1709]">
-              Fee for first 1 km
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-[#1f1709]">
+            <Toggle
+              size="sm"
+              checked={settings.distanceFeeEnabled}
+              onClick={() =>
+                handleDistanceFeeEnabledChange(!settings.distanceFeeEnabled)
+              }
+              label="toggle delivery fee by distance"
+            />
+            Charge by distance
+          </label>
+          <div className="mt-2.5 grid grid-cols-2 gap-3">
+            <FormField label="First 1 km (₹)">
               <input
                 type="number"
                 min="0"
                 step="1"
                 name="firstKmFee"
-                value={normalizedEditorDeliverySettings.firstKmFee}
+                value={settings.firstKmFee}
                 onChange={handleDeliverySettingChange}
-                className="mt-2 block w-full rounded-xl border border-[#ebe1cb] px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
+                className={fieldClass}
               />
-            </label>
-
-            <label className="mt-4 block text-sm font-medium text-[#1f1709]">
-              Fee per km beyond 1 km
+            </FormField>
+            <FormField label="Each extra km (₹)">
               <input
                 type="number"
                 min="0"
                 step="1"
                 name="pricePerKmBeyondFirstKm"
-                value={normalizedEditorDeliverySettings.pricePerKmBeyondFirstKm}
+                value={settings.pricePerKmBeyondFirstKm}
                 onChange={handleDeliverySettingChange}
-                className="mt-2 block w-full rounded-xl border border-[#ebe1cb] px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
+                className={fieldClass}
               />
-            </label>
+            </FormField>
           </div>
+        </div>
 
-          <div className="rounded-2xl border border-[#ebe1cb] bg-white p-5 shadow-sm">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7d6c4d]">
-                  Free Delivery Above Amount
-                </p>
-                <p className="mt-2 text-sm text-[#5c4a26]">
-                  When enabled, orders at or above this subtotal get zero
-                  delivery fee.
-                </p>
-              </div>
-              <label className="inline-flex items-center gap-2 text-sm font-medium text-[#1f1709]">
-                <Toggle
-                  checked={normalizedEditorDeliverySettings.freeDeliveryEnabled}
-                  onClick={() =>
-                    handleFreeDeliveryEnabledChange(
-                      !normalizedEditorDeliverySettings.freeDeliveryEnabled,
-                    )
-                  }
-                  label="toggle free delivery threshold"
-                />
-                On
-              </label>
-            </div>
-
-            <label className="mt-4 block text-sm font-medium text-[#1f1709]">
-              Minimum subtotal for free delivery
+        <div>
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-[#1f1709]">
+            <Toggle
+              size="sm"
+              checked={settings.freeDeliveryEnabled}
+              onClick={() =>
+                handleFreeDeliveryEnabledChange(!settings.freeDeliveryEnabled)
+              }
+              label="toggle free delivery threshold"
+            />
+            Free delivery above an amount
+          </label>
+          <div className="mt-2.5 grid grid-cols-2 gap-3">
+            <FormField label="Order subtotal (₹)">
               <input
                 type="number"
                 min="0"
                 step="1"
                 name="freeDeliveryMinAmount"
-                value={normalizedEditorDeliverySettings.freeDeliveryMinAmount}
+                value={settings.freeDeliveryMinAmount}
                 onChange={handleDeliverySettingChange}
-                className="mt-2 block w-full rounded-xl border border-[#ebe1cb] px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
+                className={fieldClass}
               />
-            </label>
+            </FormField>
           </div>
-        </div>
-
-        <div className="mt-6">
-          <ActionButton
-            type="button"
-            onClick={handleSaveDeliveryFee}
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Save Delivery Fee"}
-          </ActionButton>
         </div>
       </div>
     </SurfaceCard>
