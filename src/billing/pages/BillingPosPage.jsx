@@ -3,6 +3,7 @@ import { EmptyState, LoadingState } from "@/admin/components/ui/AdminUi";
 import { ActionButton } from "@/shared/ui/Primitives";
 import Modal from "@/shared/ui/Modal";
 import { billingAPI, billingError } from "@/services/billingAPI";
+import { optimizeCloudinaryUploadUrl } from "@/utils/imageOptimization";
 import { printReceipt } from "@/billing/printReceipt";
 import {
   Field,
@@ -281,9 +282,13 @@ const BillingPosPage = ({ onToast }) => {
                 <div className="aspect-[4/3] w-full bg-[#f3ecdb]">
                   {item.image && (
                     <img
-                      src={item.image}
+                      src={optimizeCloudinaryUploadUrl(
+                        item.image,
+                        "f_auto,q_auto,w_320",
+                      )}
                       alt=""
                       loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover"
                     />
                   )}

@@ -7,6 +7,7 @@ import {
 import { ActionButton, StatusChip, Toggle } from "@/shared/ui/Primitives";
 import Modal from "@/shared/ui/Modal";
 import { billingAPI, billingError } from "@/services/billingAPI";
+import { optimizeCloudinaryUploadUrl } from "@/utils/imageOptimization";
 import {
   Field,
   Panel,
@@ -208,7 +209,10 @@ const BillingItemsPage = ({ onToast, canManage }) => {
                           <span className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#f8eed2]">
                             {item.image && (
                               <img
-                                src={item.image}
+                                src={optimizeCloudinaryUploadUrl(
+                                  item.image,
+                                  "f_auto,q_auto,w_96",
+                                )}
                                 alt=""
                                 loading="lazy"
                                 className="h-full w-full object-cover"
