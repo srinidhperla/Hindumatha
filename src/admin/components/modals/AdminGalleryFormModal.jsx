@@ -16,7 +16,7 @@ import {
 } from "@/admin/pages/adminGalleryPricingUtils";
 
 const inputClassName =
-  "mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70";
+  "mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2.5 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]";
 const COMBINATION_SECTION_KEYS = ["cakeTypes", "eggOptions", "flavors"];
 
 const AdminGalleryFormModal = ({
@@ -136,12 +136,11 @@ const AdminGalleryFormModal = ({
     () =>
       allSections.map((section) => ({
         ...section,
-        pricedOptions: (
-          section.options.length
-            ? section.options
-            : section.usesFieldToggle
-              ? [section.title]
-              : []
+        pricedOptions: (section.options.length
+          ? section.options
+          : section.usesFieldToggle
+            ? [section.title]
+            : []
         ).map((option) => ({
           option,
           price:
@@ -176,14 +175,17 @@ const AdminGalleryFormModal = ({
   );
 
   const combinationPricingRows = useMemo(() => {
-    const combinationFieldSections = (formData.fieldSections || []).filter((section) =>
-      COMBINATION_SECTION_KEYS.includes(section.key),
+    const combinationFieldSections = (formData.fieldSections || []).filter(
+      (section) => COMBINATION_SECTION_KEYS.includes(section.key),
     );
     const { combinations } = buildGalleryPriceCombinations({
       ...formData,
       fieldSections: combinationFieldSections,
     });
-    return mergeGalleryCombinationPrices(combinations, formData.combinationPrices || []);
+    return mergeGalleryCombinationPrices(
+      combinations,
+      formData.combinationPrices || [],
+    );
   }, [formData]);
 
   const handleAddCustomSection = (area) => {
@@ -246,13 +248,13 @@ const AdminGalleryFormModal = ({
         </ActionButton>
 
         {isOpen ? (
-          <div className="absolute right-0 top-full z-20 mt-3 w-[300px] rounded-2xl border border-gold-200/80 bg-white p-3 shadow-[0_16px_36px_rgba(18,12,2,0.18)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700">
+          <div className="absolute right-0 top-full z-20 mt-3 w-[300px] rounded-2xl border border-[#ebe1cb] bg-white p-3 shadow-[0_16px_36px_rgba(18,12,2,0.18)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5c4a26]">
               {area === "extras" && hasFlatExtrasSection
                 ? "Create Extra"
                 : "Create Field"}
             </p>
-            <label className="mt-3 block text-sm font-medium text-primary-700">
+            <label className="mt-3 block text-sm font-medium text-[#5c4a26]">
               {area === "extras" && hasFlatExtrasSection
                 ? "Extra Name"
                 : "Field Name"}
@@ -274,7 +276,7 @@ const AdminGalleryFormModal = ({
               />
             </label>
             {area === "general" ? (
-              <label className="mt-3 block text-sm font-medium text-primary-700">
+              <label className="mt-3 block text-sm font-medium text-[#5c4a26]">
                 Option Name
                 <input
                   type="text"
@@ -298,7 +300,10 @@ const AdminGalleryFormModal = ({
               >
                 Cancel
               </ActionButton>
-              <ActionButton type="button" onClick={() => handleAddCustomSection(area)}>
+              <ActionButton
+                type="button"
+                onClick={() => handleAddCustomSection(area)}
+              >
                 Create
               </ActionButton>
             </div>
@@ -315,127 +320,129 @@ const AdminGalleryFormModal = ({
       <SurfaceCard className="p-4 sm:p-5">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-primary-900 sm:text-lg">
+            <h3 className="text-base font-semibold text-[#1f1709] sm:text-lg">
               {heading}
             </h3>
-            <p className="mt-1 text-sm text-primary-600">{description}</p>
+            <p className="mt-1 text-sm text-[#5c4a26]">{description}</p>
           </div>
           <StatusChip tone={tone}>{heading} pricing</StatusChip>
         </div>
 
         {!sections.length ? (
-          <div className="rounded-2xl border border-dashed border-gold-200/80 bg-gold-50/40 p-4 text-sm text-primary-600">
+          <div className="rounded-2xl border border-dashed border-[#ebe1cb] bg-[#faf6ec] p-4 text-sm text-[#5c4a26]">
             No {area} fields available for pricing.
           </div>
         ) : (
           <div className="grid gap-4">
             {sections.map((section) => {
-              const pricesComeFromImage = isGallerySectionPriceSetPerImage(section);
+              const pricesComeFromImage =
+                isGallerySectionPriceSetPerImage(section);
 
               return (
                 <div
                   key={`pricing-${section.key}`}
-                  className="rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/75 p-3"
+                  className="rounded-2xl border border-[#ebe1cb] bg-white p-3"
                 >
-                <div className="mb-3 flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-primary-900">
-                      {section.title}
-                    </p>
-                    <p className="mt-1 text-xs text-primary-600">
-                      {section.usesFieldToggle
-                        ? "Set price for this extra field."
-                        : "Set price for each option in this field."}
-                    </p>
-                    <label className="mt-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary-700">
-                      <input
-                        type="checkbox"
-                        checked={section.pricingMode === "per_kg"}
-                        onChange={(event) =>
-                          onSectionPricingModeChange?.(
-                            section.key,
-                            event.target.checked ? "per_kg" : "fixed",
-                          )
-                        }
-                      />
-                      Charge per kg
-                    </label>
-                    {section.area === "extras" ? (
-                      <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary-700">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-[#1f1709]">
+                        {section.title}
+                      </p>
+                      <p className="mt-1 text-xs text-[#5c4a26]">
+                        {section.usesFieldToggle
+                          ? "Set price for this extra field."
+                          : "Set price for each option in this field."}
+                      </p>
+                      <label className="mt-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#5c4a26]">
                         <input
                           type="checkbox"
-                          checked={pricesComeFromImage}
+                          checked={section.pricingMode === "per_kg"}
                           onChange={(event) =>
-                            onSectionPriceSourceChange?.(
+                            onSectionPricingModeChange?.(
                               section.key,
-                              event.target.checked ? "per_image" : "shared",
+                              event.target.checked ? "per_kg" : "fixed",
                             )
                           }
                         />
-                        Set in Add Image
+                        Charge per kg
                       </label>
-                    ) : null}
-                  </div>
-                  <StatusChip tone={tone}>
-                    {pricesComeFromImage
-                      ? "Set in image"
-                      : section.pricingMode === "per_kg"
-                        ? "Per kg"
-                        : "Fixed"}
-                  </StatusChip>
-                </div>
-
-                {!section.pricedOptions.length ? (
-                  <div className="rounded-2xl border border-dashed border-gold-200/80 bg-gold-50/40 p-4 text-sm text-primary-600">
-                    {section.usesFieldToggle
-                      ? "This extra uses the field name directly. Set its price here."
-                      : "No options here yet. Add values in Add Gallery Image first."}
-                  </div>
-                ) : isGallerySectionPriceSetPerImage(section) ? (
-                  <div className="rounded-2xl border border-dashed border-gold-200/80 bg-gold-50/40 p-4 text-sm text-primary-600">
-                    Price for this extra will be set while adding or editing each gallery image.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {section.pricedOptions.map((entry) => (
-                      <div
-                        key={`${section.key}-${entry.option}`}
-                        className="grid gap-3 rounded-2xl border border-[rgba(201,168,76,0.18)] bg-[#fffaf0] p-3 sm:grid-cols-[1fr,180px]"
-                      >
-                        <div className="flex items-center">
-                          <div>
-                            <p className="text-sm font-semibold text-primary-900">
-                              {entry.option}
-                            </p>
-                            <p className="text-xs text-primary-600">
-                              {section.pricingMode === "per_kg"
-                                ? `${section.title} option, per kg`
-                                : `${section.title} option, fixed price`}
-                            </p>
-                          </div>
-                        </div>
-                        <label className="text-sm font-medium text-primary-700">
-                          {section.pricingMode === "per_kg"
-                            ? "Price per kg"
-                            : "Fixed price"}
+                      {section.area === "extras" ? (
+                        <label className="mt-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#5c4a26]">
                           <input
-                            type="number"
-                            min="0"
-                            value={entry.price}
+                            type="checkbox"
+                            checked={pricesComeFromImage}
                             onChange={(event) =>
-                              onOptionPriceChange(
-                                section,
-                                entry.option,
-                                event.target.value,
+                              onSectionPriceSourceChange?.(
+                                section.key,
+                                event.target.checked ? "per_image" : "shared",
                               )
                             }
-                            className={inputClassName}
                           />
+                          Set in Add Image
                         </label>
-                      </div>
-                    ))}
+                      ) : null}
+                    </div>
+                    <StatusChip tone={tone}>
+                      {pricesComeFromImage
+                        ? "Set in image"
+                        : section.pricingMode === "per_kg"
+                          ? "Per kg"
+                          : "Fixed"}
+                    </StatusChip>
                   </div>
-                )}
+
+                  {!section.pricedOptions.length ? (
+                    <div className="rounded-2xl border border-dashed border-[#ebe1cb] bg-[#faf6ec] p-4 text-sm text-[#5c4a26]">
+                      {section.usesFieldToggle
+                        ? "This extra uses the field name directly. Set its price here."
+                        : "No options here yet. Add values in Add Gallery Image first."}
+                    </div>
+                  ) : isGallerySectionPriceSetPerImage(section) ? (
+                    <div className="rounded-2xl border border-dashed border-[#ebe1cb] bg-[#faf6ec] p-4 text-sm text-[#5c4a26]">
+                      Price for this extra will be set while adding or editing
+                      each gallery image.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {section.pricedOptions.map((entry) => (
+                        <div
+                          key={`${section.key}-${entry.option}`}
+                          className="grid gap-3 rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-3 sm:grid-cols-[1fr,180px]"
+                        >
+                          <div className="flex items-center">
+                            <div>
+                              <p className="text-sm font-semibold text-[#1f1709]">
+                                {entry.option}
+                              </p>
+                              <p className="text-xs text-[#5c4a26]">
+                                {section.pricingMode === "per_kg"
+                                  ? `${section.title} option, per kg`
+                                  : `${section.title} option, fixed price`}
+                              </p>
+                            </div>
+                          </div>
+                          <label className="text-sm font-medium text-[#5c4a26]">
+                            {section.pricingMode === "per_kg"
+                              ? "Price per kg"
+                              : "Fixed price"}
+                            <input
+                              type="number"
+                              min="0"
+                              value={entry.price}
+                              onChange={(event) =>
+                                onOptionPriceChange(
+                                  section,
+                                  entry.option,
+                                  event.target.value,
+                                )
+                              }
+                              className={inputClassName}
+                            />
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -448,13 +455,16 @@ const AdminGalleryFormModal = ({
   const renderPricingCatalogManager = (section) => (
     <div
       key={`pricing-manager-${section.key}`}
-      className="rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/75 p-3"
+      className="rounded-2xl border border-[#ebe1cb] bg-white p-3"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-primary-900">{section.title}</p>
-          <p className="mt-1 text-xs text-primary-600">
-            Add shared options here, then enable only the combinations you want below.
+          <p className="text-sm font-semibold text-[#1f1709]">
+            {section.title}
+          </p>
+          <p className="mt-1 text-xs text-[#5c4a26]">
+            Add shared options here, then enable only the combinations you want
+            below.
           </p>
         </div>
         <StatusChip tone="info">{section.options.length} options</StatusChip>
@@ -464,7 +474,7 @@ const AdminGalleryFormModal = ({
         {section.options.map((option) => (
           <span
             key={`${section.key}-${option}`}
-            className="rounded-full border border-[rgba(201,168,76,0.28)] bg-[#fffaf0] px-3 py-1.5 text-xs font-semibold text-primary-800"
+            className="rounded-full border border-[#ebe1cb] bg-[#faf6ec] px-3 py-1.5 text-xs font-semibold text-[#1f1709]"
           >
             {option}
           </span>
@@ -534,8 +544,12 @@ const AdminGalleryFormModal = ({
         </div>
       }
     >
-      <div className="rounded-2xl border border-gold-200/50 bg-gradient-to-br from-gold-50/35 via-white/70 to-cream-100/45 p-3 sm:p-4">
-        <form id="gallery-editor-form" onSubmit={onSubmit} className="space-y-5">
+      <div className="rounded-2xl border border-[#ebe1cb] bg-gradient-to-br from-gold-50/35 via-white/70 to-cream-100/45 p-3 sm:p-4">
+        <form
+          id="gallery-editor-form"
+          onSubmit={onSubmit}
+          className="space-y-5"
+        >
           <div
             className={
               isPricingMode
@@ -581,11 +595,12 @@ const AdminGalleryFormModal = ({
                   <SurfaceCard className="p-4 sm:p-5">
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-base font-semibold text-primary-900 sm:text-lg">
+                        <h3 className="text-base font-semibold text-[#1f1709] sm:text-lg">
                           Matrix Setup
                         </h3>
-                        <p className="mt-1 text-sm text-primary-600">
-                          Keep Cake Type, Egg Type, and Flavor global here, then price the valid combinations.
+                        <p className="mt-1 text-sm text-[#5c4a26]">
+                          Keep Cake Type, Egg Type, and Flavor global here, then
+                          price the valid combinations.
                         </p>
                       </div>
                       <StatusChip tone="accent">Shared pricing</StatusChip>
@@ -601,16 +616,19 @@ const AdminGalleryFormModal = ({
                   <AdminGalleryCombinationPricingSection
                     combinations={combinationPricingRows}
                     cakeTypes={
-                      combinationSections.find((section) => section.key === "cakeTypes")
-                        ?.options || []
+                      combinationSections.find(
+                        (section) => section.key === "cakeTypes",
+                      )?.options || []
                     }
                     eggOptions={
-                      combinationSections.find((section) => section.key === "eggOptions")
-                        ?.options || []
+                      combinationSections.find(
+                        (section) => section.key === "eggOptions",
+                      )?.options || []
                     }
                     flavorOptions={
-                      combinationSections.find((section) => section.key === "flavors")
-                        ?.options || []
+                      combinationSections.find(
+                        (section) => section.key === "flavors",
+                      )?.options || []
                     }
                     onToggleCombination={onCombinationEnabledChange}
                     onChangeCombinationPrice={onCombinationPriceChange}
@@ -632,183 +650,198 @@ const AdminGalleryFormModal = ({
               ) : null}
 
               {!isPricingMode ? (
-              <SurfaceCard className="p-4 sm:p-5">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-primary-900 sm:text-lg">
-                      General
-                    </h3>
-                    <p className="mt-1 text-sm text-primary-600">
-                      Cake type, egg type, flavor, fondant, and other main setup fields.
-                    </p>
+                <SurfaceCard className="p-4 sm:p-5">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-[#1f1709] sm:text-lg">
+                        General
+                      </h3>
+                      <p className="mt-1 text-sm text-[#5c4a26]">
+                        Cake type, egg type, flavor, fondant, and other main
+                        setup fields.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StatusChip tone="info">General block</StatusChip>
+                      {renderAddFieldPopup("general")}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusChip tone="info">General block</StatusChip>
-                    {renderAddFieldPopup("general")}
-                  </div>
-                </div>
 
-                <div className="grid gap-5">
-                  <AdminGalleryWeightRangeSection
-                    weightRange={formData.weightRange}
-                    onWeightRangeChange={onWeightRangeChange}
-                  />
+                  <div className="grid gap-5">
+                    <AdminGalleryWeightRangeSection
+                      weightRange={formData.weightRange}
+                      onWeightRangeChange={onWeightRangeChange}
+                    />
 
-                  {groupedSections.general.map((section) => (
-                    <AdminGalleryOptionSection
-                      key={section.key}
-                      title={section.title}
-                      description={section.description}
-                      placeholder={section.placeholder}
-                      options={section.options}
-                      selectedValues={formData[section.key] || []}
-                      usesFieldToggle={section.usesFieldToggle}
-                      fieldToggleValue={section.title}
-                      canDeleteSection
-                      pendingValue={pendingValues[section.key] || ""}
-                      onPendingValueChange={(value) =>
-                        setPendingValues((current) => ({
-                          ...current,
-                          [section.key]: value,
-                        }))
-                      }
-                      onToggleOption={(option) => onToggleOption(section.key, option)}
-                      onToggleAllOptions={(forceState) =>
-                        onToggleAllSectionOptions(
-                          section.key,
-                          section.usesFieldToggle ? [section.title] : section.options,
-                          forceState,
-                        )
-                      }
-                      onAddOption={() => {
-                        const nextValue = String(
-                          pendingValues[section.key] || "",
-                        ).trim();
-
-                        if (onAddOption(section.key, nextValue)) {
+                    {groupedSections.general.map((section) => (
+                      <AdminGalleryOptionSection
+                        key={section.key}
+                        title={section.title}
+                        description={section.description}
+                        placeholder={section.placeholder}
+                        options={section.options}
+                        selectedValues={formData[section.key] || []}
+                        usesFieldToggle={section.usesFieldToggle}
+                        fieldToggleValue={section.title}
+                        canDeleteSection
+                        pendingValue={pendingValues[section.key] || ""}
+                        onPendingValueChange={(value) =>
                           setPendingValues((current) => ({
                             ...current,
-                            [section.key]: "",
-                          }));
+                            [section.key]: value,
+                          }))
                         }
-                      }}
-                      onRenameOption={(index, value) =>
-                        onRenameOption(section.key, index, value)
-                      }
-                      onDeleteOption={(index) =>
-                        onDeleteOption(section.key, index)
-                      }
-                      onRenameSection={(value) =>
-                        onRenameFieldSection(section.key, value)
-                      }
-                      onDeleteSection={() => onDeleteFieldSection(section.key)}
-                    />
-                  ))}
-                </div>
-              </SurfaceCard>
+                        onToggleOption={(option) =>
+                          onToggleOption(section.key, option)
+                        }
+                        onToggleAllOptions={(forceState) =>
+                          onToggleAllSectionOptions(
+                            section.key,
+                            section.usesFieldToggle
+                              ? [section.title]
+                              : section.options,
+                            forceState,
+                          )
+                        }
+                        onAddOption={() => {
+                          const nextValue = String(
+                            pendingValues[section.key] || "",
+                          ).trim();
+
+                          if (onAddOption(section.key, nextValue)) {
+                            setPendingValues((current) => ({
+                              ...current,
+                              [section.key]: "",
+                            }));
+                          }
+                        }}
+                        onRenameOption={(index, value) =>
+                          onRenameOption(section.key, index, value)
+                        }
+                        onDeleteOption={(index) =>
+                          onDeleteOption(section.key, index)
+                        }
+                        onRenameSection={(value) =>
+                          onRenameFieldSection(section.key, value)
+                        }
+                        onDeleteSection={() =>
+                          onDeleteFieldSection(section.key)
+                        }
+                      />
+                    ))}
+                  </div>
+                </SurfaceCard>
               ) : null}
 
               {!isPricingMode ? (
-              <SurfaceCard className="p-4 sm:p-5">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-primary-900 sm:text-lg">
-                      Extras
-                    </h3>
-                    <p className="mt-1 text-sm text-primary-600">
-                      Keep photo options and simple extra names here like Doll, Deposit, and topper add-ons.
-                    </p>
+                <SurfaceCard className="p-4 sm:p-5">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-[#1f1709] sm:text-lg">
+                        Extras
+                      </h3>
+                      <p className="mt-1 text-sm text-[#5c4a26]">
+                        Keep photo options and simple extra names here like
+                        Doll, Deposit, and topper add-ons.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StatusChip tone="accent">Extras block</StatusChip>
+                      {renderAddFieldPopup("extras")}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusChip tone="accent">Extras block</StatusChip>
-                    {renderAddFieldPopup("extras")}
+
+                  <div className="grid gap-5">
+                    {groupedSections.extras.map((section) => {
+                      const pricesComeFromImage =
+                        isGallerySectionPriceSetPerImage(section);
+                      const selectedPriceEntries = pricesComeFromImage
+                        ? (formData[section.key] || []).map((option) => ({
+                            option,
+                            price:
+                              (formData.optionPrices || []).find(
+                                (entry) =>
+                                  entry.sectionKey === section.key &&
+                                  String(entry.option || "").trim() ===
+                                    String(option || "").trim(),
+                              )?.price ?? 0,
+                          }))
+                        : [];
+
+                      return (
+                        <AdminGalleryOptionSection
+                          key={section.key}
+                          title={section.title}
+                          description={section.description}
+                          placeholder={section.placeholder}
+                          options={section.options}
+                          selectedValues={formData[section.key] || []}
+                          usesFieldToggle={section.usesFieldToggle}
+                          fieldToggleValue={section.title}
+                          canDeleteSection
+                          pendingValue={pendingValues[section.key] || ""}
+                          priceEntries={selectedPriceEntries}
+                          priceInputHeading="Set in Add Image"
+                          priceInputHint={
+                            pricesComeFromImage
+                              ? section.pricingMode === "per_kg"
+                                ? "Selected options in this section will use a per-kg price for this cake image."
+                                : "Selected options in this section will use a fixed price for this cake image."
+                              : ""
+                          }
+                          onPendingValueChange={(value) =>
+                            setPendingValues((current) => ({
+                              ...current,
+                              [section.key]: value,
+                            }))
+                          }
+                          onPriceChange={
+                            pricesComeFromImage
+                              ? (option, value) =>
+                                  onOptionPriceChange(section, option, value)
+                              : undefined
+                          }
+                          onToggleOption={(option) =>
+                            onToggleOption(section.key, option)
+                          }
+                          onToggleAllOptions={(forceState) =>
+                            onToggleAllSectionOptions(
+                              section.key,
+                              section.usesFieldToggle
+                                ? [section.title]
+                                : section.options,
+                              forceState,
+                            )
+                          }
+                          onAddOption={() => {
+                            const nextValue = String(
+                              pendingValues[section.key] || "",
+                            ).trim();
+
+                            if (onAddOption(section.key, nextValue)) {
+                              setPendingValues((current) => ({
+                                ...current,
+                                [section.key]: "",
+                              }));
+                            }
+                          }}
+                          onRenameOption={(index, value) =>
+                            onRenameOption(section.key, index, value)
+                          }
+                          onDeleteOption={(index) =>
+                            onDeleteOption(section.key, index)
+                          }
+                          onRenameSection={(value) =>
+                            onRenameFieldSection(section.key, value)
+                          }
+                          onDeleteSection={() =>
+                            onDeleteFieldSection(section.key)
+                          }
+                        />
+                      );
+                    })}
                   </div>
-                </div>
-
-                <div className="grid gap-5">
-                  {groupedSections.extras.map((section) => {
-                    const pricesComeFromImage = isGallerySectionPriceSetPerImage(section);
-                    const selectedPriceEntries = pricesComeFromImage
-                      ? (formData[section.key] || []).map((option) => ({
-                          option,
-                          price:
-                            (formData.optionPrices || []).find(
-                              (entry) =>
-                                entry.sectionKey === section.key &&
-                                String(entry.option || "").trim() ===
-                                  String(option || "").trim(),
-                            )?.price ?? 0,
-                        }))
-                      : [];
-
-                    return (
-                    <AdminGalleryOptionSection
-                      key={section.key}
-                      title={section.title}
-                      description={section.description}
-                      placeholder={section.placeholder}
-                      options={section.options}
-                      selectedValues={formData[section.key] || []}
-                      usesFieldToggle={section.usesFieldToggle}
-                      fieldToggleValue={section.title}
-                      canDeleteSection
-                      pendingValue={pendingValues[section.key] || ""}
-                      priceEntries={selectedPriceEntries}
-                      priceInputHeading="Set in Add Image"
-                      priceInputHint={
-                        pricesComeFromImage
-                          ? section.pricingMode === "per_kg"
-                            ? "Selected options in this section will use a per-kg price for this cake image."
-                            : "Selected options in this section will use a fixed price for this cake image."
-                          : ""
-                      }
-                      onPendingValueChange={(value) =>
-                        setPendingValues((current) => ({
-                          ...current,
-                          [section.key]: value,
-                        }))
-                      }
-                      onPriceChange={
-                        pricesComeFromImage
-                          ? (option, value) =>
-                              onOptionPriceChange(section, option, value)
-                          : undefined
-                      }
-                      onToggleOption={(option) => onToggleOption(section.key, option)}
-                      onToggleAllOptions={(forceState) =>
-                        onToggleAllSectionOptions(
-                          section.key,
-                          section.usesFieldToggle ? [section.title] : section.options,
-                          forceState,
-                        )
-                      }
-                      onAddOption={() => {
-                        const nextValue = String(
-                          pendingValues[section.key] || "",
-                        ).trim();
-
-                        if (onAddOption(section.key, nextValue)) {
-                          setPendingValues((current) => ({
-                            ...current,
-                            [section.key]: "",
-                          }));
-                        }
-                      }}
-                      onRenameOption={(index, value) =>
-                        onRenameOption(section.key, index, value)
-                      }
-                      onDeleteOption={(index) =>
-                        onDeleteOption(section.key, index)
-                      }
-                      onRenameSection={(value) =>
-                        onRenameFieldSection(section.key, value)
-                      }
-                      onDeleteSection={() => onDeleteFieldSection(section.key)}
-                    />
-                    );
-                  })}
-                </div>
-              </SurfaceCard>
+                </SurfaceCard>
               ) : null}
             </div>
           </div>

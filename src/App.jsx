@@ -15,6 +15,7 @@ import PageBackBar from "@/shared/common/PageBackBar";
 import PrivateRoute from "@/user/components/auth/PrivateRoute";
 import AdminRoute from "@/admin/components/routes/AdminRoute";
 import DeliveryRoute from "@/delivery/components/routes/DeliveryRoute";
+import BillingRoute from "@/billing/components/BillingRoute";
 import { getProfile } from "@/features/auth/authSlice";
 import { fetchSiteContent } from "@/features/site/siteSlice";
 import { fetchProducts } from "@/features/products/productSlice";
@@ -50,7 +51,9 @@ const Contact = lazy(() => import("@/user/pages/shop/Contact"));
 const Cart = lazy(() => import("@/user/pages/checkout/Cart"));
 const Login = lazy(() => import("@/user/pages/account/Login"));
 const Register = lazy(() => import("@/user/pages/account/Register"));
-const ForgotPassword = lazy(() => import("@/user/pages/account/ForgotPassword"));
+const ForgotPassword = lazy(
+  () => import("@/user/pages/account/ForgotPassword"),
+);
 const ResetPassword = lazy(() => import("@/user/pages/account/ResetPassword"));
 const Order = lazy(() => import("@/user/pages/checkout/Order"));
 const Payment = lazy(() => import("@/user/pages/checkout/Payment"));
@@ -60,7 +63,10 @@ const Profile = lazy(() => import("@/user/pages/account/Profile"));
 const AdminDashboardWithAlerts = lazy(
   () => import("@/admin/pages/AdminDashboardWithAlerts"),
 );
-const DeliveryDashboard = lazy(() => import("@/delivery/pages/DeliveryDashboard"));
+const BillingLayout = lazy(() => import("@/billing/pages/BillingLayout"));
+const DeliveryDashboard = lazy(
+  () => import("@/delivery/pages/DeliveryDashboard"),
+);
 
 const RouteFallback = () => (
   <div className="mx-auto flex w-full max-w-7xl items-center justify-center px-4 py-12 text-sm font-medium text-primary-500">
@@ -110,7 +116,10 @@ function App() {
   const { loaded: siteLoaded, loading: siteLoading } = useSelector(
     (state) => state.site,
   );
-  const hideFooter = user?.role === "delivery";
+  const location = useLocation();
+  // Admin and Billing are full-page workspaces with their own navigation.
+  const isWorkspace = /^\/(admin|billing)(\/|$)/.test(location.pathname);
+  const hideFooter = user?.role === "delivery" || isWorkspace;
 
   // Ping backend on app load to wake up Render server
   useEffect(() => {
@@ -186,10 +195,7 @@ function App() {
     const handleSiteSync = (event) => {
       const normalizedScope = normalizeScope(event?.scope);
 
-      if (
-        !normalizedScope ||
-        PRODUCT_REFRESH_SCOPES.has(normalizedScope)
-      ) {
+      if (!normalizedScope || PRODUCT_REFRESH_SCOPES.has(normalizedScope)) {
         dispatch(fetchProducts({ force: true }));
       }
 
@@ -210,10 +216,14 @@ function App() {
     <>
       <RouteViewportReset />
       <div className="flex flex-col min-h-screen">
-        <Navbar />
+        {!isWorkspace && <Navbar />}
         <UserToast />
-        <main className="flex-grow pt-[72px] lg:pt-[88px]">
-          <PageBackBar />
+        <main
+          className={
+            isWorkspace ? "flex-grow" : "flex-grow pt-[72px] lg:pt-[88px]"
+          }
+        >
+          {!isWorkspace && <PageBackBar />}
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -276,6 +286,14 @@ function App() {
                   <AdminRoute>
                     <AdminDashboardWithAlerts />
                   </AdminRoute>
+                }
+              />
+              <Route
+                path="/billing/*"
+                element={
+                  <BillingRoute>
+                    <BillingLayout />
+                  </BillingRoute>
                 }
               />
               <Route

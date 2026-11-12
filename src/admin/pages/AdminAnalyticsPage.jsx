@@ -18,7 +18,14 @@ import { EmptyState, MetricCard } from "@/admin/components/ui/AdminUi";
 import { fetchOrderAnalytics } from "@/services/orderAPI";
 import { ActionButton, SurfaceCard } from "@/shared/ui/Primitives";
 
-const COLORS = ["#7a5c0f", "#c9a84c", "#15803d", "#0284c7", "#dc2626", "#9333ea"];
+const COLORS = [
+  "#7a5c0f",
+  "#c9a84c",
+  "#15803d",
+  "#0284c7",
+  "#dc2626",
+  "#9333ea",
+];
 
 const currencyFormatter = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -83,10 +90,12 @@ const AdminAnalyticsPage = ({ syncVersion = 0 }) => {
 
   const statusChartData = useMemo(
     () =>
-      Object.entries(analytics.statusBreakdown || {}).map(([status, count]) => ({
-        name: status.charAt(0).toUpperCase() + status.slice(1),
-        value: Number(count) || 0,
-      })),
+      Object.entries(analytics.statusBreakdown || {}).map(
+        ([status, count]) => ({
+          name: status.charAt(0).toUpperCase() + status.slice(1),
+          value: Number(count) || 0,
+        }),
+      ),
     [analytics.statusBreakdown],
   );
 
@@ -117,7 +126,7 @@ const AdminAnalyticsPage = ({ syncVersion = 0 }) => {
 
   return (
     <div className="space-y-10">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard
           title="Today Revenue"
           value={currencyFormatter(analytics.todayRevenue)}
@@ -143,10 +152,10 @@ const AdminAnalyticsPage = ({ syncVersion = 0 }) => {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <SurfaceCard className="p-6">
-          <h2 className="mb-2 text-lg font-semibold text-slate-900">
+          <h2 className="mb-2 text-lg font-semibold text-[#1f1709]">
             Daily Revenue
           </h2>
-          <p className="mb-6 text-sm text-slate-600">
+          <p className="mb-6 text-sm text-[#5c4a26]">
             Revenue trend across the last 30 days.
           </p>
           {analytics.dailyRevenue.length > 0 ? (
@@ -174,10 +183,10 @@ const AdminAnalyticsPage = ({ syncVersion = 0 }) => {
         </SurfaceCard>
 
         <SurfaceCard className="p-6">
-          <h2 className="mb-2 text-lg font-semibold text-slate-900">
+          <h2 className="mb-2 text-lg font-semibold text-[#1f1709]">
             Order Status Pie
           </h2>
-          <p className="mb-6 text-sm text-slate-600">
+          <p className="mb-6 text-sm text-[#5c4a26]">
             Current mix of pending, confirmed, delivered, and cancelled orders.
           </p>
           {statusChartData.length > 0 ? (
@@ -211,17 +220,22 @@ const AdminAnalyticsPage = ({ syncVersion = 0 }) => {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <SurfaceCard className="p-6">
-          <h2 className="mb-2 text-lg font-semibold text-slate-900">
+          <h2 className="mb-2 text-lg font-semibold text-[#1f1709]">
             Top 5 Popular Products
           </h2>
-          <p className="mb-6 text-sm text-slate-600">
+          <p className="mb-6 text-sm text-[#5c4a26]">
             Ranked by total quantity ordered.
           </p>
           {topProductChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={340}>
               <BarChart data={topProductChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-20} textAnchor="end" height={80} />
+                <XAxis
+                  dataKey="name"
+                  angle={-20}
+                  textAnchor="end"
+                  height={80}
+                />
                 <YAxis />
                 <Tooltip formatter={(value) => `${Number(value)} items`} />
                 <Legend />
@@ -239,10 +253,10 @@ const AdminAnalyticsPage = ({ syncVersion = 0 }) => {
         </SurfaceCard>
 
         <SurfaceCard className="p-6">
-          <h2 className="mb-2 text-lg font-semibold text-slate-900">
+          <h2 className="mb-2 text-lg font-semibold text-[#1f1709]">
             Orders Per Day
           </h2>
-          <p className="mb-6 text-sm text-slate-600">
+          <p className="mb-6 text-sm text-[#5c4a26]">
             Daily order volume for the last 30 days.
           </p>
           {analytics.ordersPerDay.length > 0 ? (
@@ -268,36 +282,36 @@ const AdminAnalyticsPage = ({ syncVersion = 0 }) => {
       </div>
 
       <SurfaceCard className="p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-gold-200/60 bg-gold-50/45 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7d6c4d]">
               Lifetime Revenue
             </p>
-            <p className="mt-2 text-2xl font-bold text-primary-900">
+            <p className="mt-2 text-2xl font-bold text-[#1f1709]">
               {currencyFormatter(analytics.totalRevenue)}
             </p>
           </div>
-          <div className="rounded-2xl border border-gold-200/60 bg-white/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
+          <div className="rounded-2xl border border-[#ebe1cb] bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7d6c4d]">
               Total Orders
             </p>
-            <p className="mt-2 text-2xl font-bold text-primary-900">
+            <p className="mt-2 text-2xl font-bold text-[#1f1709]">
               {analytics.orderCount}
             </p>
           </div>
-          <div className="rounded-2xl border border-gold-200/60 bg-white/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
+          <div className="rounded-2xl border border-[#ebe1cb] bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7d6c4d]">
               Catalog Size
             </p>
-            <p className="mt-2 text-2xl font-bold text-primary-900">
+            <p className="mt-2 text-2xl font-bold text-[#1f1709]">
               {analytics.productCount}
             </p>
           </div>
-          <div className="rounded-2xl border border-gold-200/60 bg-white/80 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
+          <div className="rounded-2xl border border-[#ebe1cb] bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7d6c4d]">
               Pending Orders
             </p>
-            <p className="mt-2 text-2xl font-bold text-primary-900">
+            <p className="mt-2 text-2xl font-bold text-[#1f1709]">
               {analytics.pendingOrders}
             </p>
           </div>

@@ -9,4 +9,3 @@ const AdminDashboardWithAlerts = () => (
 );
 
 export default AdminDashboardWithAlerts;
-

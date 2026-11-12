@@ -31,7 +31,9 @@ export const getOrderItems = (order) =>
 
 const toText = (value) => String(value ?? "").trim();
 const toCompactKey = (value = "") =>
-  String(value).replace(/[^a-z0-9]/gi, "").toLowerCase();
+  String(value)
+    .replace(/[^a-z0-9]/gi, "")
+    .toLowerCase();
 
 const HIDDEN_OPTION_KEYS = new Set(["size"]);
 const OPTION_DISPLAY_PRIORITY = {
@@ -147,7 +149,8 @@ const dedupeOptionEntries = (entries = []) => {
   return dedupedEntries
     .sort((left, right) => {
       const leftPriority =
-        OPTION_DISPLAY_PRIORITY[toCompactKey(left.label)] || Number.MAX_SAFE_INTEGER;
+        OPTION_DISPLAY_PRIORITY[toCompactKey(left.label)] ||
+        Number.MAX_SAFE_INTEGER;
       const rightPriority =
         OPTION_DISPLAY_PRIORITY[toCompactKey(right.label)] ||
         Number.MAX_SAFE_INTEGER;
@@ -234,8 +237,7 @@ export const getOrderSpecialInstructions = (order) => {
 
   return parts
     .filter(
-      (part) =>
-        !/^contact\s*name\s*:/i.test(part) && !/^phone\s*:/i.test(part),
+      (part) => !/^contact\s*name\s*:/i.test(part) && !/^phone\s*:/i.test(part),
     )
     .join(" | ");
 };

@@ -2,15 +2,17 @@ import React from "react";
 
 export const MetricCard = ({ title, value, subtitle, highlight = false }) => (
   <div
-    className={`rounded-2xl border p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)] admin-motion hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(18,12,2,0.16)] ${
-      highlight
-        ? "border-[rgba(201,168,76,0.4)] bg-[linear-gradient(155deg,rgba(255,252,240,.95),rgba(245,230,186,.62))]"
-        : "border-[rgba(201,168,76,0.3)] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))]"
+    className={`ws-card px-4 py-3.5 ${
+      highlight ? "!border-[rgba(201,168,76,0.55)] !bg-[#faf6ec]" : ""
     }`}
   >
-    <p className="text-sm font-medium text-[#7a5c0f]">{title}</p>
-    <p className="mt-3 text-2xl font-bold text-[#2a1f0e]">{value}</p>
-    <p className="mt-2 text-sm text-[#6a5130]">{subtitle}</p>
+    <p className="ws-eyebrow">{title}</p>
+    <p className="mt-1 text-[26px] font-bold leading-tight text-[#1f1709]">
+      {value}
+    </p>
+    {subtitle ? (
+      <p className="mt-0.5 truncate text-xs text-[#7d6c4d]">{subtitle}</p>
+    ) : null}
   </div>
 );
 
@@ -37,6 +39,6 @@ export const EmptyState = ({ message }) => (
         />
       </svg>
     </div>
-    <p className="text-sm text-[#6a5130]">{message}</p>
+    <p className="text-sm text-[#7d6c4d]">{message}</p>
   </div>
 );

@@ -8,13 +8,13 @@ const CouponManager = ({
   onSave,
   saving,
 }) => (
-  <section className="rounded-2xl border border-gold-200/60 bg-gradient-to-br from-white via-cream-50/75 to-gold-50/60 p-6 shadow-[0_14px_34px_rgba(88,60,10,0.09)] admin-motion hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(88,60,10,0.14)]">
+  <section className="rounded-2xl border border-[#ebe1cb] bg-gradient-to-br from-white via-cream-50/75 to-gold-50/60 p-6 shadow-[0_14px_34px_rgba(88,60,10,0.09)] admin-motion hover:shadow-[0_20px_40px_rgba(88,60,10,0.14)]">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h2 className="text-lg font-semibold text-primary-900">
+        <h2 className="text-lg font-semibold text-[#1f1709]">
           Coupon Management
         </h2>
-        <p className="mt-1 text-sm text-primary-600">
+        <p className="mt-1 text-sm text-[#5c4a26]">
           Create offers, set minimum order amounts, and disable old campaigns.
         </p>
       </div>
@@ -22,7 +22,7 @@ const CouponManager = ({
         <button
           type="button"
           onClick={onAddCoupon}
-          className="inline-flex items-center justify-center rounded-xl border border-gold-200/70 px-4 py-2 text-sm font-semibold text-primary-700 admin-motion hover:-translate-y-0.5 hover:bg-gold-50/80"
+          className="inline-flex items-center justify-center rounded-xl border border-[#ebe1cb] px-4 py-2 text-sm font-semibold text-[#5c4a26] admin-motion hover:bg-[#faf6ec]"
         >
           Add Coupon
         </button>
@@ -30,7 +30,7 @@ const CouponManager = ({
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="inline-flex items-center justify-center rounded-xl bg-primary-700 px-4 py-2 text-sm font-semibold text-white admin-motion hover:-translate-y-0.5 hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-xl bg-primary-700 px-4 py-2 text-sm font-semibold text-white admin-motion hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving..." : "Save Coupons"}
         </button>
@@ -41,11 +41,11 @@ const CouponManager = ({
       {coupons.map((coupon, index) => (
         <div
           key={coupon._id || `${coupon.code || "coupon"}-${index}`}
-          className="rounded-2xl border border-gold-200/50 bg-white/70 p-4 admin-motion hover:border-gold-300/70 hover:bg-white/90"
+          className="rounded-2xl border border-[#ebe1cb] bg-white p-4 admin-motion hover:border-[#ebe1cb] hover:bg-white"
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-primary-700">
+              <label className="block text-sm font-medium text-[#5c4a26]">
                 Coupon Code
               </label>
               <input
@@ -57,13 +57,13 @@ const CouponManager = ({
                     event.target.value.toUpperCase(),
                   )
                 }
-                className="mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2 text-primary-800 admin-motion focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
+                className="mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-[#1f1709] admin-motion focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                 placeholder="SWEET10"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-primary-700">
+              <label className="block text-sm font-medium text-[#5c4a26]">
                 Type
               </label>
               <select
@@ -71,7 +71,7 @@ const CouponManager = ({
                 onChange={(event) =>
                   onCouponChange(index, "type", event.target.value)
                 }
-                className="mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2 text-primary-800 admin-motion focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
+                className="mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-[#1f1709] admin-motion focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
               >
                 <option value="percent">Percentage</option>
                 <option value="flat">Flat amount</option>
@@ -80,7 +80,7 @@ const CouponManager = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-primary-700">
+              <label className="block text-sm font-medium text-[#5c4a26]">
                 Value
               </label>
               <input
@@ -90,12 +90,12 @@ const CouponManager = ({
                 onChange={(event) =>
                   onCouponChange(index, "value", event.target.value)
                 }
-                className="mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2 text-primary-800 admin-motion focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
+                className="mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-[#1f1709] admin-motion focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-primary-700">
+              <label className="block text-sm font-medium text-[#5c4a26]">
                 Minimum Subtotal
               </label>
               <input
@@ -105,12 +105,12 @@ const CouponManager = ({
                 onChange={(event) =>
                   onCouponChange(index, "minSubtotal", event.target.value)
                 }
-                className="mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2 text-primary-800 admin-motion focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
+                className="mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-[#1f1709] admin-motion focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-primary-700">
+              <label className="block text-sm font-medium text-[#5c4a26]">
                 Max Discount
               </label>
               <input
@@ -121,20 +121,20 @@ const CouponManager = ({
                   onCouponChange(index, "maxDiscount", event.target.value)
                 }
                 disabled={coupon.type !== "percent"}
-                className="mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2 text-primary-800 admin-motion focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70 disabled:bg-primary-100 disabled:text-primary-400"
+                className="mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-[#1f1709] admin-motion focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)] disabled:bg-[#faf6ec] disabled:text-[#7d6c4d]"
                 placeholder={coupon.type === "percent" ? "250" : "Not used"}
               />
             </div>
 
             <div className="flex items-end gap-3">
-              <label className="flex items-center gap-2 rounded-xl border border-gold-200/70 bg-white px-3 py-2 text-sm font-medium text-primary-700">
+              <label className="flex items-center gap-2 rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-sm font-medium text-[#5c4a26]">
                 <input
                   type="checkbox"
                   checked={coupon.isActive !== false}
                   onChange={(event) =>
                     onCouponChange(index, "isActive", event.target.checked)
                   }
-                  className="h-4 w-4 rounded border-gold-300 text-primary-700 focus:ring-gold-300"
+                  className="h-4 w-4 rounded border-[#ebe1cb] text-[#5c4a26] focus:ring-[rgba(201,168,76,0.25)]"
                 />
                 Active
               </label>
@@ -148,7 +148,7 @@ const CouponManager = ({
             </div>
 
             <div className="md:col-span-2 xl:col-span-3">
-              <label className="block text-sm font-medium text-primary-700">
+              <label className="block text-sm font-medium text-[#5c4a26]">
                 Description
               </label>
               <input
@@ -156,7 +156,7 @@ const CouponManager = ({
                 onChange={(event) =>
                   onCouponChange(index, "description", event.target.value)
                 }
-                className="mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2 text-primary-800 admin-motion focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
+                className="mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2 text-[#1f1709] admin-motion focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                 placeholder="Describe when this offer should be used"
               />
             </div>

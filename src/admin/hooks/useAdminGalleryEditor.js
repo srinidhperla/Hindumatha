@@ -94,7 +94,10 @@ const buildGalleryPayload = ({
       unit: String(formData.weightRange?.unit || "kg").trim() || "kg",
     }),
   );
-  payload.append("sectionOptions", JSON.stringify(buildSectionOptions(formData)));
+  payload.append(
+    "sectionOptions",
+    JSON.stringify(buildSectionOptions(formData)),
+  );
   payload.append("optionPrices", JSON.stringify(formData.optionPrices || []));
   payload.append("galleryFieldConfig", JSON.stringify(galleryFieldConfig));
   payload.append(
@@ -153,7 +156,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
   const [formData, setFormData] = useState(() =>
     createEmptyGalleryForm(sharedGalleryFieldConfig),
   );
-  const [optionCatalogs, setOptionCatalogs] = useState(() => sharedOptionCatalogs);
+  const [optionCatalogs, setOptionCatalogs] = useState(
+    () => sharedOptionCatalogs,
+  );
   const [fieldMutations, setFieldMutations] = useState([]);
   const [editingItem, setEditingItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -271,7 +276,10 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
   };
 
   const openEditModal = (item, mode = "general") => {
-    const nextForm = normalizeGalleryFormFromItem(item, sharedGalleryFieldConfig);
+    const nextForm = normalizeGalleryFormFromItem(
+      item,
+      sharedGalleryFieldConfig,
+    );
     setFormData(nextForm);
     setOptionCatalogs(sharedOptionCatalogs);
     setFieldMutations([]);
@@ -356,7 +364,8 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
   };
 
   const handleSectionPriceSourceChange = (sectionKey, nextPriceSource) => {
-    const priceSource = nextPriceSource === "per_image" ? "per_image" : "shared";
+    const priceSource =
+      nextPriceSource === "per_image" ? "per_image" : "shared";
 
     setFormData((current) => ({
       ...current,
@@ -397,7 +406,10 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
     setFormData((current) => ({
       ...current,
-      [sectionKey]: toUniqueOptions([...(current[sectionKey] || []), normalizedValue]),
+      [sectionKey]: toUniqueOptions([
+        ...(current[sectionKey] || []),
+        normalizedValue,
+      ]),
     }));
 
     setFieldMutations((current) => [
@@ -427,8 +439,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     const nextOptions = [...currentOptions];
     nextOptions[index] = normalizedValue;
     const sectionTitle =
-      (formData.fieldSections || []).find((section) => section.key === sectionKey)
-        ?.title || "";
+      (formData.fieldSections || []).find(
+        (section) => section.key === sectionKey,
+      )?.title || "";
 
     setOptionCatalogs((current) => ({
       ...current,
@@ -463,7 +476,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
       if (addOptionMutation) {
         return currentMutations.map((entry) =>
-          entry === addOptionMutation ? { ...entry, option: normalizedValue } : entry,
+          entry === addOptionMutation
+            ? { ...entry, option: normalizedValue }
+            : entry,
         );
       }
 
@@ -474,7 +489,8 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
           entry.option === previousValue,
       );
 
-      const previousOption = existingRenameMutation?.previousOption || previousValue;
+      const previousOption =
+        existingRenameMutation?.previousOption || previousValue;
 
       return replaceMatchingMutation(
         currentMutations,
@@ -632,8 +648,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     }
 
     const targetSection =
-      (formData.fieldSections || []).find((section) => section.key === sectionKey) ||
-      null;
+      (formData.fieldSections || []).find(
+        (section) => section.key === sectionKey,
+      ) || null;
     const previousTitle = targetSection?.title || "";
     const usesFieldToggle = isDirectToggleSection(
       targetSection,
@@ -663,7 +680,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
         optionPrices: (current.optionPrices || []).map((entry) => ({
           ...entry,
           sectionTitle:
-            entry.sectionKey === sectionKey ? normalizedTitle : entry.sectionTitle,
+            entry.sectionKey === sectionKey
+              ? normalizedTitle
+              : entry.sectionTitle,
           option:
             usesFieldToggle &&
             entry.sectionKey === sectionKey &&
@@ -676,17 +695,21 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
     setFieldMutations((current) => {
       const addFieldMutation = current.find(
-        (entry) => entry.type === "add_field" && entry.sectionKey === sectionKey,
+        (entry) =>
+          entry.type === "add_field" && entry.sectionKey === sectionKey,
       );
 
       if (addFieldMutation) {
         return current.map((entry) =>
-          entry === addFieldMutation ? { ...entry, title: normalizedTitle } : entry,
+          entry === addFieldMutation
+            ? { ...entry, title: normalizedTitle }
+            : entry,
         );
       }
 
       const existingRename = current.find(
-        (entry) => entry.type === "rename_field" && entry.sectionKey === sectionKey,
+        (entry) =>
+          entry.type === "rename_field" && entry.sectionKey === sectionKey,
       );
 
       return replaceMatchingMutation(
@@ -706,8 +729,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
   const deleteFieldSection = (sectionKey) => {
     const deletedSection =
-      (formData.fieldSections || []).find((section) => section.key === sectionKey) ||
-      null;
+      (formData.fieldSections || []).find(
+        (section) => section.key === sectionKey,
+      ) || null;
 
     setFormData((current) => {
       const nextForm = { ...current };
@@ -732,7 +756,8 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
     setFieldMutations((current) => {
       const addFieldMutation = current.find(
-        (entry) => entry.type === "add_field" && entry.sectionKey === sectionKey,
+        (entry) =>
+          entry.type === "add_field" && entry.sectionKey === sectionKey,
       );
 
       const withoutSectionMutations = dropMatchingMutations(
@@ -780,7 +805,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
             section.key,
             section.title,
             normalizedOption,
-            Number.isFinite(numericPrice) && numericPrice >= 0 ? numericPrice : 0,
+            Number.isFinite(numericPrice) && numericPrice >= 0
+              ? numericPrice
+              : 0,
           ),
         ],
       };
@@ -800,7 +827,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
       const currentEntries = Array.isArray(current.combinationPrices)
         ? current.combinationPrices
         : [];
-      const existingEntry = currentEntries.find((entry) => entry.key === combinationKey);
+      const existingEntry = currentEntries.find(
+        (entry) => entry.key === combinationKey,
+      );
       const remainingEntries = currentEntries.filter(
         (entry) => entry.key !== combinationKey,
       );
@@ -813,7 +842,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
             key: combinationKey,
             label: combinationLabel,
             price:
-              Number.isFinite(numericPrice) && numericPrice >= 0 ? numericPrice : 0,
+              Number.isFinite(numericPrice) && numericPrice >= 0
+                ? numericPrice
+                : 0,
             isEnabled: existingEntry?.isEnabled !== false,
             selections,
           },
@@ -833,7 +864,9 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
       const currentEntries = Array.isArray(current.combinationPrices)
         ? current.combinationPrices
         : [];
-      const existingEntry = currentEntries.find((entry) => entry.key === combinationKey);
+      const existingEntry = currentEntries.find(
+        (entry) => entry.key === combinationKey,
+      );
       const remainingEntries = currentEntries.filter(
         (entry) => entry.key !== combinationKey,
       );
@@ -869,44 +902,45 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     }
 
     if (galleryCategories.includes(targetCategory)) {
-      onToast("That category already exists. Choose a different name.", "error");
+      onToast(
+        "That category already exists. Choose a different name.",
+        "error",
+      );
       return;
     }
 
     try {
-      const matchingItems = galleryItems.filter(
-        (item) =>
-          (
-            Array.isArray(item?.categories) && item.categories.length > 0
-              ? item.categories
-              : [item?.category]
-          )
-            .map((entry) => String(entry || "").trim())
-            .includes(sourceCategory),
+      const matchingItems = galleryItems.filter((item) =>
+        (Array.isArray(item?.categories) && item.categories.length > 0
+          ? item.categories
+          : [item?.category]
+        )
+          .map((entry) => String(entry || "").trim())
+          .includes(sourceCategory),
       );
 
       await Promise.all(
-        matchingItems.map((item) =>
-          {
-            const nextCategories = toUniqueOptions(
-              (
-                Array.isArray(item?.categories) && item.categories.length > 0
-                  ? item.categories
-                  : [item?.category]
-              ).map((entry) =>
-                String(entry || "").trim() === sourceCategory
-                  ? targetCategory
-                  : String(entry || "").trim(),
-              ),
-            );
+        matchingItems.map((item) => {
+          const nextCategories = toUniqueOptions(
+            (Array.isArray(item?.categories) && item.categories.length > 0
+              ? item.categories
+              : [item?.category]
+            ).map((entry) =>
+              String(entry || "").trim() === sourceCategory
+                ? targetCategory
+                : String(entry || "").trim(),
+            ),
+          );
 
-            return (
-          dispatch(
+          return dispatch(
             updateGalleryItem({
               itemId: item._id,
               galleryItemData: buildGalleryPayload({
                 formData: {
-                  ...normalizeGalleryFormFromItem(item, sharedGalleryFieldConfig),
+                  ...normalizeGalleryFormFromItem(
+                    item,
+                    sharedGalleryFieldConfig,
+                  ),
                   categories: nextCategories,
                   category: nextCategories[0] || targetCategory,
                 },
@@ -914,10 +948,8 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
                 existingImageUrl: item.imageUrl,
               }),
             }),
-          ).unwrap()
-            );
-          },
-        ),
+          ).unwrap();
+        }),
       );
 
       if (selectedCategory === sourceCategory) {
@@ -945,40 +977,38 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     }
 
     try {
-      const matchingItems = galleryItems.filter(
-        (item) =>
-          (
-            Array.isArray(item?.categories) && item.categories.length > 0
-              ? item.categories
-              : [item?.category]
-          )
-            .map((entry) => String(entry || "").trim())
-            .includes(normalizedCategory),
+      const matchingItems = galleryItems.filter((item) =>
+        (Array.isArray(item?.categories) && item.categories.length > 0
+          ? item.categories
+          : [item?.category]
+        )
+          .map((entry) => String(entry || "").trim())
+          .includes(normalizedCategory),
       );
 
       await Promise.all(
-        matchingItems.map((item) =>
-          {
-            const remainingCategories = toUniqueOptions(
-              (
-                Array.isArray(item?.categories) && item.categories.length > 0
-                  ? item.categories
-                  : [item?.category]
-              ).filter(
-                (entry) => String(entry || "").trim() !== normalizedCategory,
-              ),
-            );
-            const nextCategories = remainingCategories.length
-              ? remainingCategories
-              : [DEFAULT_DELETED_CATEGORY];
+        matchingItems.map((item) => {
+          const remainingCategories = toUniqueOptions(
+            (Array.isArray(item?.categories) && item.categories.length > 0
+              ? item.categories
+              : [item?.category]
+            ).filter(
+              (entry) => String(entry || "").trim() !== normalizedCategory,
+            ),
+          );
+          const nextCategories = remainingCategories.length
+            ? remainingCategories
+            : [DEFAULT_DELETED_CATEGORY];
 
-            return (
-          dispatch(
+          return dispatch(
             updateGalleryItem({
               itemId: item._id,
               galleryItemData: buildGalleryPayload({
                 formData: {
-                  ...normalizeGalleryFormFromItem(item, sharedGalleryFieldConfig),
+                  ...normalizeGalleryFormFromItem(
+                    item,
+                    sharedGalleryFieldConfig,
+                  ),
                   categories: nextCategories,
                   category: nextCategories[0] || DEFAULT_DELETED_CATEGORY,
                 },
@@ -986,10 +1016,8 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
                 existingImageUrl: item.imageUrl,
               }),
             }),
-          ).unwrap()
-            );
-          },
-        ),
+          ).unwrap();
+        }),
       );
 
       if (selectedCategory === normalizedCategory) {
@@ -1011,7 +1039,10 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
       await dispatch(deleteGalleryItem(itemId)).unwrap();
       onToast("Gallery item deleted successfully.");
     } catch (error) {
-      onToast(getErrorMessage(error, "Failed to delete gallery item."), "error");
+      onToast(
+        getErrorMessage(error, "Failed to delete gallery item."),
+        "error",
+      );
     }
   };
 
@@ -1020,8 +1051,8 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
 
     if (editorMode === "pricing") {
       try {
-        const combinationFieldSections = (formData.fieldSections || []).filter((section) =>
-          COMBINATION_SECTION_KEYS.includes(section.key),
+        const combinationFieldSections = (formData.fieldSections || []).filter(
+          (section) => COMBINATION_SECTION_KEYS.includes(section.key),
         );
         const galleryFieldConfig = createGalleryFieldConfigFromForm(
           {
@@ -1038,7 +1069,10 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
         onToast("Gallery pricing updated successfully.");
         closeModal();
       } catch (error) {
-        onToast(getErrorMessage(error, "Failed to save gallery pricing."), "error");
+        onToast(
+          getErrorMessage(error, "Failed to save gallery pricing."),
+          "error",
+        );
       }
       return;
     }
@@ -1047,7 +1081,10 @@ const useAdminGalleryEditor = ({ onToast, syncVersion = 0 }) => {
     const categories = toUniqueOptions(formData.categories || []);
 
     if (!title || !categories.length) {
-      onToast("Please enter a gallery title and at least one category.", "error");
+      onToast(
+        "Please enter a gallery title and at least one category.",
+        "error",
+      );
       return;
     }
 

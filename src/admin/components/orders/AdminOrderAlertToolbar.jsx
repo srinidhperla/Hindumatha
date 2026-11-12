@@ -14,7 +14,7 @@ const AdminOrderAlertToolbar = ({
   onUnlockSound,
   onRunManualAlertTest,
 }) => (
-  <SurfaceCard className="mb-4 px-4 py-4 text-sm text-primary-700">
+  <SurfaceCard className="mb-4 px-4 py-4 text-sm text-[#5c4a26]">
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex flex-wrap items-center gap-3">
         <StatusChip tone={audioEnabled ? "success" : "warning"}>
@@ -75,11 +75,6 @@ const AdminOrderAlertToolbar = ({
         Test Alert
       </ActionButton>
     </div>
-    <p className="mt-3 text-xs text-primary-500">
-      "Not subscribed yet" means this browser has not finished push
-      registration. Click "Enable background alerts" once and allow
-      notifications.
-    </p>
   </SurfaceCard>
 );
 

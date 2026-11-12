@@ -1,10 +1,6 @@
 import React from "react";
 import { EmptyState } from "../ui/AdminUi";
-import {
-  ActionButton,
-  StatusChip,
-  SurfaceCard,
-} from "@/shared/ui/Primitives";
+import { ActionButton, StatusChip, SurfaceCard } from "@/shared/ui/Primitives";
 import { OptimizedImage } from "@/shared/ui";
 import {
   formatCategoryLabel,
@@ -52,27 +48,27 @@ const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
                   {product.isEggless && (
                     <StatusChip tone="success">Eggless</StatusChip>
                   )}
-                  <h3 className="mt-1 text-sm sm:text-base font-bold text-primary-800 leading-tight truncate">
+                  <h3 className="mt-1 text-sm sm:text-base font-bold text-[#1f1709] leading-tight truncate">
                     {product.name}
                   </h3>
                 </div>
-                <p className="shrink-0 text-sm sm:text-base font-semibold text-primary-700">
+                <p className="shrink-0 text-sm sm:text-base font-semibold text-[#5c4a26]">
                   ₹{product.price}
                 </p>
               </div>
 
-              <p className="text-xs sm:text-sm text-primary-600 line-clamp-2">
+              <p className="text-xs sm:text-sm text-[#5c4a26] line-clamp-2">
                 {product.description}
               </p>
 
               <div className="mt-2 sm:mt-3 flex flex-wrap gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium">
-                <span className="rounded-full bg-cream-100 px-2.5 py-0.5 sm:px-3 sm:py-1 text-primary-700">
+                <span className="rounded-full bg-[#faf6ec] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[#5c4a26]">
                   {availableFlavorCount} flavors
                 </span>
-                <span className="rounded-full bg-cream-100 px-2.5 py-0.5 sm:px-3 sm:py-1 text-primary-700">
+                <span className="rounded-full bg-[#faf6ec] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[#5c4a26]">
                   {availableWeightCount} sizes
                 </span>
-                <span className="rounded-full bg-cream-100 px-2.5 py-0.5 sm:px-3 sm:py-1 text-primary-700">
+                <span className="rounded-full bg-[#faf6ec] px-2.5 py-0.5 sm:px-3 sm:py-1 text-[#5c4a26]">
                   {product.images?.length || 1} imgs
                 </span>
               </div>
@@ -82,13 +78,13 @@ const AdminProductsGrid = ({ products, onEdit, onDelete }) => {
                   {product.flavorOptions.slice(0, 3).map((option) => (
                     <span
                       key={`${product._id}-${option.name}`}
-                      className="rounded-full bg-cream-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-primary-700"
+                      className="rounded-full bg-[#faf6ec] px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-[#5c4a26]"
                     >
                       {option.name}
                     </span>
                   ))}
                   {product.flavorOptions.length > 3 && (
-                    <span className="rounded-full bg-cream-100 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-primary-500">
+                    <span className="rounded-full bg-[#faf6ec] px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium text-[#7d6c4d]">
                       +{product.flavorOptions.length - 3}
                     </span>
                   )}

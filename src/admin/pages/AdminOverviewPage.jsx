@@ -202,7 +202,7 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
 
   return (
     <div className="space-y-10">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard
           title="Today's Orders"
           value={analytics.todayOrders}
@@ -211,7 +211,7 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
         />
         <MetricCard
           title="Today's Revenue"
-          value={`Rs.${analytics.todayRevenue.toLocaleString("en-IN")}`}
+          value={`₹${analytics.todayRevenue.toLocaleString("en-IN")}`}
           subtitle="Non-cancelled order value today"
           highlight
         />
@@ -232,13 +232,13 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="rounded-2xl border border-[rgba(201,168,76,0.3)] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
+        <div className="rounded-2xl border border-[#ebe1cb] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="font-playfair text-lg font-semibold text-[#2a1f0e]">
+              <h2 className="font-playfair text-lg font-semibold text-[#1f1709]">
                 Recent Orders
               </h2>
-              <p className="mt-1 text-sm text-[#6a5130]">
+              <p className="mt-1 text-sm text-[#7d6c4d]">
                 Quick triage for the latest five orders.
               </p>
             </div>
@@ -257,32 +257,32 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
                 return (
                   <div
                     key={order._id}
-                    className="rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/85 p-4 admin-motion hover:-translate-y-0.5 hover:border-[rgba(201,168,76,0.4)] hover:bg-white"
+                    className="rounded-2xl border border-[#ebe1cb] bg-white p-4 admin-motion hover:border-[rgba(201,168,76,0.4)] hover:bg-white"
                   >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7a5c0f]">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b6914]">
                           {getOrderDisplayCode(order)}
                         </p>
-                        <p className="mt-1 text-base font-semibold text-[#2a1f0e]">
+                        <p className="mt-1 text-base font-semibold text-[#1f1709]">
                           {order.user?.name || "Guest Customer"}
                         </p>
-                        <p className="mt-1 text-sm text-[#6a5130]">
+                        <p className="mt-1 text-sm text-[#7d6c4d]">
                           {getOrderSummary(order)}
                         </p>
-                        <p className="mt-1 text-xs text-[#8f7859]">
+                        <p className="mt-1 text-xs text-[#7d6c4d]">
                           Customer asked for: {formatRequestedDelivery(order)}
                         </p>
                       </div>
 
                       <div className="text-right">
                         <p className="text-base font-semibold text-[#5b4312]">
-                          Rs.
+                          ₹
                           {Number(order.totalAmount || 0).toLocaleString(
                             "en-IN",
                           )}
                         </p>
-                        <p className="mt-1 text-sm font-medium capitalize text-[#7a5c0f]">
+                        <p className="mt-1 text-sm font-medium capitalize text-[#8b6914]">
                           {getOrderStatusLabel(order.status)}
                         </p>
                       </div>
@@ -321,7 +321,7 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
                             }
                             handleQuickStatusChange(order._id, nextValue);
                           }}
-                          className="rounded-2xl border border-gold-200/70 bg-white px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
+                          className="rounded-2xl border border-[#ebe1cb] bg-white px-3 py-2.5 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                           aria-label="Update order status"
                           title="Update order status"
                         >
@@ -342,11 +342,11 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
           )}
         </div>
 
-        <div className="rounded-2xl border border-[rgba(201,168,76,0.3)] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
-          <h2 className="font-playfair text-lg font-semibold text-[#2a1f0e]">
+        <div className="rounded-2xl border border-[#ebe1cb] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.78))] p-6 shadow-[0_10px_22px_rgba(18,12,2,0.12)]">
+          <h2 className="font-playfair text-lg font-semibold text-[#1f1709]">
             Product Summary
           </h2>
-          <p className="mt-1 text-sm text-[#6a5130]">
+          <p className="mt-1 text-sm text-[#7d6c4d]">
             Quick visibility into the live catalog.
           </p>
 
@@ -357,7 +357,7 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
               {products.slice(0, 6).map((product) => (
                 <li
                   key={product._id}
-                  className="flex items-center justify-between rounded-xl border border-[rgba(201,168,76,0.22)] bg-white/85 p-3 admin-motion hover:-translate-y-0.5 hover:border-[rgba(201,168,76,0.4)] hover:bg-white"
+                  className="flex items-center justify-between rounded-xl border border-[#ebe1cb] bg-white p-3 admin-motion hover:border-[rgba(201,168,76,0.4)] hover:bg-white"
                 >
                   <div className="flex items-center space-x-3">
                     <OptimizedImage
@@ -369,16 +369,16 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
                       className="h-12 w-12 rounded-xl object-cover"
                     />
                     <div>
-                      <p className="text-sm font-semibold text-[#2a1f0e]">
+                      <p className="text-sm font-semibold text-[#1f1709]">
                         {product.name}
                       </p>
-                      <p className="text-xs text-[#6a5130]">
+                      <p className="text-xs text-[#7d6c4d]">
                         {product.category}
                       </p>
                     </div>
                   </div>
                   <p className="text-sm font-semibold text-[#5b4312]">
-                    Rs.{product.price}
+                    ₹{product.price}
                   </p>
                 </li>
               ))}
@@ -387,14 +387,14 @@ const AdminOverviewPage = ({ onToast = () => {}, syncVersion = 0 }) => {
             <EmptyState message="Add products to view summary." />
           )}
 
-          <div className="mt-5 rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/85 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#7a5c0f]">
+          <div className="mt-5 rounded-2xl border border-[#ebe1cb] bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8b6914]">
               Snapshot
             </p>
-            <div className="mt-3 space-y-2 text-sm text-[#6a5130]">
+            <div className="mt-3 space-y-2 text-sm text-[#7d6c4d]">
               <p>Total orders: {metrics.totalOrders}</p>
               <p>
-                Total revenue: Rs.{metrics.totalRevenue.toLocaleString("en-IN")}
+                Total revenue: ₹{metrics.totalRevenue.toLocaleString("en-IN")}
               </p>
               <p>
                 Analytics status:{" "}

@@ -88,9 +88,13 @@ const useImageBackup = ({
 
       await onRestored?.();
 
-      const parts = [`Restored ${result.updated?.length || 0} missing ${label} image(s).`];
+      const parts = [
+        `Restored ${result.updated?.length || 0} missing ${label} image(s).`,
+      ];
       if (result.alreadyHealthy?.length) {
-        parts.push(`${result.alreadyHealthy.length} already fine (left as is).`);
+        parts.push(
+          `${result.alreadyHealthy.length} already fine (left as is).`,
+        );
       }
       if (result.skipped?.length) {
         parts.push(`${result.skipped.length} skipped.`);

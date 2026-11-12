@@ -78,8 +78,7 @@ const formatEstimatedDelivery = (order) => {
   return ESTIMATED_DELIVERY_LABELS[value] || value;
 };
 
-const formatINR = (value) =>
-  `Rs.${Number(value || 0).toLocaleString("en-IN")}`;
+const formatINR = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
 const buildDeliveryShareText = (order) => {
   const address = order?.deliveryAddress || {};
@@ -144,20 +143,20 @@ const OrderDetailsModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-primary-900/70 via-primary-900/55 to-black/60 p-4 backdrop-blur-md">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/35 bg-white/25 p-6 shadow-[0_30px_80px_rgba(10,10,20,0.45)] backdrop-blur-2xl">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-white/35 bg-white/25 p-6 shadow-[0_30px_80px_rgba(10,10,20,0.45)] backdrop-blur-2xl">
         <div className="mb-6 flex items-start justify-between rounded-2xl border border-white/40 bg-white/35 p-4 backdrop-blur-xl">
           <div>
-            <h2 className="text-xl font-semibold text-primary-900">
+            <h2 className="text-xl font-semibold text-[#1f1709]">
               Order details
             </h2>
-            <p className="mt-1 text-sm font-medium text-primary-700">
+            <p className="mt-1 text-sm font-medium text-[#5c4a26]">
               {getOrderDisplayCode(order)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/50 bg-white/45 p-2 text-primary-700 admin-motion hover:bg-white/70"
+            className="rounded-full border border-white/50 bg-white/45 p-2 text-[#5c4a26] admin-motion hover:bg-white"
           >
             <span className="sr-only">Close</span>
             <svg
@@ -178,36 +177,37 @@ const OrderDetailsModal = ({
 
         <div className="grid gap-5 md:grid-cols-2">
           <div className="rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
-            <h3 className="text-sm font-semibold text-primary-900">Customer</h3>
-            <p className="mt-2 text-sm font-medium text-primary-800">
+            <h3 className="text-sm font-semibold text-[#1f1709]">Customer</h3>
+            <p className="mt-2 text-sm font-medium text-[#1f1709]">
               {order.user?.name || "Guest Customer"}
             </p>
-            <p className="text-sm text-primary-700">
+            <p className="text-sm text-[#5c4a26]">
               {order.user?.email || "No email"}
             </p>
-            <p className="text-sm text-primary-700">
+            <p className="text-sm text-[#5c4a26]">
               {order.user?.phone || order.deliveryAddress?.phone || "No phone"}
             </p>
           </div>
 
           <div className="rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
-            <h3 className="text-sm font-semibold text-primary-900">Delivery</h3>
+            <h3 className="text-sm font-semibold text-[#1f1709]">Delivery</h3>
             {order.deliveryAddress?.label && (
-              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-primary-700">
+              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-[#5c4a26]">
                 {order.deliveryAddress.label}
               </p>
             )}
-            <p className="mt-2 text-sm font-semibold text-primary-900">
+            <p className="mt-2 text-sm font-semibold text-[#1f1709]">
               Customer asked for: {formatRequestedDelivery(order)}
             </p>
-            <p className="mt-1 text-sm text-primary-700">
+            <p className="mt-1 text-sm text-[#5c4a26]">
               Estimated: {formatEstimatedDelivery(order)}
             </p>
-            <p className="mt-3 text-sm text-primary-800">
-              {formatAddressText(order.deliveryAddress) || "Address not provided"}
+            <p className="mt-3 text-sm text-[#1f1709]">
+              {formatAddressText(order.deliveryAddress) ||
+                "Address not provided"}
             </p>
             {order.assignedDeliveryPartner?.name && (
-              <p className="mt-2 text-sm text-primary-700">
+              <p className="mt-2 text-sm text-[#5c4a26]">
                 Assigned delivery partner: {order.assignedDeliveryPartner.name}
               </p>
             )}
@@ -215,38 +215,36 @@ const OrderDetailsModal = ({
               <button
                 type="button"
                 onClick={handleCopyAddress}
-                className="rounded-lg border border-white/55 bg-white/55 px-3 py-1.5 text-xs font-semibold text-primary-800 admin-motion hover:bg-white/80"
+                className="rounded-lg border border-white/55 bg-white/55 px-3 py-1.5 text-xs font-semibold text-[#1f1709] admin-motion hover:bg-white"
               >
                 Copy Address
               </button>
               {formatAddressText(order.deliveryAddress) && (
-                  <a
-                    href={buildGoogleMapsSearchUrl(order.deliveryAddress)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-lg border border-white/55 bg-white/55 px-3 py-1.5 text-xs font-semibold text-primary-800 admin-motion hover:bg-white/80"
-                  >
-                    Open in Maps
-                  </a>
-                )}
+                <a
+                  href={buildGoogleMapsSearchUrl(order.deliveryAddress)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg border border-white/55 bg-white/55 px-3 py-1.5 text-xs font-semibold text-[#1f1709] admin-motion hover:bg-white"
+                >
+                  Open in Maps
+                </a>
+              )}
             </div>
           </div>
         </div>
 
         {specialInstructions && (
           <div className="mt-5 rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
-            <h3 className="text-sm font-semibold text-primary-900">
+            <h3 className="text-sm font-semibold text-[#1f1709]">
               Special Instructions
             </h3>
-            <p className="mt-2 text-sm text-primary-800">
-              {specialInstructions}
-            </p>
+            <p className="mt-2 text-sm text-[#1f1709]">{specialInstructions}</p>
           </div>
         )}
 
         <div className="mt-5 rounded-2xl border border-white/45 bg-white/35 backdrop-blur-xl">
           <div className="border-b border-white/45 px-4 py-3">
-            <h3 className="text-sm font-semibold text-primary-900">Items</h3>
+            <h3 className="text-sm font-semibold text-[#1f1709]">Items</h3>
           </div>
           <div className="divide-y divide-white/45">
             {getOrderItems(order).map((item, index) => {
@@ -258,13 +256,13 @@ const OrderDetailsModal = ({
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-primary-900">
+                      <p className="text-sm font-semibold text-[#1f1709]">
                         {getOrderItemName(item)}
                       </p>
-                      <p className="mt-1 text-xs font-medium text-primary-700">
+                      <p className="mt-1 text-xs font-medium text-[#5c4a26]">
                         Qty: {Number(item.quantity || 0)}
                       </p>
-                      <p className="mt-1 text-xs text-primary-700">
+                      <p className="mt-1 text-xs text-[#5c4a26]">
                         Price per item: {formatINR(item.price)}
                       </p>
                       {optionEntries.length > 0 && (
@@ -272,7 +270,7 @@ const OrderDetailsModal = ({
                           {optionEntries.map((entry) => (
                             <span
                               key={`${order._id}-${index}-${entry.label}-${entry.value}`}
-                              className="rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-primary-700"
+                              className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-[#5c4a26]"
                             >
                               {entry.label}: {entry.value}
                             </span>
@@ -280,7 +278,7 @@ const OrderDetailsModal = ({
                         </div>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-primary-900">
+                    <p className="text-sm font-semibold text-[#1f1709]">
                       {formatINR(
                         Number(item.price || 0) * Number(item.quantity || 0),
                       )}
@@ -295,13 +293,13 @@ const OrderDetailsModal = ({
         <div className="mt-5 rounded-2xl border border-white/45 bg-white/35 p-4 backdrop-blur-xl">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-sm text-primary-700">Payment Method</p>
-              <p className="text-sm font-semibold text-primary-900">
+              <p className="text-sm text-[#5c4a26]">Payment Method</p>
+              <p className="text-sm font-semibold text-[#1f1709]">
                 {getPaymentMethodLabel(order.paymentMethod)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-primary-700">Payment Status</p>
+              <p className="text-sm text-[#5c4a26]">Payment Status</p>
               <p
                 className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold capitalize ${getPaymentStatusClasses(order.paymentStatus)}`}
               >
@@ -310,23 +308,23 @@ const OrderDetailsModal = ({
             </div>
             {order.paymentGateway && (
               <div>
-                <p className="text-sm text-primary-700">Gateway</p>
-                <p className="text-sm font-semibold uppercase text-primary-900">
+                <p className="text-sm text-[#5c4a26]">Gateway</p>
+                <p className="text-sm font-semibold uppercase text-[#1f1709]">
                   {order.paymentGateway}
                 </p>
               </div>
             )}
             {order.paymentGatewayPaymentId && (
               <div>
-                <p className="text-sm text-primary-700">Payment ID</p>
-                <p className="break-all text-sm font-semibold text-primary-900">
+                <p className="text-sm text-[#5c4a26]">Payment ID</p>
+                <p className="break-all text-sm font-semibold text-[#1f1709]">
                   {order.paymentGatewayPaymentId}
                 </p>
               </div>
             )}
             <div>
-              <p className="text-sm text-primary-700">Created</p>
-              <p className="text-sm font-semibold text-primary-900">
+              <p className="text-sm text-[#5c4a26]">Created</p>
+              <p className="text-sm font-semibold text-[#1f1709]">
                 {new Date(order.createdAt).toLocaleString("en-IN")}
               </p>
             </div>
@@ -334,15 +332,15 @@ const OrderDetailsModal = ({
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-white/55 bg-white/55 px-4 py-2">
-              <p className="text-xs uppercase tracking-wide text-primary-700">
+              <p className="text-xs uppercase tracking-wide text-[#5c4a26]">
                 Delivery
               </p>
-              <p className="text-base font-semibold text-primary-900">
+              <p className="text-base font-semibold text-[#1f1709]">
                 {formatINR(deliveryFee)}
               </p>
             </div>
             <div className="rounded-xl border border-white/55 bg-white/55 px-4 py-2">
-              <p className="text-xs uppercase tracking-wide text-primary-700">
+              <p className="text-xs uppercase tracking-wide text-[#5c4a26]">
                 Discount
               </p>
               <p className="text-base font-semibold text-emerald-700">
@@ -355,11 +353,11 @@ const OrderDetailsModal = ({
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="rounded-xl border border-white/55 bg-white/55 px-4 py-2">
-              <p className="text-xs uppercase tracking-wide text-primary-700">
+              <p className="text-xs uppercase tracking-wide text-[#5c4a26]">
                 Total Amount
               </p>
-              <p className="text-lg font-bold text-primary-900">
-                Rs.{order.totalAmount?.toLocaleString("en-IN") || 0}
+              <p className="text-lg font-bold text-[#1f1709]">
+                ₹{order.totalAmount?.toLocaleString("en-IN") || 0}
               </p>
             </div>
 
@@ -401,7 +399,7 @@ const OrderDetailsModal = ({
                     }
                     onStatusChange?.(order._id, nextValue);
                   }}
-                  className="rounded-xl border border-white/60 bg-white/65 px-3 py-2 text-sm font-semibold text-primary-900 hover:bg-white"
+                  className="rounded-xl border border-white/60 bg-white/65 px-3 py-2 text-sm font-semibold text-[#1f1709] hover:bg-white"
                   aria-label="Update order status"
                   title="Update order status"
                 >
@@ -416,7 +414,7 @@ const OrderDetailsModal = ({
                 <button
                   type="button"
                   onClick={() => onRequestAction?.("assign", order)}
-                  className="rounded-xl border border-white/60 bg-white/65 px-4 py-2 font-semibold text-primary-900 hover:bg-white"
+                  className="rounded-xl border border-white/60 bg-white/65 px-4 py-2 font-semibold text-[#1f1709] hover:bg-white"
                 >
                   {order.assignedDeliveryPartner
                     ? "Reassign Delivery"
@@ -426,7 +424,7 @@ const OrderDetailsModal = ({
               <button
                 type="button"
                 onClick={handleDownloadInvoice}
-                className="rounded-xl border border-white/60 bg-white/65 px-4 py-2 font-semibold text-primary-900 hover:bg-white"
+                className="rounded-xl border border-white/60 bg-white/65 px-4 py-2 font-semibold text-[#1f1709] hover:bg-white"
               >
                 Download Invoice
               </button>

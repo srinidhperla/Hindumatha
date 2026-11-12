@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   reverseGeocodeCoordinates,
   searchAddressSuggestions,
@@ -206,37 +212,42 @@ const StoreLocationPicker = ({ lat, lng, radiusKm, onPickLocation }) => {
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 p-3">
-        <form onSubmit={handleSearch} className="flex flex-col gap-2 sm:flex-row">
+    <div className="overflow-hidden rounded-2xl border border-[#ebe1cb] bg-white">
+      <div className="border-b border-[#ebe1cb] p-3">
+        <form
+          onSubmit={handleSearch}
+          className="flex flex-col gap-2 sm:flex-row"
+        >
           <input
             type="text"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search area, landmark, street or city"
-            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-200"
+            className="flex-1 rounded-xl border border-[#e3d7bb] px-3 py-2 text-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
           />
           <button
             type="submit"
             disabled={searchLoading}
-            className="rounded-xl border border-pink-200 px-4 py-2 text-sm font-semibold text-pink-700 transition hover:bg-pink-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl border border-[#c9a84c] px-4 py-2 text-sm font-semibold text-[#8b6914] transition hover:bg-[#faf6ec] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {searchLoading ? "Searching..." : "Search"}
           </button>
         </form>
 
         {searchError && (
-          <p className="mt-2 text-xs font-medium text-amber-700">{searchError}</p>
+          <p className="mt-2 text-xs font-medium text-amber-700">
+            {searchError}
+          </p>
         )}
 
         {searchResults.length > 0 && (
-          <div className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+          <div className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-[#ebe1cb] bg-white">
             {searchResults.map((result) => (
               <button
                 key={result.place_id || result.description}
                 type="button"
                 onClick={() => handleSelectSearchResult(result)}
-                className="w-full border-b border-slate-100 px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                className="w-full border-b border-[#ebe1cb] px-3 py-2 text-left text-sm text-[#1f1709] transition hover:bg-[#faf6ec]"
               >
                 {result.description}
               </button>
@@ -246,11 +257,11 @@ const StoreLocationPicker = ({ lat, lng, radiusKm, onPickLocation }) => {
       </div>
 
       {mapError ? (
-        <div className="flex h-80 w-full items-center justify-center bg-cream-100 px-4 text-center text-sm font-medium text-primary-700">
+        <div className="flex h-80 w-full items-center justify-center bg-[#faf6ec] px-4 text-center text-sm font-medium text-[#5c4a26]">
           {mapError}
         </div>
       ) : (
-        <div ref={mapRef} className="h-80 w-full bg-cream-100" />
+        <div ref={mapRef} className="h-80 w-full bg-[#faf6ec]" />
       )}
     </div>
   );

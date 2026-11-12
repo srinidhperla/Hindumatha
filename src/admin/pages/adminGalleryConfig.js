@@ -92,8 +92,7 @@ const cloneFieldSections = (items = []) =>
       isCustom: Boolean(section?.isCustom),
       pricingMode:
         section?.pricingMode === "per_kg" ||
-        (section?.pricingMode !== "fixed" &&
-          section?.area !== "extras")
+        (section?.pricingMode !== "fixed" && section?.area !== "extras")
           ? "per_kg"
           : "fixed",
       priceSource:
@@ -181,7 +180,9 @@ const stripImplicitToggleOptions = (section = {}, options = []) => {
 };
 
 const getAllowedSectionOptions = (section = {}, optionCatalogMap = {}) => {
-  const configuredOptions = cloneOptionList(optionCatalogMap[section.key] || []);
+  const configuredOptions = cloneOptionList(
+    optionCatalogMap[section.key] || [],
+  );
 
   if (configuredOptions.length > 0) {
     return configuredOptions;
@@ -244,7 +245,9 @@ const filterSharedOptionPrices = (optionPrices = [], fieldSections = []) => {
 };
 
 const buildLegacySectionOptionsMap = (item = {}) => {
-  const fieldSections = Array.isArray(item?.fieldSections) ? item.fieldSections : [];
+  const fieldSections = Array.isArray(item?.fieldSections)
+    ? item.fieldSections
+    : [];
   const customSectionKeys = new Set(
     fieldSections
       .filter((section) => section?.isCustom)
@@ -265,7 +268,8 @@ const buildLegacySectionOptionsMap = (item = {}) => {
     legacySelections[sectionKey] =
       item?.[sectionKey] ||
       (Array.isArray(item?.customSections)
-        ? item.customSections.find((section) => section?.key === sectionKey)?.options
+        ? item.customSections.find((section) => section?.key === sectionKey)
+            ?.options
         : []);
   });
 
@@ -303,8 +307,12 @@ export const buildOptionCatalogMap = (galleryFieldConfig = {}) => {
 
 export const normalizeGalleryFieldConfig = (source = {}, galleryItems = []) => {
   const fallbackConfig = createDefaultGalleryFieldConfig();
-  const rawSections = Array.isArray(source?.fieldSections) ? source.fieldSections : [];
-  const rawCatalogs = Array.isArray(source?.optionCatalogs) ? source.optionCatalogs : [];
+  const rawSections = Array.isArray(source?.fieldSections)
+    ? source.fieldSections
+    : [];
+  const rawCatalogs = Array.isArray(source?.optionCatalogs)
+    ? source.optionCatalogs
+    : [];
   const rawOptionPrices = Array.isArray(source?.optionPrices)
     ? source.optionPrices
     : [];
@@ -346,7 +354,9 @@ export const normalizeGalleryFieldConfig = (source = {}, galleryItems = []) => {
 
   if (!hasExplicitConfig) {
     galleryItems.forEach((item) => {
-      const itemSections = Array.isArray(item?.fieldSections) ? item.fieldSections : [];
+      const itemSections = Array.isArray(item?.fieldSections)
+        ? item.fieldSections
+        : [];
       const itemSectionMap = new Map();
 
       itemSections.forEach((section) => {
@@ -361,7 +371,8 @@ export const normalizeGalleryFieldConfig = (source = {}, galleryItems = []) => {
 
       const legacySectionOptions = buildLegacySectionOptionsMap(item);
       Object.entries(legacySectionOptions).forEach(([sectionKey, options]) => {
-        const section = itemSectionMap.get(sectionKey) || fieldSectionMap.get(sectionKey);
+        const section =
+          itemSectionMap.get(sectionKey) || fieldSectionMap.get(sectionKey);
         const nextOptions = stripImplicitToggleOptions(section, options);
         if (!nextOptions.length) {
           return;
@@ -422,7 +433,10 @@ export const normalizeGalleryFieldConfig = (source = {}, galleryItems = []) => {
   };
 };
 
-export const createGalleryFieldConfigFromForm = (formData = {}, optionCatalogs = {}) => {
+export const createGalleryFieldConfigFromForm = (
+  formData = {},
+  optionCatalogs = {},
+) => {
   const fieldSections = cloneFieldSections(formData.fieldSections || []);
 
   return {
@@ -431,14 +445,21 @@ export const createGalleryFieldConfigFromForm = (formData = {}, optionCatalogs =
       sectionKey: section.key,
       options: toUniqueOptions(optionCatalogs[section.key] || []),
     })),
-    optionPrices: filterSharedOptionPrices(formData.optionPrices || [], fieldSections),
-    combinationPrices: cloneCombinationPriceEntries(formData.combinationPrices || []),
+    optionPrices: filterSharedOptionPrices(
+      formData.optionPrices || [],
+      fieldSections,
+    ),
+    combinationPrices: cloneCombinationPriceEntries(
+      formData.combinationPrices || [],
+    ),
   };
 };
 
 const buildSectionSelectionMap = (item = {}, normalizedConfig = {}) => {
   const catalogMap = buildOptionCatalogMap(normalizedConfig);
-  const rawSectionOptions = Array.isArray(item?.sectionOptions) ? item.sectionOptions : [];
+  const rawSectionOptions = Array.isArray(item?.sectionOptions)
+    ? item.sectionOptions
+    : [];
 
   const selectionMap =
     rawSectionOptions.length > 0
@@ -509,7 +530,9 @@ export const normalizeGalleryFormFromItem = (
   item = {},
   galleryFieldConfig = createDefaultGalleryFieldConfig(),
 ) => {
-  const normalizedConfig = normalizeGalleryFieldConfig(galleryFieldConfig, [item]);
+  const normalizedConfig = normalizeGalleryFieldConfig(galleryFieldConfig, [
+    item,
+  ]);
   const sectionSelections = buildSectionSelectionMap(item, normalizedConfig);
 
   return {

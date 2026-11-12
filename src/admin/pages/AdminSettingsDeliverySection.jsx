@@ -24,10 +24,10 @@ export const AdminSettingsDeliverySection = ({
     <SurfaceCard className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-primary-900">
+          <h2 className="text-lg font-semibold text-[#1f1709]">
             Delivery Coverage
           </h2>
-          <p className="mt-1 text-sm text-primary-600">
+          <p className="mt-1 text-sm text-[#5c4a26]">
             Configure store GPS location and delivery radius used for checkout
             serviceability checks.
           </p>
@@ -72,7 +72,7 @@ export const AdminSettingsDeliverySection = ({
 
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
         <label className="block">
-          <span className="block text-sm font-medium text-primary-700">
+          <span className="block text-sm font-medium text-[#5c4a26]">
             Delivery Enabled
           </span>
           <input
@@ -80,12 +80,12 @@ export const AdminSettingsDeliverySection = ({
             name="enabled"
             checked={deliverySettings.enabled !== false}
             onChange={onDeliverySettingsChange}
-            className="mt-3 h-4 w-4 rounded border-gold-300 text-primary-700 focus:ring-gold-300"
+            className="mt-3 h-4 w-4 rounded border-[#ebe1cb] text-[#5c4a26] focus:ring-[rgba(201,168,76,0.25)]"
           />
         </label>
 
         <label className="block">
-          <span className="block text-sm font-medium text-primary-700">
+          <span className="block text-sm font-medium text-[#5c4a26]">
             Max Radius (km)
           </span>
           <input
@@ -95,19 +95,19 @@ export const AdminSettingsDeliverySection = ({
             name="maxDeliveryRadiusKm"
             value={deliverySettings.maxDeliveryRadiusKm ?? ""}
             onChange={onDeliverySettingsChange}
-            className="mt-1 block w-full rounded-xl border border-gold-200/70 px-3 py-2 focus:border-gold-400 focus:ring-2 focus:ring-gold-200/70"
+            className="mt-1 block w-full rounded-xl border border-[#ebe1cb] px-3 py-2 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
           />
         </label>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-gold-200/70 bg-cream-50 px-4 py-3 text-sm text-primary-700">
+      <div className="mt-4 rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] px-4 py-3 text-sm text-[#5c4a26]">
         Search for the store area below, use current browser location, or drop
         the pin on the map. The system keeps coordinates internally for radius
         checks, but the admin flow stays address-first.
       </div>
 
       <div className="mt-5">
-        <p className="mb-2 text-sm font-medium text-primary-700">
+        <p className="mb-2 text-sm font-medium text-[#5c4a26]">
           Click on the map to set store location and preview delivery radius
         </p>
         <StoreLocationPicker
@@ -124,7 +124,7 @@ export const AdminSettingsDeliverySection = ({
             href={`https://maps.google.com/?q=${deliverySettings.storeLocation.lat},${deliverySettings.storeLocation.lng}`}
             target="_blank"
             rel="noreferrer"
-            className="text-sm font-semibold text-primary-700 hover:text-primary-900"
+            className="text-sm font-semibold text-[#5c4a26] hover:text-[#1f1709]"
           >
             Open Store Location in Maps
           </a>

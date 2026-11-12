@@ -19,12 +19,8 @@ import {
   LoadingState,
   MetricCard,
 } from "@/admin/components/ui/AdminUi";
-import {
-  ActionButton,
-  StatusChip,
-  SurfaceCard,
-  Toggle,
-} from "@/shared/ui/Primitives";
+import { StatusChip, SurfaceCard, Toggle } from "@/shared/ui/Primitives";
+import WorkspaceToolbar from "@/shared/workspace/Toolbar";
 import { DEFAULT_PRODUCT_CATEGORIES, getErrorMessage } from "./adminShared";
 import useAdminInventoryToggles from "@/admin/hooks/useAdminInventoryToggles";
 import AdminInventoryProductCard from "./AdminInventoryProductCard";
@@ -69,7 +65,7 @@ const CategoryCard = ({
   return (
     <div ref={sortable ? sortableApi.setNodeRef : undefined} style={style}>
       <SurfaceCard className="overflow-hidden">
-        <div className="border-b border-gold-200/50 bg-white/70 px-4 py-3 sm:px-5">
+        <div className="border-b border-[#ebe1cb] bg-white px-4 py-3 sm:px-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {sortable ? (
@@ -77,21 +73,21 @@ const CategoryCard = ({
                   type="button"
                   {...sortableApi.attributes}
                   {...sortableApi.listeners}
-                  className="cursor-grab text-xl font-bold leading-none text-primary-500 active:cursor-grabbing"
+                  className="cursor-grab text-xl font-bold leading-none text-[#7d6c4d] active:cursor-grabbing"
                   title="Drag category"
                 >
                   {"\u2261"}
                 </button>
               ) : (
-                <span className="text-xl font-bold leading-none text-primary-300">
+                <span className="text-xl font-bold leading-none text-[#7d6c4d]">
                   {"\u2261"}
                 </span>
               )}
               <div>
-                <p className="text-base font-semibold text-primary-900">
+                <p className="text-base font-semibold text-[#1f1709]">
                   {formatCategoryLabel(category)}
                 </p>
-                <p className="text-xs text-primary-500">
+                <p className="text-xs text-[#7d6c4d]">
                   {count} product{count === 1 ? "" : "s"}
                 </p>
               </div>
@@ -305,7 +301,10 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
       ).unwrap();
       onToast("Category order saved.");
     } catch (error) {
-      onToast(getErrorMessage(error, "Failed to save category order."), "error");
+      onToast(
+        getErrorMessage(error, "Failed to save category order."),
+        "error",
+      );
     } finally {
       setSavingCategoryOrder(false);
     }
@@ -325,7 +324,11 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
       return;
     }
 
-    const reorderedProducts = arrayMove(categoryProducts, activeIndex, overIndex);
+    const reorderedProducts = arrayMove(
+      categoryProducts,
+      activeIndex,
+      overIndex,
+    );
 
     try {
       setSavingProductCategory(category);
@@ -375,7 +378,9 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragEnd={(event) => handleProductDragEnd(category, categoryProducts, event)}
+      onDragEnd={(event) =>
+        handleProductDragEnd(category, categoryProducts, event)
+      }
     >
       <SortableContext
         items={categoryProducts.map((product) => product._id)}
@@ -419,7 +424,7 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard
           title="Catalog"
           value={summary.totalProducts}
@@ -443,44 +448,31 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
         />
       </div>
 
-      <SurfaceCard className="p-3 sm:p-5">
-        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
-            <ActionButton
-              onClick={() => setSelectedCategory("all")}
-              variant={selectedCategory === "all" ? "primary" : "soft"}
-              className={`rounded-full px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm ${
-                selectedCategory === "all" ? "" : "text-slate-700"
-              }`}
-            >
-              All
-            </ActionButton>
-            {availableCategories.map((category) => (
-              <ActionButton
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                variant={selectedCategory === category ? "primary" : "soft"}
-                className="rounded-full px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
-              >
-                {formatCategoryLabel(category)}
-              </ActionButton>
-            ))}
-          </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search inventory..."
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-fuchsia-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-200 lg:max-w-xs"
-          />
-        </div>
-
-        <div className="mt-3 text-xs text-primary-600">
-          {categoryReorderEnabled
-            ? "Drag categories and products to save menu order instantly."
-            : "Category drag is available when All categories is selected and search is cleared."}
-        </div>
-      </SurfaceCard>
+      <WorkspaceToolbar
+        search={{
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: "Search inventory",
+        }}
+        chips={{
+          value: selectedCategory,
+          onChange: setSelectedCategory,
+          options: [
+            { value: "all", label: "All" },
+            ...availableCategories.map((category) => ({
+              value: category,
+              label: formatCategoryLabel(category),
+            })),
+          ],
+        }}
+        footer={
+          <p className="text-xs text-[#7d6c4d]">
+            {categoryReorderEnabled
+              ? "Drag categories and products to change the menu order."
+              : "Category drag works when All is selected and search is empty."}
+          </p>
+        }
+      />
 
       {visibleCategories.length ? (
         categoryReorderEnabled ? (
@@ -510,9 +502,12 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
                       onToggleCategoryVisibility={() =>
                         handleCategoryVisibilityToggle(category)
                       }
-                      categoryToggleSaving={savingCategoryVisibility === category}
+                      categoryToggleSaving={
+                        savingCategoryVisibility === category
+                      }
                       saving={
-                        savingCategoryOrder || savingProductCategory === category
+                        savingCategoryOrder ||
+                        savingProductCategory === category
                       }
                     >
                       {renderProductCards(category, categoryProducts)}
@@ -532,7 +527,10 @@ const AdminInventoryPage = ({ onToast, syncVersion = 0 }) => {
                   key={category}
                   category={category}
                   count={categoryProducts.length}
-                  categoryIsActive={isCategoryActive(categorySettings, category)}
+                  categoryIsActive={isCategoryActive(
+                    categorySettings,
+                    category,
+                  )}
                   onToggleCategoryVisibility={() =>
                     handleCategoryVisibilityToggle(category)
                   }

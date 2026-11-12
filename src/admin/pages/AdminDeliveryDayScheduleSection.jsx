@@ -45,8 +45,8 @@ const AdminDeliveryDayScheduleSection = ({
               onClick={() => setActiveDeliveryDay(dayKey)}
               className={`rounded-2xl border px-4 py-4 text-left admin-motion ${
                 isActive
-                  ? "border-slate-900 bg-slate-900 text-white shadow-lg"
-                  : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50"
+                  ? "border-[#1f1709] bg-[#1f1709] text-white"
+                  : "border-[#ebe1cb] bg-white text-[#1f1709] hover:border-[#e3d7bb] hover:bg-[#faf6ec]"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -62,7 +62,7 @@ const AdminDeliveryDayScheduleSection = ({
               </div>
               <p
                 className={`mt-3 text-xs leading-5 ${
-                  isActive ? "text-slate-200" : "text-slate-500"
+                  isActive ? "text-[#e8d08a]" : "text-[#7d6c4d]"
                 }`}
               >
                 {daySchedule.isOpen
@@ -78,23 +78,23 @@ const AdminDeliveryDayScheduleSection = ({
         })}
       </div>
 
-      <div className="mt-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mt-6 rounded-[28px] border border-[#ebe1cb] bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7d6c4d]">
               Editing
             </p>
-            <h3 className="mt-1 text-xl font-semibold text-slate-900">
+            <h3 className="mt-1 text-xl font-semibold text-[#1f1709]">
               {DAY_LABELS[activeDeliveryDay]}
             </h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[#7d6c4d]">
               Use one or more time windows for this day. Customers will see only
               these slots at checkout.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <label className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+            <label className="inline-flex items-center gap-2 rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] px-4 py-3 text-sm font-medium text-[#1f1709]">
               <Toggle
                 checked={activeDaySchedule.isOpen}
                 onClick={() =>
@@ -128,7 +128,7 @@ const AdminDeliveryDayScheduleSection = ({
           {activeDaySchedule.slots.map((slot, slotIndex) => (
             <span
               key={`${activeDeliveryDay}-summary-${slotIndex}`}
-              className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700"
+              className="rounded-full border border-[#e3d7bb] bg-[#faf6ec] px-3 py-1 text-xs font-semibold text-[#5c4a26]"
             >
               {formatTimeRangeLabel(slot.startTime, slot.endTime)}
             </span>
@@ -143,10 +143,10 @@ const AdminDeliveryDayScheduleSection = ({
             return (
               <div
                 key={`${activeDeliveryDay}-${slotIndex}`}
-                className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]"
+                className="grid gap-3 rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]"
               >
                 <label className="block">
-                  <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-[#7d6c4d]">
                     Start
                   </span>
                   <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
@@ -163,7 +163,7 @@ const AdminDeliveryDayScheduleSection = ({
                           toTwelveHourParts,
                         )
                       }
-                      className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                      className="block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                     >
                       {HOURS.map((hour) => (
                         <option key={hour} value={hour}>
@@ -184,7 +184,7 @@ const AdminDeliveryDayScheduleSection = ({
                           toTwelveHourParts,
                         )
                       }
-                      className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                      className="block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                     >
                       {MINUTES.map((minute) => (
                         <option key={minute} value={minute}>
@@ -205,18 +205,18 @@ const AdminDeliveryDayScheduleSection = ({
                           toTwelveHourParts,
                         )
                       }
-                      className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                      className="block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                     >
                       <option value="AM">AM</option>
                       <option value="PM">PM</option>
                     </select>
                   </div>
                 </label>
-                <div className="flex items-end justify-center pb-3 text-sm font-semibold text-slate-400">
+                <div className="flex items-end justify-center pb-3 text-sm font-semibold text-[#7d6c4d]">
                   to
                 </div>
                 <label className="block">
-                  <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-[#7d6c4d]">
                     End
                   </span>
                   <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
@@ -233,7 +233,7 @@ const AdminDeliveryDayScheduleSection = ({
                           toTwelveHourParts,
                         )
                       }
-                      className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                      className="block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                     >
                       {HOURS.map((hour) => (
                         <option key={hour} value={hour}>
@@ -254,7 +254,7 @@ const AdminDeliveryDayScheduleSection = ({
                           toTwelveHourParts,
                         )
                       }
-                      className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                      className="block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                     >
                       {MINUTES.map((minute) => (
                         <option key={minute} value={minute}>
@@ -275,7 +275,7 @@ const AdminDeliveryDayScheduleSection = ({
                           toTwelveHourParts,
                         )
                       }
-                      className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-3 focus:border-pink-500 focus:ring-2 focus:ring-pink-200"
+                      className="block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-3 focus:border-[#c9a84c] focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
                     >
                       <option value="AM">AM</option>
                       <option value="PM">PM</option>

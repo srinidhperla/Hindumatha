@@ -5,7 +5,7 @@ const join = (...tokens) => tokens.filter(Boolean).join(" ");
 export const SurfaceCard = ({ className = "", children }) => (
   <div
     className={join(
-      "rounded-3xl border border-[rgba(201,168,76,0.3)] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.82))] shadow-[0_12px_28px_rgba(18,12,2,0.12)]",
+      "surface-card rounded-3xl border border-[rgba(201,168,76,0.3)] bg-[linear-gradient(165deg,rgba(255,255,255,.95),rgba(255,246,228,.82))] shadow-[0_12px_28px_rgba(18,12,2,0.12)]",
       className,
     )}
   >
@@ -59,7 +59,7 @@ export const ActionButton = ({
       type={type}
       disabled={disabled}
       className={join(
-        "inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold admin-motion focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55",
+        "action-button inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold admin-motion focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55",
         variantMap[variant] || variantMap.primary,
         className,
       )}

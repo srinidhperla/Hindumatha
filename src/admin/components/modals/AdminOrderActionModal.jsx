@@ -23,7 +23,7 @@ const REJECT_OPTIONS = [
 const STATUS_EDIT_OPTIONS = ORDER_STATUS_OPTIONS;
 
 const inputClassName =
-  "mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/90 px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70";
+  "mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2.5 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]";
 
 const getRequestedDeliveryLabel = (order) => {
   if (order?.deliveryMode === "now") {
@@ -145,13 +145,17 @@ const AdminOrderActionModal = ({
         </div>
       }
     >
-      <form id="admin-order-action-form" onSubmit={handleSubmit} className="space-y-4">
-        <div className="rounded-2xl border border-gold-200/60 bg-gold-50/55 p-4 text-sm text-primary-700">
-          <p className="font-semibold text-primary-900">
+      <form
+        id="admin-order-action-form"
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
+        <div className="rounded-2xl border border-[#ebe1cb] bg-[#faf6ec] p-4 text-sm text-[#5c4a26]">
+          <p className="font-semibold text-[#1f1709]">
             Customer request: {getRequestedDeliveryLabel(order)}
           </p>
           <p className="mt-1">
-            {order.user?.name || "Customer"} | Rs.
+            {order.user?.name || "Customer"} | ₹
             {Number(order.totalAmount || 0).toLocaleString("en-IN")}
           </p>
         </div>
@@ -159,12 +163,14 @@ const AdminOrderActionModal = ({
         {mode === "accept" && (
           <>
             <label className="block">
-              <span className="text-sm font-medium text-primary-700">
+              <span className="text-sm font-medium text-[#5c4a26]">
                 Estimated delivery time
               </span>
               <select
                 value={estimatedDeliveryTime}
-                onChange={(event) => setEstimatedDeliveryTime(event.target.value)}
+                onChange={(event) =>
+                  setEstimatedDeliveryTime(event.target.value)
+                }
                 className={inputClassName}
               >
                 {ACCEPT_OPTIONS.map((option) => (
@@ -177,13 +183,15 @@ const AdminOrderActionModal = ({
 
             {estimatedDeliveryTime === "custom" && (
               <label className="block">
-                <span className="text-sm font-medium text-primary-700">
+                <span className="text-sm font-medium text-[#5c4a26]">
                   Custom delivery time
                 </span>
                 <input
                   type="text"
                   value={customDeliveryTime}
-                  onChange={(event) => setCustomDeliveryTime(event.target.value)}
+                  onChange={(event) =>
+                    setCustomDeliveryTime(event.target.value)
+                  }
                   placeholder="Example: 75 minutes"
                   className={inputClassName}
                 />
@@ -191,7 +199,7 @@ const AdminOrderActionModal = ({
             )}
 
             <label className="block">
-              <span className="text-sm font-medium text-primary-700">
+              <span className="text-sm font-medium text-[#5c4a26]">
                 Message to customer
               </span>
               <textarea
@@ -208,7 +216,7 @@ const AdminOrderActionModal = ({
         {mode === "reject" && (
           <>
             <label className="block">
-              <span className="text-sm font-medium text-primary-700">
+              <span className="text-sm font-medium text-[#5c4a26]">
                 Rejection reason
               </span>
               <select
@@ -225,7 +233,7 @@ const AdminOrderActionModal = ({
             </label>
 
             <label className="block">
-              <span className="text-sm font-medium text-primary-700">
+              <span className="text-sm font-medium text-[#5c4a26]">
                 Message to customer
               </span>
               <textarea
@@ -241,12 +249,14 @@ const AdminOrderActionModal = ({
 
         {mode === "assign" && (
           <label className="block">
-            <span className="text-sm font-medium text-primary-700">
+            <span className="text-sm font-medium text-[#5c4a26]">
               Delivery partner
             </span>
             <select
               value={assignedDeliveryPartner}
-              onChange={(event) => setAssignedDeliveryPartner(event.target.value)}
+              onChange={(event) =>
+                setAssignedDeliveryPartner(event.target.value)
+              }
               className={inputClassName}
             >
               <option value="">Select delivery partner</option>
@@ -262,7 +272,7 @@ const AdminOrderActionModal = ({
 
         {mode === "editStatus" && (
           <label className="block">
-            <span className="text-sm font-medium text-primary-700">
+            <span className="text-sm font-medium text-[#5c4a26]">
               Select status
             </span>
             <select

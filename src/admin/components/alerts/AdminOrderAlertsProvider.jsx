@@ -138,13 +138,13 @@ const registerFcmToken = async ({ registration, authToken }) => {
 
 const FloatingAlertUnlock = ({ onUnlock }) => (
   <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[70] flex justify-center px-4">
-    <div className="pointer-events-auto w-full max-w-xl overflow-hidden rounded-[24px] border border-amber-200 bg-white/95 shadow-[0_20px_60px_rgba(15,23,42,0.16)] backdrop-blur">
+    <div className="pointer-events-auto w-full max-w-xl overflow-hidden rounded-[24px] border border-amber-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.16)] backdrop-blur">
       <div className="flex flex-col gap-2 bg-gradient-to-r from-amber-50 via-white to-rose-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
             ?? Sound needs one tap to re-arm
           </p>
-          <p className="mt-0.5 text-xs text-slate-600">
+          <p className="mt-0.5 text-xs text-[#5c4a26]">
             Browser blocks audio until first interaction after a refresh. Tap
             anywhere or use the button.
           </p>
@@ -221,40 +221,36 @@ export const AdminOrderAlertsProvider = ({ children }) => {
     }, 1000);
   }, []);
 
-  const ensureAudioReady = useCallback(
-    async ({ allowCreate = false } = {}) => {
-      if (!canUseAudio()) {
+  const ensureAudioReady = useCallback(async ({ allowCreate = false } = {}) => {
+    if (!canUseAudio()) {
+      return false;
+    }
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+    if (!audioContextRef.current) {
+      if (!allowCreate) {
         return false;
       }
+      audioContextRef.current = new AudioContextClass();
+    }
 
-      const AudioContextClass =
-        window.AudioContext || window.webkitAudioContext;
+    if (audioContextRef.current.state === "suspended") {
+      await audioContextRef.current.resume();
+    }
 
-      if (!audioContextRef.current) {
-        if (!allowCreate) {
-          return false;
-        }
-        audioContextRef.current = new AudioContextClass();
+    const isReady = audioContextRef.current.state === "running";
+    setAudioEnabled(isReady);
+
+    if (isReady) {
+      setSoundArmed(true);
+      if (canUseLocalStorage()) {
+        localStorage.setItem(SOUND_ARMED_STORAGE_KEY, "true");
       }
+    }
 
-      if (audioContextRef.current.state === "suspended") {
-        await audioContextRef.current.resume();
-      }
-
-      const isReady = audioContextRef.current.state === "running";
-      setAudioEnabled(isReady);
-
-      if (isReady) {
-        setSoundArmed(true);
-        if (canUseLocalStorage()) {
-          localStorage.setItem(SOUND_ARMED_STORAGE_KEY, "true");
-        }
-      }
-
-      return isReady;
-    },
-    [],
-  );
+    return isReady;
+  }, []);
 
   const attemptSilentAudioUnlock = useCallback(async () => {
     if (!canUseAudio() || !canUseLocalStorage()) {

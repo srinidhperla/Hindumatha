@@ -4,7 +4,7 @@ import { OptimizedImage } from "@/shared/ui";
 import { ActionButton, StatusChip } from "@/shared/ui/Primitives";
 
 const inputClassName =
-  "mt-1 block w-full rounded-xl border border-gold-200/70 bg-white/85 px-3 py-2.5 text-sm text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70";
+  "mt-1 block w-full rounded-xl border border-[#ebe1cb] bg-white px-3 py-2.5 text-sm text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]";
 
 const AddOnFormModal = ({
   formData,
@@ -31,7 +31,7 @@ const AddOnFormModal = ({
   >
     <form id="addon-editor-form" onSubmit={onSubmit} className="space-y-4">
       <label className="block">
-        <span className="text-sm font-medium text-primary-700">Name</span>
+        <span className="text-sm font-medium text-[#5c4a26]">Name</span>
         <input
           name="name"
           value={formData.name}
@@ -43,7 +43,7 @@ const AddOnFormModal = ({
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-primary-700">Price</span>
+        <span className="text-sm font-medium text-[#5c4a26]">Price</span>
         <input
           type="number"
           name="price"
@@ -58,9 +58,7 @@ const AddOnFormModal = ({
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-primary-700">
-          Description
-        </span>
+        <span className="text-sm font-medium text-[#5c4a26]">Description</span>
         <textarea
           name="description"
           rows={3}
@@ -73,7 +71,7 @@ const AddOnFormModal = ({
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-primary-700">Image</span>
+        <span className="text-sm font-medium text-[#5c4a26]">Image</span>
         <input
           type="file"
           accept="image/*"
@@ -84,7 +82,7 @@ const AddOnFormModal = ({
       </label>
 
       {formData.imagePreview && (
-        <div className="overflow-hidden rounded-2xl border border-gold-200/70 bg-white/80 p-2">
+        <div className="overflow-hidden rounded-2xl border border-[#ebe1cb] bg-white p-2">
           <OptimizedImage
             src={formData.imagePreview}
             alt="Addon preview"

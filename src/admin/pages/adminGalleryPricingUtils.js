@@ -25,10 +25,14 @@ export const getGalleryPricingSections = (formData = {}) =>
       title: toCleanText(section?.title),
       area: toCleanText(section?.area) || "general",
       options: Array.isArray(formData?.[section?.key])
-        ? formData[section.key].map((option) => toCleanText(option)).filter(Boolean)
+        ? formData[section.key]
+            .map((option) => toCleanText(option))
+            .filter(Boolean)
         : [],
     }))
-    .filter((section) => section.key && section.title && section.options.length > 0);
+    .filter(
+      (section) => section.key && section.title && section.options.length > 0,
+    );
 
 export const buildGalleryPriceCombinations = (formData = {}) => {
   const sections = getGalleryPricingSections(formData);
@@ -113,17 +117,19 @@ export const mergeGalleryCombinationPrices = (
   return combinations.map((combination) => ({
     ...combination,
     price: Number(savedByKey.get(combination.key)?.price) || 0,
-    isEnabled:
-      savedByKey.has(combination.key)
-        ? savedByKey.get(combination.key)?.isEnabled !== false
-        : !hasSavedEntries,
+    isEnabled: savedByKey.has(combination.key)
+      ? savedByKey.get(combination.key)?.isEnabled !== false
+      : !hasSavedEntries,
   }));
 };
 
 export const normalizeCombinationPricePayload = (formData = {}) => {
   const { combinations } = buildGalleryPriceCombinations(formData);
   const savedByKey = new Map(
-    (Array.isArray(formData?.combinationPrices) ? formData.combinationPrices : [])
+    (Array.isArray(formData?.combinationPrices)
+      ? formData.combinationPrices
+      : []
+    )
       .map((entry) => [
         toCleanText(entry?.key),
         {
@@ -142,10 +148,9 @@ export const normalizeCombinationPricePayload = (formData = {}) => {
     key: combination.key,
     label: combination.label,
     price: Number(savedByKey.get(combination.key)?.price) || 0,
-    isEnabled:
-      savedByKey.has(combination.key)
-        ? savedByKey.get(combination.key)?.isEnabled !== false
-        : !hasSavedEntries,
+    isEnabled: savedByKey.has(combination.key)
+      ? savedByKey.get(combination.key)?.isEnabled !== false
+      : !hasSavedEntries,
     selections: combination.selections,
   }));
 };

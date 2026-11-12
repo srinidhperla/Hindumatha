@@ -24,6 +24,7 @@ const Login = () => {
       const redirectPath =
         user?.role === "admin" ? "/admin" :
         user?.role === "delivery" ? "/delivery" :
+        ["owner", "manager", "cashier"].includes(user?.role) ? "/billing" :
         "/";
       navigate(redirectPath);
     }

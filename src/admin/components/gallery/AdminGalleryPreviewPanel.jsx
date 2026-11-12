@@ -8,7 +8,7 @@ const AdminGalleryPreviewPanel = ({
   onImagePick,
 }) => (
   <SurfaceCard className="p-4 sm:p-5">
-    <div className="overflow-hidden rounded-3xl border border-gold-200/60 bg-[#fff9ea]">
+    <div className="overflow-hidden rounded-2xl border border-[#ebe1cb] bg-[#faf6ec]">
       {imagePreview ? (
         <img
           src={imagePreview}
@@ -16,7 +16,7 @@ const AdminGalleryPreviewPanel = ({
           className="h-72 w-full object-cover"
         />
       ) : (
-        <div className="flex h-72 items-center justify-center px-6 text-center text-sm text-primary-700">
+        <div className="flex h-72 items-center justify-center px-6 text-center text-sm text-[#5c4a26]">
           Add an image to preview the gallery item here.
         </div>
       )}
@@ -33,7 +33,7 @@ const AdminGalleryPreviewPanel = ({
       </ActionButton>
     </div>
 
-    <p className="mt-3 text-xs text-primary-700">
+    <p className="mt-3 text-xs text-[#5c4a26]">
       {imageFileName
         ? `Selected image: ${imageFileName}`
         : editingItem

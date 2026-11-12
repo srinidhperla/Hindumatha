@@ -181,7 +181,8 @@ const getItemsPreviewRows = (order) => {
       (entry) => `${entry.label}: ${entry.value}`,
     );
     const parsedQty = Number(item?.quantity);
-    const quantity = Number.isFinite(parsedQty) && parsedQty > 0 ? parsedQty : 1;
+    const quantity =
+      Number.isFinite(parsedQty) && parsedQty > 0 ? parsedQty : 1;
 
     return [getOrderItemName(item), ...optionLines, `Qty: ${quantity}`].join(
       "\n",
@@ -384,7 +385,10 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
       return;
     }
 
-    if (nextStatus === "confirmed" && !String(order?.estimatedDeliveryTime || "").trim()) {
+    if (
+      nextStatus === "confirmed" &&
+      !String(order?.estimatedDeliveryTime || "").trim()
+    ) {
       openActionModal("accept", order);
       return;
     }
@@ -445,7 +449,7 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
       />
 
       {latestOrder && (
-        <SurfaceCard className="mb-4 border-gold-200/70 bg-gradient-to-r from-gold-50/70 via-white/70 to-cream-100/70 px-4 py-3 text-sm text-primary-700 shadow-none admin-motion hover:border-gold-300">
+        <SurfaceCard className="mb-4 border-[#ebe1cb] bg-gradient-to-r from-gold-50/70 via-white/70 to-cream-100/70 px-4 py-3 text-sm text-[#5c4a26] shadow-none admin-motion hover:border-[#ebe1cb]">
           Latest order from{" "}
           <span className="font-semibold">
             {latestOrder.user?.name || "Guest Customer"}
@@ -460,271 +464,277 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
 
       <SurfaceCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className="min-w-[1760px] divide-y divide-gold-200/60 text-sm">
-            <thead className="bg-gold-50/50">
+          <table className="w-full min-w-[960px] text-sm">
+            <thead className="bg-[#faf6ec]">
               <tr>
                 {[
-                  { key: SORTABLE_COLUMNS.order, label: "Order" },
-                  { key: SORTABLE_COLUMNS.customer, label: "Customer" },
-                  { key: SORTABLE_COLUMNS.items, label: "Items" },
-                  {
-                    key: SORTABLE_COLUMNS.specialInstructions,
-                    label: "Special Instructions",
-                  },
-                  { key: SORTABLE_COLUMNS.paymentStatus, label: "Payment" },
-                  { key: SORTABLE_COLUMNS.paymentMethod, label: "Method" },
-                  { key: SORTABLE_COLUMNS.totalAmount, label: "Total" },
-                  { key: SORTABLE_COLUMNS.requestedDelivery, label: "Requested" },
-                  { key: SORTABLE_COLUMNS.estimatedDelivery, label: "Estimated" },
-                ].map((column) => (
+                  [{ key: SORTABLE_COLUMNS.order, label: "Order" }],
+                  [{ key: SORTABLE_COLUMNS.customer, label: "Customer" }],
+                  [{ key: SORTABLE_COLUMNS.items, label: "Items" }],
+                  [
+                    {
+                      key: SORTABLE_COLUMNS.specialInstructions,
+                      label: "Notes",
+                    },
+                  ],
+                  [
+                    { key: SORTABLE_COLUMNS.paymentStatus, label: "Payment" },
+                    { key: SORTABLE_COLUMNS.paymentMethod, label: "Method" },
+                  ],
+                  [{ key: SORTABLE_COLUMNS.totalAmount, label: "Total" }],
+                  [
+                    {
+                      key: SORTABLE_COLUMNS.requestedDelivery,
+                      label: "Requested",
+                    },
+                    {
+                      key: SORTABLE_COLUMNS.estimatedDelivery,
+                      label: "Estimated",
+                    },
+                  ],
+                  [{ key: SORTABLE_COLUMNS.status, label: "Status" }],
+                ].map((group) => (
                   <th
-                    key={column.key}
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700"
+                    key={group[0].key}
+                    className={`px-3 py-2.5 text-left align-top text-[11px] font-semibold uppercase tracking-[0.08em] text-[#7d6c4d] ${
+                      group[0].key === SORTABLE_COLUMNS.status
+                        ? "sticky right-0 z-10 bg-[#faf6ec]"
+                        : ""
+                    }`}
                   >
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 hover:text-primary-900"
-                      onClick={() => toggleSort(column.key)}
-                    >
-                      {column.label}
-                      {sortField === column.key
-                        ? sortDirection === "asc"
-                          ? "[^]"
-                          : "[v]"
-                        : "[^v]"}
-                    </button>
+                    <span className="flex flex-col items-start gap-1">
+                      {group.map((column) => (
+                        <button
+                          key={column.key}
+                          type="button"
+                          className="inline-flex items-center gap-1 uppercase hover:text-[#1f1709]"
+                          onClick={() => toggleSort(column.key)}
+                        >
+                          {column.label}
+                          <span
+                            className={
+                              sortField === column.key
+                                ? "text-[#8b6914]"
+                                : "text-[#c9bb97]"
+                            }
+                          >
+                            {sortField === column.key
+                              ? sortDirection === "asc"
+                                ? "↑"
+                                : "↓"
+                              : "↕"}
+                          </span>
+                        </button>
+                      ))}
+                    </span>
                   </th>
                 ))}
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700">
-                  View Details
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700">
-                  Assign to Delivery
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-primary-700">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 hover:text-primary-900"
-                    onClick={() => toggleSort(SORTABLE_COLUMNS.status)}
-                  >
-                    Status
-                    {sortField === SORTABLE_COLUMNS.status
-                      ? sortDirection === "asc"
-                        ? "[^]"
-                        : "[v]"
-                      : "[^v]"}
-                  </button>
-                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gold-200/40 bg-white">
+            <tbody className="divide-y divide-[#f3ecdb] bg-white">
               {sortedOrders.map((order) => {
-          const canAssignDelivery =
-            order.status !== "pending" &&
-            order.status !== "cancelled" &&
-            order.status !== "delivered";
-          const specialInstructions = getOrderSpecialInstructions(order);
-          const isProgressEditable = canEditProgressStatus(order.status);
+                const canAssignDelivery =
+                  order.status !== "pending" &&
+                  order.status !== "cancelled" &&
+                  order.status !== "delivered";
+                const specialInstructions = getOrderSpecialInstructions(order);
+                const isProgressEditable = canEditProgressStatus(order.status);
 
-          return (
-                <tr key={order._id} className="align-top hover:bg-gold-50/25">
-                  <td className="px-4 py-3">
-                    <p className="font-semibold text-primary-900">
-                      {getOrderDisplayCode(order)}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-primary-900">
-                      {order.user?.name || "Guest Customer"}
-                    </p>
-                    <p className="text-xs text-primary-500">
-                      {order.user?.email || "No email"}
-                    </p>
-                    <p className="text-xs text-primary-700">
-                      {order.deliveryAddress?.phone ||
-                        order.user?.phone ||
-                        "No phone"}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="space-y-1">
-                      {getItemsPreviewRows(order).map((row, index) => (
-                        <p
-                          key={`${order._id}-item-preview-${index}`}
-                          className="whitespace-pre-line text-xs text-primary-700"
-                        >
-                          {row}
-                        </p>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {specialInstructions ? (
-                      <p className="max-w-[260px] text-xs text-primary-700">
-                        {specialInstructions}
+                return (
+                  <tr
+                    key={order._id}
+                    className="group align-top hover:bg-[#fdfbf5]"
+                  >
+                    <td className="px-3 py-3">
+                      <p className="whitespace-nowrap font-semibold text-[#1f1709]">
+                        {getOrderDisplayCode(order)}
                       </p>
-                    ) : (
-                      <span className="text-xs text-primary-500">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusChip
-                      tone={getPaymentStatusTone(order.paymentStatus)}
-                      className="capitalize"
-                    >
-                      {getPaymentStatusLabel(order.paymentStatus)}
-                    </StatusChip>
-                  </td>
-                  <td className="px-4 py-3 text-primary-800">
-                    {getPaymentMethodLabel(order.paymentMethod)}
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-primary-900">
-                    Rs.{Number(order.totalAmount || 0).toLocaleString("en-IN")}
-                  </td>
-                  <td className="px-4 py-3 text-primary-700">
-                    {formatRequestedDelivery(order)}
-                  </td>
-                  <td className="px-4 py-3 text-primary-700">
-                    {formatEstimatedDelivery(order)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <ActionButton
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setSelectedOrder(order)}
-                    >
-                      View Details
-                    </ActionButton>
-                  </td>
-                  <td className="px-4 py-3">
-                    {canAssignDelivery ? (
-                      <ActionButton
+                      <button
                         type="button"
-                        variant="secondary"
-                        onClick={() => openActionModal("assign", order)}
+                        onClick={() => setSelectedOrder(order)}
+                        className="mt-1 text-xs font-semibold text-[#8b6914] hover:underline"
                       >
-                        {order.assignedDeliveryPartner
-                          ? "Reassign Delivery"
-                          : "Assign to Delivery"}
-                      </ActionButton>
-                    ) : (
-                      <span className="text-xs text-primary-500">N/A</span>
-                    )}
-                    {order.assignedDeliveryPartner?.name && (
-                      <p className="mt-1 text-xs text-primary-700">
-                        {order.assignedDeliveryPartner.name}
+                        View details
+                      </button>
+                    </td>
+                    <td className="px-3 py-3">
+                      <p className="font-medium text-[#1f1709]">
+                        {order.user?.name || "Guest Customer"}
                       </p>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex min-w-[240px] items-start gap-2">
-                      {order.status === "pending" ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <ActionButton
-                            type="button"
-                            variant="success"
-                            onClick={() => openActionModal("accept", order)}
+                      <p className="text-xs text-[#7d6c4d]">
+                        {order.user?.email || "No email"}
+                      </p>
+                      <p className="text-xs text-[#5c4a26]">
+                        {order.deliveryAddress?.phone ||
+                          order.user?.phone ||
+                          "No phone"}
+                      </p>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="max-w-[190px] space-y-1">
+                        {getItemsPreviewRows(order).map((row, index) => (
+                          <p
+                            key={`${order._id}-item-preview-${index}`}
+                            className="whitespace-pre-line text-xs text-[#5c4a26]"
                           >
-                            Accept
-                          </ActionButton>
-                          <ActionButton
-                            type="button"
-                            variant="danger"
-                            onClick={() => openActionModal("reject", order)}
-                          >
-                            Reject
-                          </ActionButton>
-                        </div>
-                      ) : statusEditorOrderId === order._id && isProgressEditable ? (
-                        <select
-                          key={`status-editor-${order._id}-${order.status}`}
-                          ref={(node) => {
-                            if (node) {
-                              statusEditorRefs.current[order._id] = node;
-                            } else {
-                              delete statusEditorRefs.current[order._id];
-                            }
-                          }}
-                          defaultValue=""
-                          onChange={(event) => {
-                            handleStatusSelection(order, event.target.value);
-                          }}
-                          onBlur={() => setStatusEditorOrderId("")}
-                          className="min-h-[42px] min-w-[150px] rounded-full border border-gold-200/70 bg-white px-4 py-2 text-sm font-semibold text-primary-800 shadow-sm focus:border-gold-400 focus:outline-none focus:ring-2 focus:ring-gold-200/70"
-                          aria-label="Update order progress"
-                          title="Update order progress"
-                        >
-                          <option value="" disabled>
-                            Select status
-                          </option>
-                          {getProgressEditOptions().map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
+                            {row}
+                          </p>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3">
+                      {specialInstructions ? (
+                        <p className="max-w-[160px] text-xs text-[#5c4a26]">
+                          {specialInstructions}
+                        </p>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleAdvanceStatus(order)}
-                          disabled={
-                            order.status === "pending" ||
-                            !getNextProgressStatus(order.status)
-                          }
-                          className={`inline-flex min-h-[42px] items-center rounded-full border px-4 py-2 text-sm font-semibold admin-motion disabled:cursor-not-allowed disabled:opacity-70 ${getStatusButtonClasses(order.status)}`}
-                        >
-                          {getOrderStatusLabel(order.status)}
-                        </button>
+                        <span className="text-xs text-[#7d6c4d]">-</span>
                       )}
-                      {isProgressEditable && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setStatusEditorOrderId((current) =>
-                              current === order._id ? "" : order._id,
-                            )
-                          }
-                          className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold-200/70 bg-white text-primary-700 shadow-sm admin-motion hover:border-gold-400 hover:bg-gold-50"
-                          aria-label="Edit status"
-                          title="Edit status"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            className="h-4 w-4"
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M4 20h4l10-10a2 2 0 1 0-4-4L4 16v4Z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="m12 6 4 4"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    {order.status === "cancelled" && getRejectionReasonLabel(order) && (
-                      <p className="mt-1 text-xs text-rose-700">
-                        {getRejectionReasonLabel(order)}
+                    </td>
+                    <td className="px-3 py-3">
+                      <StatusChip
+                        tone={getPaymentStatusTone(order.paymentStatus)}
+                        className="capitalize"
+                      >
+                        {getPaymentStatusLabel(order.paymentStatus)}
+                      </StatusChip>
+                      <p className="mt-1.5 text-xs text-[#5c4a26]">
+                        {getPaymentMethodLabel(order.paymentMethod)}
                       </p>
-                    )}
-                  </td>
-                </tr>
-          );
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3 font-semibold text-[#1f1709]">
+                      ₹{Number(order.totalAmount || 0).toLocaleString("en-IN")}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-[#5c4a26]">
+                      <p className="font-medium text-[#1f1709]">
+                        {formatRequestedDelivery(order)}
+                      </p>
+                      <p className="mt-1 text-[#7d6c4d]">
+                        Est. {formatEstimatedDelivery(order)}
+                      </p>
+                    </td>
+                    <td className="sticky right-0 bg-white px-3 py-3 shadow-[-10px_0_14px_-12px_rgba(31,23,9,0.25)] group-hover:bg-[#fdfbf5]">
+                      <div className="flex items-start gap-2">
+                        {order.status === "pending" ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <ActionButton
+                              type="button"
+                              variant="success"
+                              onClick={() => openActionModal("accept", order)}
+                            >
+                              Accept
+                            </ActionButton>
+                            <ActionButton
+                              type="button"
+                              variant="danger"
+                              onClick={() => openActionModal("reject", order)}
+                            >
+                              Reject
+                            </ActionButton>
+                          </div>
+                        ) : statusEditorOrderId === order._id &&
+                          isProgressEditable ? (
+                          <select
+                            key={`status-editor-${order._id}-${order.status}`}
+                            ref={(node) => {
+                              if (node) {
+                                statusEditorRefs.current[order._id] = node;
+                              } else {
+                                delete statusEditorRefs.current[order._id];
+                              }
+                            }}
+                            defaultValue=""
+                            onChange={(event) => {
+                              handleStatusSelection(order, event.target.value);
+                            }}
+                            onBlur={() => setStatusEditorOrderId("")}
+                            className="min-h-[38px] min-w-[150px] rounded-full border border-[#ebe1cb] bg-white px-4 py-2 text-sm font-semibold text-[#1f1709] shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-2 focus:ring-[rgba(201,168,76,0.25)]"
+                            aria-label="Update order progress"
+                            title="Update order progress"
+                          >
+                            <option value="" disabled>
+                              Select status
+                            </option>
+                            {getProgressEditOptions().map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleAdvanceStatus(order)}
+                            disabled={
+                              order.status === "pending" ||
+                              !getNextProgressStatus(order.status)
+                            }
+                            className={`inline-flex min-h-[38px] items-center rounded-full border px-4 py-2 text-sm font-semibold admin-motion disabled:cursor-not-allowed disabled:opacity-70 ${getStatusButtonClasses(order.status)}`}
+                          >
+                            {getOrderStatusLabel(order.status)}
+                          </button>
+                        )}
+                        {isProgressEditable && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setStatusEditorOrderId((current) =>
+                                current === order._id ? "" : order._id,
+                              )
+                            }
+                            className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[#ebe1cb] bg-white text-[#5c4a26] shadow-sm admin-motion hover:border-[#c9a84c] hover:bg-[#faf6ec]"
+                            aria-label="Edit status"
+                            title="Edit status"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M4 20h4l10-10a2 2 0 1 0-4-4L4 16v4Z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="m12 6 4 4"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      {canAssignDelivery && (
+                        <button
+                          type="button"
+                          onClick={() => openActionModal("assign", order)}
+                          className="mt-2 block text-xs font-semibold text-[#8b6914] hover:underline"
+                        >
+                          {order.assignedDeliveryPartner?.name
+                            ? `Delivery: ${order.assignedDeliveryPartner.name} · change`
+                            : "Assign delivery partner"}
+                        </button>
+                      )}
+                      {order.status === "cancelled" &&
+                        getRejectionReasonLabel(order) && (
+                          <p className="mt-1 text-xs text-rose-700">
+                            {getRejectionReasonLabel(order)}
+                          </p>
+                        )}
+                    </td>
+                  </tr>
+                );
               })}
             </tbody>
           </table>
         </div>
 
         {!sortedOrders?.length && (
-          <div className="p-8 text-center text-primary-600">No orders yet.</div>
+          <div className="p-8 text-center text-[#5c4a26]">No orders yet.</div>
         )}
       </SurfaceCard>
 
@@ -749,4 +759,3 @@ const AdminOrdersPage = ({ onToast, syncVersion = 0 }) => {
 };
 
 export default AdminOrdersPage;
-

@@ -11,9 +11,6 @@ import {
   FiX,
 } from "react-icons/fi";
 import { logout } from "@/features/auth/authSlice";
-import { optimizeProductImageUrl } from "@/utils/imageOptimization";
-import { filterWebsiteProducts } from "@/utils/productVisibility";
-import NavbarMegaMenu from "./NavbarMegaMenu";
 import NavbarMobileMenu from "./NavbarMobileMenu";
 
 const Navbar = () => {
@@ -21,21 +18,20 @@ const Navbar = () => {
   const location = useLocation();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { businessInfo } = useSelector((state) => state.site);
-  const { products: allProducts } = useSelector((state) => state.products);
-  const products = useMemo(() => filterWebsiteProducts(allProducts), [allProducts]);
   const cartItems = useSelector((state) => state.cart.items);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [megaOpenKey, setMegaOpenKey] = useState("");
   const isDeliveryUser = isAuthenticated && user?.role === "delivery";
   const dashboardPath =
     user?.role === "admin"
       ? "/admin/orders"
       : user?.role === "delivery"
         ? "/delivery"
-        : "";
+        : ["owner", "manager", "cashier"].includes(user?.role)
+          ? "/billing"
+          : "";
   const brandPath = isDeliveryUser ? "/delivery" : "/";
 
   const cartCount = cartItems.reduce(
@@ -52,21 +48,12 @@ const Navbar = () => {
   const navLinks = useMemo(
     () => [
       { label: "Home", path: "/" },
-      { label: "Menu", path: "/menu", mega: true },
-      { label: "Gallery", path: "/gallery", mega: true },
+      { label: "Menu", path: "/menu" },
+      { label: "Gallery", path: "/gallery" },
       { label: "Contact", path: "/contact" },
     ],
     [],
   );
-
-  const megaCards = useMemo(() => {
-    return products.slice(0, 5).map((product) => ({
-      id: product._id,
-      name: product.name,
-      price: product.price,
-      image: optimizeProductImageUrl(product.image || product.images?.[0]),
-    }));
-  }, [products]);
 
   const isActive = (path) => location.pathname === path;
 
@@ -89,12 +76,7 @@ const Navbar = () => {
             <nav className="hidden items-center gap-1 lg:flex">
               {!isDeliveryUser &&
                 navLinks.map((link) => (
-                <div
-                  key={link.label}
-                  className="relative"
-                  onMouseEnter={() => link.mega && setMegaOpenKey(link.label)}
-                  onMouseLeave={() => link.mega && setMegaOpenKey("")}
-                >
+                <div key={link.label} className="relative">
                   <Link
                     to={link.path}
                     className={`group relative inline-flex px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition ${"text-[#5b4312] hover:text-[#120c02]"} ${isActive(link.path) ? "text-[#8b6914]" : ""}`}
@@ -169,6 +151,14 @@ const Navbar = () => {
                     <FiUser className="mr-1.5 h-4 w-4" />
                     Profile
                   </Link>
+                  {user?.role === "admin" && (
+                    <Link
+                      to="/billing"
+                      className="hidden rounded-full border border-[rgba(201,168,76,0.45)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#6a4c16] lg:inline-flex"
+                    >
+                      Billing
+                    </Link>
+                  )}
                   {dashboardPath && (
                     <Link
                       to={dashboardPath}
@@ -219,13 +209,6 @@ const Navbar = () => {
             </div>
           </div>
         </div>
-
-        <NavbarMegaMenu
-          megaOpenKey={megaOpenKey}
-          megaCards={megaCards}
-          onMouseEnter={() => setMegaOpenKey(megaOpenKey)}
-          onMouseLeave={() => setMegaOpenKey("")}
-        />
 
         <NavbarMobileMenu
           isMobileMenuOpen={isMobileMenuOpen}

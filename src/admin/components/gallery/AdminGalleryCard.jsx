@@ -13,7 +13,7 @@ const formatPrice = (value) => {
     return "Price not set";
   }
 
-  return `Rs.${numericValue.toLocaleString("en-IN")}`;
+  return `₹${numericValue.toLocaleString("en-IN")}`;
 };
 
 const summarizeOptions = (items = [], limit = 3) => {
@@ -50,12 +50,7 @@ const summarizeSectionOptions = (section, items = []) => {
   return summarizeOptions(normalizedItems);
 };
 
-const AdminGalleryCard = ({
-  item,
-  galleryFieldConfig,
-  onEdit,
-  onDelete,
-}) => {
+const AdminGalleryCard = ({ item, galleryFieldConfig, onEdit, onDelete }) => {
   const normalizedItem = normalizeGalleryFormFromItem(item, galleryFieldConfig);
   const visibleSections = Array.isArray(normalizedItem.fieldSections)
     ? normalizedItem.fieldSections
@@ -64,7 +59,7 @@ const AdminGalleryCard = ({
   const categories = getGalleryItemCategories(item);
 
   return (
-    <SurfaceCard className="overflow-hidden border-[rgba(201,168,76,0.28)]">
+    <SurfaceCard className="overflow-hidden border-[#ebe1cb]">
       <div className="relative">
         <img
           src={item.imageUrl}
@@ -85,28 +80,28 @@ const AdminGalleryCard = ({
               {categories.map((category, index) => (
                 <span
                   key={`${item._id}-${category}`}
-                  className="rounded-full bg-[#fff5d8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a6630]"
+                  className="rounded-full bg-[#faf6ec] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8b6914]"
                 >
                   {formatGalleryCategoryLabel(category)}
                   {index === 0 ? " • Main" : ""}
                 </span>
               ))}
             </div>
-            <h3 className="mt-1 text-lg font-bold text-[#2a1f0e]">
+            <h3 className="mt-1 text-lg font-bold text-[#1f1709]">
               {item.title}
             </h3>
-            <p className="mt-1 text-sm text-[#6a5130]">
+            <p className="mt-1 text-sm text-[#7d6c4d]">
               {item.priceLabel || "Starting at"} {formatPrice(item.price)}
             </p>
             {weightLabel ? (
-              <p className="mt-1 text-xs font-medium text-[#8a6630]">
+              <p className="mt-1 text-xs font-medium text-[#8b6914]">
                 Weight: {weightLabel}
               </p>
             ) : null}
           </div>
         </div>
 
-        <div className="grid gap-2 rounded-2xl border border-[rgba(201,168,76,0.22)] bg-white/75 p-3 text-xs text-[#6a5130]">
+        <div className="grid gap-2 rounded-2xl border border-[#ebe1cb] bg-white p-3 text-xs text-[#7d6c4d]">
           {visibleSections.map((section) => (
             <p key={section.key}>
               <span className="font-semibold text-[#6a4c16]">

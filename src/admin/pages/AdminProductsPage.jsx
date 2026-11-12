@@ -390,7 +390,10 @@ const AdminProductsPage = ({ onToast, syncVersion = 0 }) => {
       }
 
       if (value && typeof value === "object") {
-        if (typeof value.label === "string" || typeof value.label === "number") {
+        if (
+          typeof value.label === "string" ||
+          typeof value.label === "number"
+        ) {
           return String(value.label);
         }
         return String(fallback || "");
