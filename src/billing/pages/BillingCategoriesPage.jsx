@@ -20,6 +20,7 @@ const emptyForm = {
   id: "",
   name: "",
   hsnCode: "",
+  hsnPrefixes: "",
   gstRate: 5,
   productIds: [],
   valueMode: "none",
@@ -59,6 +60,7 @@ const toForm = (category) => ({
   id: category.id,
   name: category.name,
   hsnCode: category.hsnCode,
+  hsnPrefixes: (category.hsnPrefixes || []).join(", "),
   gstRate: category.gstRate,
   productIds: category.productIds,
   valueMode: category.valueMode,
@@ -164,6 +166,9 @@ const BillingCategoriesPage = ({ onToast, canManage }) => {
     const payload = {
       name: form.name,
       hsnCode: form.hsnCode,
+      hsnPrefixes: String(form.hsnPrefixes || "")
+        .split(/[\s,;]+/)
+        .filter(Boolean),
       gstRate: Number(form.gstRate),
       productIds: form.productIds,
       // Amounts only apply while the category has no items.
@@ -368,6 +373,19 @@ const BillingCategoriesPage = ({ onToast, canManage }) => {
                   />
                 </FormField>
               </div>
+              <FormField
+                label="Purchase bills: HSN codes that belong here"
+                hint={`Supplier bill lines whose HSN starts with one of these go to ${form.name || "this category"}. Leave empty to use the HSN code above. Example: 190531, 190532 for biscuits and wafers.`}
+                className="mt-3"
+              >
+                <input
+                  value={form.hsnPrefixes}
+                  onChange={setField("hsnPrefixes")}
+                  placeholder={form.hsnCode || "e.g. 1806"}
+                  className={fieldClass}
+                  inputMode="numeric"
+                />
+              </FormField>
             </FormSection>
 
             <FormSection

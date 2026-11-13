@@ -8,6 +8,7 @@ import {
   FiPackage,
   FiPlusCircle,
   FiSettings,
+  FiShoppingBag,
   FiTag,
   FiZap,
 } from "react-icons/fi";
@@ -22,6 +23,7 @@ const BillingBillsPage = lazy(() => import("./BillingBillsPage"));
 const BillingItemsPage = lazy(() => import("./BillingItemsPage"));
 const BillingCategoriesPage = lazy(() => import("./BillingCategoriesPage"));
 const BillingReportsPage = lazy(() => import("./BillingReportsPage"));
+const BillingPurchasesPage = lazy(() => import("./BillingPurchasesPage"));
 
 const tabs = [
   { name: "Dashboard", href: "/billing/dashboard", icon: FiGrid },
@@ -34,6 +36,12 @@ const tabs = [
   },
   { name: "Bills", href: "/billing/bills", icon: FiFileText },
   { name: "Items", href: "/billing/items", icon: FiPackage },
+  {
+    name: "Purchases",
+    href: "/billing/purchases",
+    icon: FiShoppingBag,
+    managerOnly: true,
+  },
   { name: "Categories & Tax", href: "/billing/categories", icon: FiTag },
   { name: "Reports", href: "/billing/reports", icon: FiBarChart2 },
 ];
@@ -101,6 +109,16 @@ const BillingLayout = () => {
           />
           <Route path="bills" element={<BillingBillsPage {...pageProps} />} />
           <Route path="items" element={<BillingItemsPage {...pageProps} />} />
+          <Route
+            path="purchases"
+            element={
+              canManage ? (
+                <BillingPurchasesPage {...pageProps} />
+              ) : (
+                <Navigate to="/billing/dashboard" replace />
+              )
+            }
+          />
           <Route
             path="categories"
             element={<BillingCategoriesPage {...pageProps} />}

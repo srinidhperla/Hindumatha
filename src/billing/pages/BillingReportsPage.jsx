@@ -11,7 +11,7 @@ import {
   formatDateKey,
   inputClass,
   money,
-  shiftKey,
+  quickRanges,
   tableCellClass,
   tableHeadClass,
   todayKey,
@@ -21,35 +21,6 @@ import {
  *   by category (open a category to see its items), by item, and by day.
  * Every amount is split into cash and UPI, and the tax table is grouped by
  * HSN code and GST rate. */
-
-// Monday of the week `dateKey` falls in.
-const weekStart = (dateKey) => {
-  const day = new Date(`${dateKey}T12:00:00+05:30`).getUTCDay();
-  return shiftKey(dateKey, -((day + 6) % 7));
-};
-
-const quickRanges = () => {
-  const today = todayKey();
-  const monthStart = `${today.slice(0, 7)}-01`;
-  const lastMonthEnd = shiftKey(monthStart, -1);
-  const thisWeek = weekStart(today);
-  return [
-    { label: "Today", from: today, to: today },
-    { label: "Yesterday", from: shiftKey(today, -1), to: shiftKey(today, -1) },
-    { label: "This week", from: thisWeek, to: today },
-    {
-      label: "Last week",
-      from: shiftKey(thisWeek, -7),
-      to: shiftKey(thisWeek, -1),
-    },
-    { label: "This month", from: monthStart, to: today },
-    {
-      label: "Last month",
-      from: `${lastMonthEnd.slice(0, 7)}-01`,
-      to: lastMonthEnd,
-    },
-  ];
-};
 
 const VIEWS = [
   { value: "categories", label: "By category" },
