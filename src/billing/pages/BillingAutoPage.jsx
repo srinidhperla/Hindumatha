@@ -913,6 +913,27 @@ const BillingAutoPage = ({ onToast }) => {
             </div>
           )}
 
+          {plan.stockUsed?.length > 0 && (
+            <details className="mb-3 rounded-xl border border-[#ebe1cb] bg-[#fffdf7] px-3 py-2">
+              <summary className="cursor-pointer text-sm font-semibold text-[#1f1709]">
+                Stock these bills take: {plan.stockUsed.length} item
+                {plan.stockUsed.length === 1 ? "" : "s"} (never more than in
+                stock)
+              </summary>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {plan.stockUsed.map((entry) => (
+                  <span
+                    key={entry.itemId}
+                    className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs text-emerald-900"
+                  >
+                    {entry.name} · <strong>−{entry.used}</strong> {entry.baseUnit === "pcs" ? "pcs" : entry.baseUnit} ·{" "}
+                    {entry.left} left
+                  </span>
+                ))}
+              </div>
+            </details>
+          )}
+
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <ChipRow
               options={REVIEW_FILTERS.map((filter) => ({

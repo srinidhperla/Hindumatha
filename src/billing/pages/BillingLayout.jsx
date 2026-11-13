@@ -5,6 +5,7 @@ import {
   FiBarChart2,
   FiFileText,
   FiGrid,
+  FiLayers,
   FiPackage,
   FiPlusCircle,
   FiSettings,
@@ -24,6 +25,7 @@ const BillingItemsPage = lazy(() => import("./BillingItemsPage"));
 const BillingCategoriesPage = lazy(() => import("./BillingCategoriesPage"));
 const BillingReportsPage = lazy(() => import("./BillingReportsPage"));
 const BillingPurchasesPage = lazy(() => import("./BillingPurchasesPage"));
+const BillingStockPage = lazy(() => import("./BillingStockPage"));
 
 const tabs = [
   { name: "Dashboard", href: "/billing/dashboard", icon: FiGrid },
@@ -40,6 +42,12 @@ const tabs = [
     name: "Purchases",
     href: "/billing/purchases",
     icon: FiShoppingBag,
+    managerOnly: true,
+  },
+  {
+    name: "Stock",
+    href: "/billing/stock",
+    icon: FiLayers,
     managerOnly: true,
   },
   { name: "Categories & Tax", href: "/billing/categories", icon: FiTag },
@@ -114,6 +122,16 @@ const BillingLayout = () => {
             element={
               canManage ? (
                 <BillingPurchasesPage {...pageProps} />
+              ) : (
+                <Navigate to="/billing/dashboard" replace />
+              )
+            }
+          />
+          <Route
+            path="stock"
+            element={
+              canManage ? (
+                <BillingStockPage {...pageProps} />
               ) : (
                 <Navigate to="/billing/dashboard" replace />
               )

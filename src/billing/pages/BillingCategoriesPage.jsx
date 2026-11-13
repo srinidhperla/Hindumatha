@@ -112,7 +112,9 @@ const BillingCategoriesPage = ({ onToast, canManage }) => {
         billingAPI.getCatalog(),
       ]);
       setCategories(categoryResponse.categories);
-      setItems(catalog.items);
+      // Website products are ticked in here; stock items get their category
+      // on the purchase bill or in Purchases → Stock.
+      setItems(catalog.items.filter((item) => item.kind !== "stock"));
     } catch (error) {
       onToast(billingError(error, "Could not load categories."), "error");
     } finally {

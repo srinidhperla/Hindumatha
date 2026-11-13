@@ -12,6 +12,7 @@ import {
   shortBase,
   stockLabel,
   unitChoices,
+  unitValue,
 } from "@/billing/stockUnits";
 
 /* Purchase bill editor — for a bill read by AI, typed in by hand, or opened
@@ -78,7 +79,10 @@ const toFormLine = (line) => ({
   categoryId: line.categoryId || "",
   hsnCode: line.hsnCode || "",
   qty: String(line.qty ?? 1),
-  unit: line.unit || line.baseUnit || "pcs",
+  // Only pcs / g / kg / ml / litre or a Box: other pack names become a Box.
+  unit: isMeasure({ baseUnit: line.baseUnit || "pcs", unit: line.unit || line.baseUnit || "pcs" })
+    ? String(line.unit || line.baseUnit || "pcs").toLowerCase()
+    : "Box",
   rate: line.rate === undefined || line.rate === null ? "" : String(line.rate),
   discount: line.discount ? String(line.discount) : "",
   gstRate:
@@ -292,14 +296,21 @@ const PurchaseEditor = ({
       ...current,
       lines: current.lines.map((line) => {
         if (line.key !== key) return line;
-        const own = unitChoices({ ...line, baseUnit: item.baseUnit, packUnits: item.packUnits, unit: "" }).find(
-          (entry) => entry.name.toLowerCase() === String(line.unit).toLowerCase(),
-        );
-        const factor = own ? own.factor : Number(line.unitFactor) || 1;
+        // A measure (pcs, kg …) stays; a Box keeps its size, or takes the
+        // item's only box size when it has none yet.
+        const sizes = (item.packUnits || []).map((pack) => pack.factor);
+        const measure = isMeasure({ ...line, baseUnit: item.baseUnit });
+        const factor = measure
+          ? Number(line.unitFactor) || 1
+          : Number(line.unitFactor) > 0
+            ? Number(line.unitFactor)
+            : sizes.length === 1
+              ? sizes[0]
+              : 0;
         return {
           ...line,
-          unit: own ? own.name : line.unit,
-          unitFactor: String(factor),
+          unit: measure ? line.unit : "Box",
+          unitFactor: factor ? String(factor) : "",
           mrp: line.mrp || (item.mrp ? String(round(item.mrp * factor, 2)) : ""),
         };
       }),
@@ -327,14 +338,54 @@ const PurchaseEditor = ({
     }));
   };
 
+  /* Qty, rate, rate + GST and amount are tied together: typing any one
+   * works out the rest. The rate before GST is what is stored; typing the
+   * rate with GST or the line amount works back to it (amount keeps the
+   * line's discount). While a box is being typed in, its text is kept as
+   * typed (drafts) so decimals can be entered. */
+  const typeDerived = (key, field, text) =>
+    setForm((current) => ({
+      ...current,
+      lines: current.lines.map((line) => {
+        if (line.key !== key) return line;
+        const gst = 1 + (Number(line.gstRate) || 0) / 100;
+        const value = Number(text);
+        let rate = line.rate;
+        if (value > 0) {
+          if (field === "rateInc") {
+            rate = String(round(value / gst, 4));
+          } else {
+            const qty = Number(line.qty) > 0 ? Number(line.qty) : 1;
+            const discount = discountValue(line, false);
+            rate = String(round((value / gst + discount) / qty, 4));
+          }
+        }
+        return { ...line, rate, check: false, drafts: { [field]: text } };
+      }),
+    }));
+
+  const endDraft = (key, field) =>
+    setForm((current) => ({
+      ...current,
+      lines: current.lines.map((line) =>
+        line.key === key && line.drafts?.[field] !== undefined
+          ? { ...line, drafts: { ...line.drafts, [field]: undefined } }
+          : line,
+      ),
+    }));
+
   const chooseUnit = (key, value) => {
     setForm((current) => ({
       ...current,
       lines: current.lines.map((line) => {
         if (line.key !== key) return line;
         if (value === "__new") return { ...line, unit: "Box", unitFactor: "" };
-        const choice = unitChoices(line).find((entry) => entry.name === value);
-        return { ...line, unit: value, unitFactor: String(choice ? choice.factor : 1) };
+        const choice = unitChoices(line).find((entry) => entry.value === value);
+        return {
+          ...line,
+          unit: choice ? choice.name : value,
+          unitFactor: String(choice?.factor ?? 1),
+        };
       }),
     }));
   };
@@ -428,7 +479,7 @@ const PurchaseEditor = ({
         sellOptions: line.sellOptions
           .filter((option) => option.price !== "")
           .map((option) => ({ qty: option.qty, label: option.label, price: Number(option.price) })),
-        rate: round2(baseRate(line, form.ratesIncludeGst)),
+        rate: round(baseRate(line, form.ratesIncludeGst), 4),
         discount: round2(discountValue(line, form.ratesIncludeGst)),
         gstRate: Number(line.gstRate) || 0,
       })),
@@ -770,19 +821,6 @@ const PurchaseEditor = ({
                     : "Adding page…"
                   : "Add page"}
               </button>
-              <label className="flex items-center gap-2 text-sm text-[#5c4a26]">
-                <input
-                  type="checkbox"
-                  checked={form.ratesIncludeGst}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      ratesIncludeGst: event.target.checked,
-                    }))
-                  }
-                />
-                Rates include GST
-              </label>
             </div>
             <datalist id="purchase-stock-names">
               {stockItems.map((item) => (
@@ -801,12 +839,20 @@ const PurchaseEditor = ({
                     <th className="w-[72px] px-2 py-2 text-right">Qty</th>
                     <th className="w-[60px] px-2 py-2 text-right">Free</th>
                     <th className="w-[150px] px-2 py-2">Unit</th>
-                    <th className="w-[92px] px-2 py-2 text-right">
-                      Rate{form.ratesIncludeGst ? " incl." : ""}
+                    <th className="w-[92px] px-2 py-2 text-right" title="Price of one unit before GST (S.Rate / Rate on the bill)">
+                      Rate
+                      <span className="block font-normal normal-case tracking-normal">before GST</span>
                     </th>
                     <th className="w-[76px] px-2 py-2 text-right" title="₹ amount, or a percentage like 4%">Disc ₹/%</th>
                     <th className="w-[68px] px-2 py-2 text-right">GST %</th>
-                    <th className="w-[96px] px-2 py-2 text-right">Amount</th>
+                    <th className="w-[92px] px-2 py-2 text-right" title="Price of one unit with GST (D.Price / Rate incl. of tax on the bill)">
+                      Rate
+                      <span className="block font-normal normal-case tracking-normal">with GST</span>
+                    </th>
+                    <th className="w-[104px] px-2 py-2 text-right" title="Line total with GST">
+                      Amount
+                      <span className="block font-normal normal-case tracking-normal">with GST</span>
+                    </th>
                     <th className="w-[96px] px-2 py-2 text-right">MRP / unit</th>
                     <th className="w-[36px]" />
                   </tr>
@@ -900,7 +946,7 @@ const PurchaseEditor = ({
                             step="any"
                             value={line.qty}
                             onChange={(event) =>
-                              setLine(line.key, { qty: event.target.value, check: false })
+                              setLine(line.key, { qty: event.target.value, check: false, drafts: {} })
                             }
                             className={`${cellInput} text-right`}
                           />
@@ -920,29 +966,20 @@ const PurchaseEditor = ({
                         </td>
                         <td className="border-t border-[#f3ecdb] px-1.5 py-1.5">
                           <select
-                            value={line.unit}
+                            value={unitValue(line)}
                             onChange={(event) => chooseUnit(line.key, event.target.value)}
                             className={cellInput}
                             aria-label="Unit"
                           >
                             {unitChoices(line).map((choice) => (
-                              <option key={choice.name} value={choice.name}>
-                                {isMeasure({ ...line, unit: choice.name })
-                                  ? choice.name
-                                  : `${choice.name}${choice.factor ? ` (${round(choice.factor, 3)} ${shortBase(line.baseUnit)})` : ""}`}
+                              <option key={choice.value} value={choice.value}>
+                                {choice.label}
                               </option>
                             ))}
-                            <option value="__new">＋ New pack…</option>
                           </select>
                           {!isMeasure(line) && (
                             <span className="mt-1 flex items-center gap-1 text-[11px] text-[#7d6c4d]">
-                              <input
-                                value={line.unit}
-                                onChange={(event) => setLine(line.key, { unit: event.target.value })}
-                                className="w-[54px] rounded border border-[#e5d9bf] px-1 py-0.5"
-                                aria-label="Pack name"
-                              />
-                              =
+                              1 Box =
                               <input
                                 type="number"
                                 min="0"
@@ -965,7 +1002,7 @@ const PurchaseEditor = ({
                             step="any"
                             value={line.rate}
                             onChange={(event) =>
-                              setLine(line.key, { rate: event.target.value, check: false })
+                              setLine(line.key, { rate: event.target.value, check: false, drafts: {} })
                             }
                             className={`${cellInput} text-right`}
                           />
@@ -975,7 +1012,7 @@ const PurchaseEditor = ({
                             inputMode="decimal"
                             value={line.discount}
                             onChange={(event) =>
-                              setLine(line.key, { discount: event.target.value, check: false })
+                              setLine(line.key, { discount: event.target.value, check: false, drafts: {} })
                             }
                             placeholder="0"
                             className={`${cellInput} text-right`}
@@ -988,13 +1025,39 @@ const PurchaseEditor = ({
                             step="any"
                             value={line.gstRate}
                             onChange={(event) =>
-                              setLine(line.key, { gstRate: event.target.value })
+                              setLine(line.key, { gstRate: event.target.value, drafts: {} })
                             }
                             className={`${cellInput} text-right`}
                           />
                         </td>
-                        <td className="border-t border-[#f3ecdb] px-2 py-2.5 text-right font-semibold">
-                          {money(line.amount)}
+                        <td className="border-t border-[#f3ecdb] px-1.5 py-1.5">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={
+                              line.drafts?.rateInc ??
+                              (Number(line.rate) > 0
+                                ? String(round(Number(line.rate) * (1 + (Number(line.gstRate) || 0) / 100), 3))
+                                : "")
+                            }
+                            onChange={(event) => typeDerived(line.key, "rateInc", event.target.value)}
+                            onBlur={() => endDraft(line.key, "rateInc")}
+                            className={`${cellInput} text-right`}
+                            aria-label="Rate with GST"
+                          />
+                        </td>
+                        <td className="border-t border-[#f3ecdb] px-1.5 py-1.5 text-right">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={line.drafts?.amount ?? (line.amount ? String(line.amount) : "")}
+                            onChange={(event) => typeDerived(line.key, "amount", event.target.value)}
+                            onBlur={() => endDraft(line.key, "amount")}
+                            className={`${cellInput} text-right font-semibold`}
+                            aria-label="Amount with GST"
+                          />
                           {printedOff && (
                             <span className="block text-[11px] font-semibold text-amber-700">
                               Bill: {money(line.printedAmount)}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { EmptyState, LoadingState } from "@/admin/components/ui/AdminUi";
 import { ActionButton } from "@/shared/ui/Primitives";
 import Modal from "@/shared/ui/Modal";
@@ -11,6 +11,7 @@ import {
   inputClass,
   money,
 } from "@/billing/billingShared";
+import { shortBase } from "@/billing/stockUnits";
 
 const round2 = (value) => Math.round((Number(value) || 0) * 100) / 100;
 
@@ -51,23 +52,22 @@ const BillingPosPage = ({ onToast }) => {
   const [valueAmount, setValueAmount] = useState("");
   const [lastBill, setLastBill] = useState(null);
 
+  // Loaded again after each bill so stock counts stay current.
+  const loadCatalog = useCallback(
+    () =>
+      billingAPI
+        .getCatalog()
+        .then((response) => setCatalog(response))
+        .catch((error) =>
+          onToast(billingError(error, "Could not load billing items."), "error"),
+        )
+        .finally(() => setLoading(false)),
+    [onToast],
+  );
+
   useEffect(() => {
-    let mounted = true;
-    billingAPI
-      .getCatalog()
-      .then((response) => {
-        if (mounted) setCatalog(response);
-      })
-      .catch((error) =>
-        onToast(billingError(error, "Could not load billing items."), "error"),
-      )
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [onToast]);
+    loadCatalog();
+  }, [loadCatalog]);
 
   const billableItems = useMemo(
     () => catalog.items.filter((item) => item.billable),
@@ -138,9 +138,16 @@ const BillingPosPage = ({ onToast }) => {
       productId: item.id,
       variantKey: variant.key,
       name: item.name,
-      variant: variant.label,
+      variant: item.kind === "stock" && !item.hasVariants ? "" : variant.label,
       unitPrice: variant.price,
       qty: 1,
+      ...(item.kind === "stock"
+        ? {
+            stockItemId: item.stock.itemId,
+            stockPerUnit: Number(variant.stockQty) || 1,
+            baseUnit: item.stock.baseUnit,
+          }
+        : {}),
     });
     setVariantItem(null);
   };
@@ -213,6 +220,23 @@ const BillingPosPage = ({ onToast }) => {
     }
     return map;
   }, {});
+  // Stock this bill takes, per stock item, against what is in stock.
+  const stockById = useMemo(() => {
+    const map = new Map();
+    catalog.items.forEach((item) => {
+      if (item.kind === "stock") map.set(item.stock.itemId, item.stock);
+    });
+    return map;
+  }, [catalog.items]);
+  const stockInCart = cart.reduce((map, line) => {
+    if (line.stockItemId) {
+      map[line.stockItemId] = round2((map[line.stockItemId] || 0) + line.qty * line.stockPerUnit);
+    }
+    return map;
+  }, {});
+  const shortLines = Object.entries(stockInCart).filter(
+    ([itemId, qty]) => qty > (stockById.get(itemId)?.qty ?? 0),
+  ).length;
   const splitCashValue = Math.min(total, Math.max(0, round2(splitCash)));
   const change = round2(Number(cashReceived || 0) - total);
 
@@ -266,6 +290,7 @@ const BillingPosPage = ({ onToast }) => {
       });
       setLastBill(bill);
       resetBill();
+      loadCatalog();
       onToast(`Bill ${bill.billNo} saved · ${money(bill.grandTotal)}`);
       if (shouldPrint && !printReceipt(bill, catalog.shop)) {
         onToast("Bill saved. Allow pop-ups to print the receipt.", "error");
@@ -362,6 +387,24 @@ const BillingPosPage = ({ onToast }) => {
                     {qtyByProduct[item.id]}
                   </span>
                 ) : null}
+                {item.kind === "stock" ? (() => {
+                  // Stock left after what is already in this bill.
+                  const left = round2(item.stock.qty - (stockInCart[item.stock.itemId] || 0));
+                  const unit = shortBase(item.stock.baseUnit);
+                  return (
+                    <div
+                      className={`flex h-14 items-end px-3 pb-1.5 text-xs font-semibold ${
+                        left > 0 ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-700"
+                      }`}
+                    >
+                      {left > 0
+                        ? `${left} ${unit} in stock`
+                        : left < 0
+                          ? `Stock −${Math.abs(left)} ${unit}`
+                          : "Out of stock"}
+                    </div>
+                  );
+                })() : (
                 <div className="aspect-[4/3] w-full bg-[#f3ecdb]">
                   {item.image && (
                     <img
@@ -376,6 +419,7 @@ const BillingPosPage = ({ onToast }) => {
                     />
                   )}
                 </div>
+                )}
                 <div className="px-3 pb-3 pt-2.5">
                   <p className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-5 text-[#1f1709]">
                     {item.name}
@@ -428,6 +472,14 @@ const BillingPosPage = ({ onToast }) => {
                       {line.variant ? `${line.variant} · ` : ""}
                       {money(line.unitPrice)}
                     </p>
+                    {line.stockItemId &&
+                      stockInCart[line.stockItemId] > (stockById.get(line.stockItemId)?.qty ?? 0) && (
+                        <p className="text-[11px] font-semibold text-rose-700">
+                          Only {round2(Math.max(0, stockById.get(line.stockItemId)?.qty ?? 0))}{" "}
+                          {shortBase(line.baseUnit)} in stock; it will go to{" "}
+                          {round2((stockById.get(line.stockItemId)?.qty ?? 0) - stockInCart[line.stockItemId])}
+                        </p>
+                      )}
                   </div>
                   <div className="flex items-center gap-1">
                     <button
@@ -572,6 +624,14 @@ const BillingPosPage = ({ onToast }) => {
             </Field>
           </div>
 
+          {shortLines > 0 && (
+            <p className="mt-3 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800">
+              {shortLines} item{shortLines === 1 ? "" : "s"} on this bill{" "}
+              {shortLines === 1 ? "is" : "are"} more than the stock. You can
+              still save; stock will show below zero until a purchase bill is
+              entered.
+            </p>
+          )}
           <div className="mt-3 grid grid-cols-[1fr_1.6fr] gap-2">
             <ActionButton
               variant="secondary"
@@ -619,6 +679,11 @@ const BillingPosPage = ({ onToast }) => {
               >
                 <span className="text-sm font-semibold text-[#1f1709]">
                   {variant.label}
+                  {variantItem.kind === "stock" && variant.stockQty > 1 && (
+                    <span className="block text-xs font-normal text-[#7d6c4d]">
+                      takes {variant.stockQty} {shortBase(variantItem.stock.baseUnit)} from stock
+                    </span>
+                  )}
                 </span>
                 <span className="text-sm font-bold text-[#8b6914]">
                   {money(variant.price)}

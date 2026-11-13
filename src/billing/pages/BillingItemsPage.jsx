@@ -33,7 +33,8 @@ const BillingItemsPage = ({ onToast, canManage }) => {
   const load = useCallback(async () => {
     try {
       const response = await billingAPI.getCatalog();
-      setItems(response.items);
+      // Website products only; stock items are managed under Purchases.
+      setItems(response.items.filter((item) => item.kind !== "stock"));
     } catch (error) {
       onToast(billingError(error, "Could not load items."), "error");
     } finally {

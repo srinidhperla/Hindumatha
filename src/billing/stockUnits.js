@@ -48,25 +48,42 @@ export const stockLabel = (qty, baseUnit, packUnits = []) => {
   return base;
 };
 
-/* The units a line can be billed in: the measures for its base unit, the
- * item's own packs, and the line's current unit if it is something else. */
-export const unitChoices = (line) => {
-  const choices = [...(MEASURE_UNITS[line.baseUnit] || MEASURE_UNITS.pcs)];
-  (line.packUnits || []).forEach((pack) => {
-    if (!choices.some((entry) => entry.name.toLowerCase() === pack.name.toLowerCase())) {
-      choices.push(pack);
-    }
-  });
-  if (line.unit && !choices.some((entry) => entry.name.toLowerCase() === line.unit.toLowerCase())) {
-    choices.push({ name: line.unit, factor: Number(line.unitFactor) || 1 });
-  }
-  return choices;
-};
-
+/* A line is billed in pcs, g, kg, ml or litre ("measures"), or in a Box of
+ * some size (display, hanger, carton, bag … are all a Box). */
 export const isMeasure = (line) =>
   (MEASURE_UNITS[line.baseUnit] || MEASURE_UNITS.pcs).some(
     (entry) => entry.name.toLowerCase() === String(line.unit || "").toLowerCase(),
   );
+
+// The select value for a line's unit: "pcs", "kg", "Box|24", or "__new"
+// for a box whose size isn't known yet.
+export const unitValue = (line) =>
+  isMeasure(line)
+    ? String(line.unit).toLowerCase()
+    : Number(line.unitFactor) > 0
+      ? `Box|${round(line.unitFactor)}`
+      : "__new";
+
+/* The units a line can be billed in: the measures for its stock unit, the
+ * item's box sizes, the line's own box size, and "Box (other size)". */
+export const unitChoices = (line) => {
+  const base = shortBase(line.baseUnit);
+  const choices = (MEASURE_UNITS[line.baseUnit] || MEASURE_UNITS.pcs).map((entry) => ({
+    value: entry.name,
+    name: entry.name,
+    factor: entry.factor,
+    label: entry.name,
+  }));
+  const sizes = new Set((line.packUnits || []).map((pack) => round(pack.factor)).filter((size) => size > 0));
+  if (!isMeasure(line) && Number(line.unitFactor) > 0) sizes.add(round(line.unitFactor));
+  [...sizes]
+    .sort((left, right) => left - right)
+    .forEach((size) => {
+      choices.push({ value: `Box|${size}`, name: "Box", factor: size, label: `Box (${size} ${base})` });
+    });
+  choices.push({ value: "__new", name: "Box", factor: null, label: "Box (other size)…" });
+  return choices;
+};
 
 /* Quick choices for "sell as": a piece and each pack, or common weights. */
 export const sellPresets = (baseUnit, packUnits = []) => {

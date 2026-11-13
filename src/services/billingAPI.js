@@ -54,6 +54,10 @@ export const billingAPI = {
     data(apiClient.get("/billing/purchases/stock", { params })),
   updateStock: (id, payload) =>
     data(apiClient.patch(`/billing/purchases/stock/${id}`, payload)),
+  adjustStock: (id, payload) =>
+    data(apiClient.post(`/billing/purchases/stock/${id}/adjust`, payload)),
+  stockHistory: (id) =>
+    data(apiClient.get(`/billing/purchases/stock/${id}/history`)),
   listShortNames: () => data(apiClient.get("/billing/purchases/short-names")),
   saveShortName: (payload) =>
     data(apiClient.post("/billing/purchases/short-names", payload)),

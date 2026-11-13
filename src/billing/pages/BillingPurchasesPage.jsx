@@ -13,7 +13,6 @@ import { ChipRow, SearchInput } from "@/shared/workspace/Toolbar";
 import { billingAPI, billingError } from "@/services/billingAPI";
 import PurchaseEditor from "@/billing/components/PurchaseEditor";
 import PurchaseKnowledge from "@/billing/components/PurchaseKnowledge";
-import PurchaseStock from "@/billing/components/PurchaseStock";
 import { readSheet } from "@/billing/phonepeImport";
 import {
   Field,
@@ -40,7 +39,6 @@ const VIEWS = [
   { value: "categories", label: "By category" },
   { value: "suppliers", label: "By supplier" },
   { value: "gst", label: "GST paid" },
-  { value: "stock", label: "Stock" },
   { value: "knowledge", label: "Reader knowledge" },
 ];
 
@@ -446,7 +444,7 @@ const BillingPurchasesPage = ({ onToast }) => {
                 <ChipRow options={VIEWS} value={view} onChange={setView} />
                 <div
                   className={`ml-auto flex-wrap items-center gap-2 ${
-                    view === "knowledge" || view === "stock" ? "hidden" : "flex"
+                    view === "knowledge" ? "hidden" : "flex"
                   }`}
                 >
                   <SearchInput
@@ -476,14 +474,7 @@ const BillingPurchasesPage = ({ onToast }) => {
                 </div>
               </div>
 
-              {view === "stock" ? (
-                <PurchaseStock
-                  items={stockItems}
-                  categories={categories}
-                  onChanged={loadStock}
-                  onToast={onToast}
-                />
-              ) : view === "knowledge" ? (
+              {view === "knowledge" ? (
                 <PurchaseKnowledge categories={categories} onToast={onToast} />
               ) : !data.purchases.length ? (
                 <EmptyState message="No purchase bills in this period." />
