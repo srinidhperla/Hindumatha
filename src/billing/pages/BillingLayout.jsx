@@ -8,6 +8,7 @@ import {
   FiPackage,
   FiPlusCircle,
   FiSettings,
+  FiTag,
   FiZap,
 } from "react-icons/fi";
 import WorkspaceShell from "@/shared/workspace/WorkspaceShell";
@@ -19,6 +20,7 @@ const BillingPosPage = lazy(() => import("./BillingPosPage"));
 const BillingAutoPage = lazy(() => import("./BillingAutoPage"));
 const BillingBillsPage = lazy(() => import("./BillingBillsPage"));
 const BillingItemsPage = lazy(() => import("./BillingItemsPage"));
+const BillingCategoriesPage = lazy(() => import("./BillingCategoriesPage"));
 const BillingReportsPage = lazy(() => import("./BillingReportsPage"));
 
 const tabs = [
@@ -32,6 +34,7 @@ const tabs = [
   },
   { name: "Bills", href: "/billing/bills", icon: FiFileText },
   { name: "Items", href: "/billing/items", icon: FiPackage },
+  { name: "Categories & Tax", href: "/billing/categories", icon: FiTag },
   { name: "Reports", href: "/billing/reports", icon: FiBarChart2 },
 ];
 
@@ -98,6 +101,10 @@ const BillingLayout = () => {
           />
           <Route path="bills" element={<BillingBillsPage {...pageProps} />} />
           <Route path="items" element={<BillingItemsPage {...pageProps} />} />
+          <Route
+            path="categories"
+            element={<BillingCategoriesPage {...pageProps} />}
+          />
           <Route
             path="reports"
             element={<BillingReportsPage {...pageProps} />}

@@ -191,7 +191,7 @@ const BillingItemsPage = ({ onToast, canManage }) => {
                 <thead>
                   <tr>
                     <th className={tableHeadClass}>Item</th>
-                    <th className={tableHeadClass}>Category</th>
+                    <th className={tableHeadClass}>Billing category</th>
                     <th className={tableHeadClass}>Price</th>
                     <th className={`${tableHeadClass} text-right`}>GST</th>
                     <th className={tableHeadClass}>Website</th>
@@ -222,8 +222,17 @@ const BillingItemsPage = ({ onToast, canManage }) => {
                           <span className="font-semibold">{item.name}</span>
                         </div>
                       </td>
-                      <td className={`${tableCellClass} text-[#7d6c4d]`}>
-                        {titleCase(item.category)}
+                      <td className={tableCellClass}>
+                        {item.billingCategory ? (
+                          <>
+                            {item.billingCategory}
+                            <span className="block text-xs text-[#8a7a5c]">
+                              HSN {item.hsnCode || "—"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-[#a3271b]">Not set</span>
+                        )}
                       </td>
                       <td className={tableCellClass}>
                         {item.hasVariants ? (

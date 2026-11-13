@@ -10,7 +10,6 @@ import {
   PAYMENT_MODES,
   inputClass,
   money,
-  titleCase,
 } from "@/billing/billingShared";
 
 const round2 = (value) => Math.round((Number(value) || 0) * 100) / 100;
@@ -22,12 +21,15 @@ const chipClass = (active) =>
       : "border border-[#e3d7bb] bg-white text-[#5c4a26] hover:bg-[#faf6ec]"
   }`;
 
+const OTHER = "Other";
+
 const emptyCustomItem = { name: "", unitPrice: "", qty: 1 };
 
 const BillingPosPage = ({ onToast }) => {
   const [catalog, setCatalog] = useState({
     items: [],
     categories: [],
+    billingCategories: [],
     shop: {},
   });
   const [loading, setLoading] = useState(true);
@@ -44,6 +46,9 @@ const BillingPosPage = ({ onToast }) => {
   const [saving, setSaving] = useState(false);
   const [variantItem, setVariantItem] = useState(null);
   const [customItem, setCustomItem] = useState(null);
+  // A category with no items, being priced before it goes on the bill.
+  const [valueCategory, setValueCategory] = useState(null);
+  const [valueAmount, setValueAmount] = useState("");
   const [lastBill, setLastBill] = useState(null);
 
   useEffect(() => {
@@ -69,19 +74,49 @@ const BillingPosPage = ({ onToast }) => {
     [catalog.items],
   );
 
-  const categories = useMemo(
-    () => [...new Set(billableItems.map((item) => item.category))].sort(),
-    [billableItems],
+  // Categories with no items are billed as one line named after them.
+  const valueCategories = useMemo(
+    () =>
+      (catalog.billingCategories || []).filter(
+        (entry) => entry.isValueCategory,
+      ),
+    [catalog.billingCategories],
   );
 
-  const visibleItems = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return billableItems.filter(
-      (item) =>
-        (!category || item.category === category) &&
-        (!term || item.name.toLowerCase().includes(term)),
+  // Chips follow the Categories & Tax order; items not placed in any
+  // category sit under "Other".
+  const categories = useMemo(() => {
+    const used = new Set(
+      billableItems.map((item) => item.billingCategory || OTHER),
     );
-  }, [billableItems, category, search]);
+    valueCategories.forEach((entry) => used.add(entry.name));
+    const ordered = (catalog.billingCategories || [])
+      .map((entry) => entry.name)
+      .filter((name) => used.has(name));
+    return used.has(OTHER) ? [...ordered, OTHER] : ordered;
+  }, [billableItems, catalog.billingCategories, valueCategories]);
+
+  const term = search.trim().toLowerCase();
+
+  const visibleItems = useMemo(
+    () =>
+      billableItems.filter(
+        (item) =>
+          (!category || (item.billingCategory || OTHER) === category) &&
+          (!term || item.name.toLowerCase().includes(term)),
+      ),
+    [billableItems, category, term],
+  );
+
+  const visibleValueCategories = useMemo(
+    () =>
+      valueCategories.filter(
+        (entry) =>
+          (!category || entry.name === category) &&
+          (!term || entry.name.toLowerCase().includes(term)),
+      ),
+    [valueCategories, category, term],
+  );
 
   const addLine = (line) => {
     setCart((current) => {
@@ -116,6 +151,25 @@ const BillingPosPage = ({ onToast }) => {
     } else {
       addVariant(item, item.variants[0]);
     }
+  };
+
+  const addCategoryLine = (entry, amount) => {
+    const unitPrice = round2(amount);
+    if (!(unitPrice > 0)) {
+      onToast(`Enter an amount for ${entry.name}.`, "error");
+      return;
+    }
+    addLine({
+      key: `category-${entry.id}-${unitPrice}`,
+      productId: "",
+      categoryId: entry.id,
+      name: entry.name,
+      variant: "",
+      unitPrice,
+      qty: 1,
+    });
+    setValueCategory(null);
+    setValueAmount("");
   };
 
   const setQty = (key, qty) => {
@@ -197,7 +251,13 @@ const BillingPosPage = ({ onToast }) => {
                 variantKey: line.variantKey,
                 qty: line.qty,
               }
-            : { name: line.name, unitPrice: line.unitPrice, qty: line.qty },
+            : line.categoryId
+              ? {
+                  categoryId: line.categoryId,
+                  unitPrice: line.unitPrice,
+                  qty: line.qty,
+                }
+              : { name: line.name, unitPrice: line.unitPrice, qty: line.qty },
         ),
         discount: discountValue,
         payments: buildPayments(),
@@ -256,13 +316,36 @@ const BillingPosPage = ({ onToast }) => {
               className={chipClass(category === entry)}
               onClick={() => setCategory(entry)}
             >
-              {titleCase(entry)}
+              {entry}
             </button>
           ))}
         </div>
 
-        {visibleItems.length ? (
+        {visibleItems.length || visibleValueCategories.length ? (
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {visibleValueCategories.map((entry) => (
+              <button
+                type="button"
+                key={entry.id}
+                onClick={() => {
+                  setValueAmount("");
+                  setValueCategory(entry);
+                }}
+                className="flex flex-col justify-between overflow-hidden rounded-2xl border border-dashed border-[#d9c48a] bg-[#fffaf0] p-3 text-left admin-motion hover:border-[#c9a84c] hover:shadow-[0_8px_18px_rgba(31,23,9,0.1)] active:scale-[0.98]"
+              >
+                <span className="ws-eyebrow">Category</span>
+                <span>
+                  <span className="block text-sm font-semibold leading-5 text-[#1f1709]">
+                    {entry.name}
+                  </span>
+                  <span className="mt-1 block text-xs text-[#7d6c4d]">
+                    {entry.valueMode === "fixed"
+                      ? entry.fixedValues.map(money).join(" · ")
+                      : `${money(entry.rangeMin)} – ${money(entry.rangeMax)}`}
+                  </span>
+                </span>
+              </button>
+            ))}
             {visibleItems.map((item) => (
               <button
                 type="button"
@@ -543,6 +626,57 @@ const BillingPosPage = ({ onToast }) => {
               </button>
             ))}
           </div>
+        </Modal>
+      )}
+
+      {valueCategory && (
+        <Modal
+          title={valueCategory.name}
+          onClose={() => setValueCategory(null)}
+          maxWidthClassName="max-w-md"
+        >
+          {valueCategory.valueMode === "fixed" ? (
+            <div className="grid grid-cols-3 gap-2">
+              {valueCategory.fixedValues.map((amount) => (
+                <button
+                  type="button"
+                  key={amount}
+                  onClick={() => addCategoryLine(valueCategory, amount)}
+                  className="rounded-2xl border border-[#e3d7bb] bg-white py-3 text-base font-bold text-[#1f1709] admin-motion hover:border-[#c9a84c] hover:bg-[#faf6ec]"
+                >
+                  {money(amount)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                addCategoryLine(valueCategory, valueAmount);
+              }}
+              className="grid gap-3"
+            >
+              <Field
+                label="Amount (₹)"
+                hint={`${money(valueCategory.rangeMin)} to ${money(valueCategory.rangeMax)}${
+                  valueCategory.endDigits?.length
+                    ? `, ending in ${valueCategory.endDigits.join(" or ")}`
+                    : ""
+                }.`}
+              >
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={valueAmount}
+                  onChange={(event) => setValueAmount(event.target.value)}
+                  className={inputClass}
+                  autoFocus
+                />
+              </Field>
+              <ActionButton type="submit">Add to bill</ActionButton>
+            </form>
+          )}
         </Modal>
       )}
 

@@ -12,6 +12,13 @@ export const billingAPI = {
   updateItem: (id, payload) =>
     data(apiClient.patch(`/billing/items/${id}`, payload)),
 
+  listCategories: () => data(apiClient.get("/billing/categories")),
+  createCategory: (payload) =>
+    data(apiClient.post("/billing/categories", payload)),
+  updateCategory: (id, payload) =>
+    data(apiClient.patch(`/billing/categories/${id}`, payload)),
+  deleteCategory: (id) => data(apiClient.delete(`/billing/categories/${id}`)),
+
   listBills: (params) => data(apiClient.get("/billing/bills", { params })),
   getBill: (id) => data(apiClient.get(`/billing/bills/${id}`)),
   createBill: (payload) => data(apiClient.post("/billing/bills", payload)),
